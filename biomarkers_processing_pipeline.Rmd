@@ -5,10 +5,162 @@ date: "2025-06-26"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r}
+library(readxl)
+#install.packages("ggplot2")
+library(ggplot2)
+#install.packages("psych")
+library(psych)
+#install.packages("tidyverse")
+library(tidyverse)
+#install.packages("ggpubr")
+library(ggpubr)
+#install.packages("broom")
+library(broom)
+#install.packages("ggeffects")
+library(ggeffects)
+#install.packages("MASS")
+library(MASS)
+#install.packages("PResiduals")
+library(PResiduals)
+#install.packages("mice")
+library(mice)
+#install.packages("VIM")
+library(VIM)
+#install.packages("car")
+library(car)
+#install.packages("sjPlot")
+library(sjPlot)
+#install.packages("caret")
+library(caret)
+#install.packages("bestNormalize")
+library(bestNormalize)
+#install.packages("ggrain")
+library(ggrain)
+#install.packages("emmeans")
+library(emmeans)
+#install.packages("skimr")
+library(skimr)
+library(glmnet)
+#install.packages("bullseye")
+library(bullseye)
+#install.packages("lavaan")
+library(lavaan)
+#install.packages("brms")
+library(brms)
+#install.packages("mgcv")
+library(mgcv)
+library(splines)
+#install.packages("fitdistrplus")
+library(fitdistrplus)
+#install.packages("patchwork")
+library(patchwork)
 ```
 
-This new line
+###biomarkers
+```{r}
+biomarcadores <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/BIOMARKERS_V_Aplus_Anna_Brugulat_20241024_2.csv", 
+    delim = ";", escape_double = FALSE, trim_ws = TRUE)
 
-This second new line
+
+# "1 = A-T-
+# 2 = A+T-
+# 3 = A-T+
+# 4 = A+T+"
+
+#A, T, a42/a40
+#ptau: elecsys amyloids: NTK
+
+#removing the p 181 rows because wrong kit, need to replace with elecsys dataset
+
+biomarcadores_v1<-biomarcadores%>%
+  filter(Visit == "V1")%>%
+  filter(is.na(Comment) | Comment == "" | !grepl("duplicates\\. all CV<20%\\. non-corrected values \\(do not use for analysis\\)", Comment),
+  !(Assay == "Abeta1-42" & Kit == "Elecsys"),
+  !(Assay == "pTau181"))%>%
+  mutate(result_PG_ML = ifelse(Original_units == "NG/ML", as.numeric(Result_in_original_units)*1000, 
+                         ifelse(is.na(Result_in_original_units), as.numeric(ResultRecalc), as.numeric(Result_in_original_units))))%>%
+  rename(subject = IdParticipante)%>%
+  dplyr::select(subject, Assay, result_PG_ML, Kit)%>%
+  mutate(subject = factor(subject))
+
+
+#read_in ab_40 from other dataset
+biomarcadores_NTK <- read_excel("G:/My Drive/Data/ALFA+/biomarkers/alfa_NTK_Biomarkers.xlsx")
+
+biomarcadores_NTK_AB_40<- biomarcadores_NTK%>%
+  filter(Visit == "1", ASSAY == "ABeta 1-40" | ASSAY == "Abeta1-40")%>%
+  mutate(result_PG_ML = as.numeric(RESULT)*1000,
+         Kit = "NTK",
+         ASSAY = str_replace(ASSAY,"Abeta1-40", "ABeta 1-40"))%>%
+  dplyr::select(PATIENT_ID, ASSAY, result_PG_ML, Kit)%>%
+  rename(subject = PATIENT_ID, 
+         Assay = ASSAY)%>%
+  mutate(subject = factor(subject))
+
+
+by = join_by(subject)
+biomarcadores_v1<-full_join(biomarcadores_v1, biomarcadores_NTK_AB_40)
+
+#read in ptau 181 from elecsys dataset
+biomarcadores_elecsys <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Elecsys_Roche_Comercial_Kit_ptau_181.csv", 
+    delim = ";", escape_double = FALSE, trim_ws = TRUE)
+
+biomarcadores_elecsys$Session_result<-factor(biomarcadores_elecsys$Session_result)
+levels(biomarcadores_elecsys$Session_result)
+
+biomarcadores_elecsys_ptau <- biomarcadores_elecsys%>%
+  filter(Session_result == "A+_V1S2"|Session_result == "EPAD_V4S3/A+_V1S2"|Session_result == "A+V1S2/EPAD_V3S3"| Session_result == "EPAD_V1S3/A+_V1S2"| Session_result == "A+V1S2")%>%
+  mutate(Kit = "Elecsys",
+         Assay = "pTau181",
+         pTau = str_replace_all(pTau, ",", "."))%>%
+  rename(result_PG_ML = pTau,
+         subject = IdParticipante)%>%
+  dplyr::select(subject, result_PG_ML, Kit, Assay)%>%
+  mutate(result_PG_ML = ifelse(result_PG_ML == "<8"|result_PG_ML=="<8.00", "7.9", result_PG_ML),
+         result_PG_ML = as.numeric(result_PG_ML),
+         subject = factor(subject))
+
+biomarcadores_v1<-full_join(biomarcadores_v1, biomarcadores_elecsys_ptau)
+
+#wider dataset
+
+biomarcadores_v1<-biomarcadores_v1%>%
+  dplyr::select(subject, Assay, result_PG_ML)
+
+biomarcadores_v1$Assay<-factor(biomarcadores_v1$Assay)
+levels(biomarcadores_v1$Assay)
+
+wider_biomarcadores_v1<-pivot_wider(biomarcadores_v1, names_from = Assay, values_from = result_PG_ML)
+wider_biomarcadores_v1<-wider_biomarcadores_v1%>%
+  rename(Abeta_40 = `ABeta 1-40`,
+         Abeta_42 = `Abeta1-42`)
+
+#join!
+master_nd<-left_join(master_nd, wider_biomarcadores_v1)
+
+
+
+
+###plasma ptau 217
+
+plasma_ptau <- read_excel("G:/My Drive/Data/ALFA+/biomarkers/plasma_ptau_217.xlsx")
+
+plasma_ptau_217<-plasma_ptau%>%
+  dplyr::select(IdParticipante, ptau217_plasmaF_MSDLilly_BL)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = factor(subject))
+
+master_nd<-left_join(master_nd, plasma_ptau_217)
+
+### add PET amyloid 
+
+biomarkers_PET<- read_excel("G:/My Drive/Data/ALFA+/biomarkers/bx_ftm_centiloids_ALFA_PET_FTM_20210421_20250319_141859.xlsx")
+
+biomarkers_PET_A<-biomarkers_PET%>%
+  dplyr::select(centiloids, subject)%>%
+  mutate(subject = factor(subject))
+
+master_nd<-left_join(master_nd, biomarkers_PET_A)
+
+```
