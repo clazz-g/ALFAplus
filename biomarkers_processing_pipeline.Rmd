@@ -57,6 +57,7 @@ library(fitdistrplus)
 library(patchwork)
 ```
 
+testing commit issues
 ###biomarkers
 ```{r}
 biomarcadores <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/BIOMARKERS_V_Aplus_Anna_Brugulat_20241024_2.csv", 
