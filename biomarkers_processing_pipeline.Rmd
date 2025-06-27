@@ -55,15 +55,28 @@ library(splines)
 library(fitdistrplus)
 #install.packages("patchwork")
 library(patchwork)
+library(ellmer)
+library(gander)
 ```
 
-testing commit issues
-###biomarkers
+
+
 ```{r}
-biomarcadores <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/BIOMARKERS_V_Aplus_Anna_Brugulat_20241024_2.csv", 
-    delim = ";", escape_double = FALSE, trim_ws = TRUE)
+
+biomarcadores <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Alfa_Cohort__Biomarkers_alfa_cohort_20241220142704(in).csv", 
+    delim = ";", escape_double = FALSE, trim_ws = TRUE)%>%
+  dplyr::select(Visit, idparticipante, collection_dt, Assay, SampleType, Result, Kit)%>%
+  mutate(Kit = factor(Kit),
+         SampleType = factor(SampleType),
+         Assay = factor(Assay))%>%
+  filter(Assay %in% c("a-Synuclein", "Abeta1-40", "Abeta1-42", "GAP43", "IL-6", "Neurogranin", "NFL", "pTau181", "pTau217", "sICAM1", "SNAP25", "sTREM2", "sVCAM1"))
+
+levels(biomarcadores$Kit)
+levels(biomarcadores$Assay)
+```
 
 
+```{r}
 # "1 = A-T-
 # 2 = A+T-
 # 3 = A-T+
