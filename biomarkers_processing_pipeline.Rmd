@@ -69,7 +69,8 @@ biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Al
   dplyr::select(Visit, idparticipante, collection_dt, Assay, SampleType, Result, Kit)%>%
   mutate(Kit = factor(Kit),
          SampleType = factor(SampleType),
-         Assay = factor(Assay))%>%
+         Assay = factor(Assay),
+         Result= as.numeric(gsub("\\.", "", Result)) / 1000)%>%
   filter(Assay %in% c("a-Synuclein", "Abeta1-40", "Abeta1-42", "GAP43", "IL-6", "Neurogranin", "NFL", "pTau181", "pTau217", "sICAM1", "SNAP25", "sTREM2", "sVCAM1", "tTau"))%>%
   filter(SampleType == "CSF")%>%
   unique()%>%
@@ -80,8 +81,8 @@ biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Al
          !(Kit == "NTK" & Assay == "pTau181"),
          !(Kit == "NTK" & Assay == "tTau"),
          !(Kit == "In-house" & Assay == "tTau"),
-         !(Kit == "In-house" & Assay == "pTau217"))
-  #pivot_wider(names_from = Assay, values_from = Result, names_prefix = "CSF_")%>%
+         !(Kit == "In-house" & Assay == "pTau217"))%>%
+  pivot_wider(names_from = Assay, values_from = Result, names_prefix = "CSF_")
   #rename(subject = idparticipante, 
          #Abeta40 = `CSF_Abeta1-40`,
          #Abeta42 = `CSF_Abeta1-42`)
