@@ -60,19 +60,21 @@ library(gander)
 ```
 
 
-
+#CSF values
 ```{r}
-#ptau: elecsys amyloids: NTK
+
+#ptau/ttau: elecsys 
+#amyloids: NTK
 
 biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Alfa_Cohort__Biomarkers_alfa_cohort_20241220142704(in).csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE)%>%
-  dplyr::select(Visit, idparticipante, collection_dt, Assay, SampleType, Result, Kit)%>%
+  dplyr::select(Visit, idparticipante, collection_dt, Assay, SampleType, Result, Kit, ResultRecalc)%>%
   mutate(Kit = factor(Kit),
          SampleType = factor(SampleType),
          Assay = factor(Assay),
          Result= as.numeric(gsub("\\.", "", Result)) / 1000)%>%
-  filter(Assay %in% c("a-Synuclein", "Abeta1-40", "Abeta1-42", "GAP43", "IL-6", "Neurogranin", "NFL", "pTau181", "pTau217", "sICAM1", "SNAP25", "sTREM2", "sVCAM1", "tTau"))%>%
   filter(SampleType == "CSF")%>%
+  filter(Assay %in% c("a-Synuclein", "Abeta1-40", "Abeta1-42", "GAP43", "IL-6", "Neurogranin", "NFL", "pTau181", "pTau217", "sICAM1", "SNAP25", "sTREM2", "sVCAM1", "tTau"))%>%
   unique()%>%
   filter(!(Kit == "Elecsys" & Assay == "Abeta1-42"),
          !(Kit == "In-house (Karikari et al. Lancet Neurol 2020. Suarez-Calvet et al. 2020)" & Assay == "pTau181"),
@@ -82,6 +84,8 @@ biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Al
          !(Kit == "NTK" & Assay == "tTau"),
          !(Kit == "In-house" & Assay == "tTau"),
          !(Kit == "In-house" & Assay == "pTau217"))%>%
+  mutate(Result = ifelse(is.na(Result)&!is.na(ResultRecalc), as.numeric(gsub("\\.", "", ResultRecalc)) / 1000, Result))%>%
+  dplyr::select(-ResultRecalc)%>%
   pivot_wider(names_from = Assay, values_from = Result, names_prefix = "CSF_")
   #rename(subject = idparticipante, 
          #Abeta40 = `CSF_Abeta1-40`,
@@ -91,8 +95,25 @@ biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Al
 levels(biomarcadores$Kit)
 levels(biomarcadores$Assay)
 
-#which kits do I use? lol
+#using NTK for amyloid means some NA with abeta42. Is this the best course of action still?
 ```
+
+#Plasma values
+only ptau217 I guess? 
+
+```{r}
+biomarcadores_PLASMA <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Alfa_Cohort__Biomarkers_alfa_cohort_20241220142704(in).csv", 
+    delim = ";", escape_double = FALSE, trim_ws = TRUE)%>%
+  dplyr::select(Visit, idparticipante, collection_dt, Assay, SampleType, Result, Kit, ResultRecalc)%>%
+  mutate(Kit = factor(Kit),
+         SampleType = factor(SampleType),
+         Assay = factor(Assay),
+         Result= as.numeric(gsub("\\.", "", Result)) / 1000)%>%
+  filter(SampleType == "PLASMA")%>%
+  mutate(Result = ifelse(is.na(Result)&!is.na(ResultRecalc), as.numeric(gsub("\\.", "", ResultRecalc)) / 1000, Result))%>%
+  dplyr::select(-ResultRecalc)
+```
+
 
 
 
