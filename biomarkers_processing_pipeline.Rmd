@@ -78,7 +78,7 @@ biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Al
          Assay = factor(Assay),
          Result= as.numeric(gsub("\\.", "", Result)) / 1000)%>%
   filter(SampleType == "CSF")%>%
-  filter(Assay %in% c("a-Synuclein", "Abeta1-40", "Abeta1-42", "GAP43", "IL-6", "Neurogranin", "NFL", "pTau181", "pTau217", "sICAM1", "SNAP25", "sTREM2", "sVCAM1", "tTau"))%>%
+  filter(Assay %in% c("a-Synuclein", "Abeta1-40", "Abeta1-42", "GAP43","GFAP", "IL-6", "Neurogranin", "NFL", "pTau181", "pTau217", "sICAM1", "SNAP25", "sTREM2", "sVCAM1","Synaptotagmin", "tTau", "YKL40"))%>%
   unique()%>%
   filter(!(Kit == "Elecsys" & Assay == "Abeta1-42"),
          !(Kit == "In-house (Karikari et al. Lancet Neurol 2020. Suarez-Calvet et al. 2020)" & Assay == "pTau181"),
@@ -87,7 +87,8 @@ biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Al
          !(Kit == "NTK" & Assay == "pTau181"),
          !(Kit == "NTK" & Assay == "tTau"),
          !(Kit == "In-house" & Assay == "tTau"),
-         !(Kit == "In-house" & Assay == "pTau217"))%>%
+         !(Kit == "In-house" & Assay == "pTau217"),
+         !(Kit == "GFAP Discovery Kit #102336" & Assay == "GFAP"))%>%
   mutate(Result = ifelse(is.na(Result)&!is.na(ResultRecalc), as.numeric(gsub("\\.", "", ResultRecalc)) / 1000, Result))%>%
   dplyr::select(-ResultRecalc)%>%
   dplyr::select(-Kit)%>%
@@ -97,14 +98,14 @@ biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Al
          Abeta42 = `CSF_Abeta1-42`)
   
   
-
+write.csv(biomarcadores_CSF, file = "G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", row.names = F)
 
 
 #using NTK for amyloid means some NA with abeta42. Is this the best course of action still?
 ```
 
 #Plasma values
-only ptau217 I guess? 
+plasma values are a mess - come back to later
 
 ```{r}
 biomarcadores_PLASMA <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Alfa_Cohort__Biomarkers_alfa_cohort_20241220142704(in).csv", 
@@ -116,7 +117,12 @@ biomarcadores_PLASMA <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers
          Result= as.numeric(gsub("\\.", "", Result)) / 1000)%>%
   filter(SampleType == "PLASMA")%>%
   mutate(Result = ifelse(is.na(Result)&!is.na(ResultRecalc), as.numeric(gsub("\\.", "", ResultRecalc)) / 1000, Result))%>%
-  dplyr::select(-ResultRecalc)
+  dplyr::select(-ResultRecalc) %>%
+  filter(Assay %in% c("a-Synuclein", "Abeta1-40", "Abeta1-42", "GAP43", "GFAP", "IL-6", "Neurogranin", "NFL", "pTau181", "pTau217", "sICAM1", "SNAP25", "sTREM2", "sVCAM1", "Synaptotagmin", "tTau", "YKL40"),
+         Visit %in% c("V1", "V2"))
+  pivot_wider(names_from = Assay, values_from = Result, names_prefix = "PLASMA_")
+
+
 ```
 
 
