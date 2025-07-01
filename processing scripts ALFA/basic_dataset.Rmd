@@ -623,7 +623,8 @@ master_nd_pmm<-master_nd_pmm%>%
 master_nd_pmm<-master_nd_pmm%>%
   mutate(hypertension = factor(hypertension),
          high_chol = factor(high_chol),
-         diabetes = factor(diabetes))
+         diabetes = factor(diabetes))%>%
+  dplyr::select(-AP_METDM, -AP_METdislip, -AP_CVhbp, -anti_dyslip, -anti_hta, -anti_diab)
 ```
 
 
