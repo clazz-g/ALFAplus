@@ -90,14 +90,24 @@ data_wmh_w<-data_wmh%>%
   filter(sex == 2)
 ```
 
+#sanity checks
+
+```{r}
+data_wmh%>%
+  filter(bilateral_region == "occipital")%>%
+  pull(volume_wmh)%>%
+  hist()
+```
+
+
 #Model 1 - PACC ~ WMH
 
 ```{r}
-mod_1<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education + A, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
-mod_2<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
-mod_3<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
-mod_4<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A, data = data_wmh_w[data_wmh_w$bilateral_region == "occipital",])
-mod_5<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
+mod_1<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education + A + TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_2<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
+mod_3<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
+mod_4<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "occipital",])
+mod_5<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
 
 summary(trafo_lm(mod_1))
 summary(trafo_lm(mod_2))
@@ -106,5 +116,49 @@ summary(trafo_lm(mod_4))
 summary(trafo_lm(mod_5))
 ```
 
-no effect of WMH on PACC change between v1 and v2
+no effect of WMH on PACC change between v1 and v2. No trend of A status
 
+# Model 2: PACC ~ childbirth 
+
+```{r}
+mod_1<-lm(PACC_diff ~ kids_total + time_diff + APOE_binary + education + A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_2<-lm(PACC_diff ~ kids_dicho + time_diff + APOE_binary + education + A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_3<-lm(PACC_diff ~ parous_group + time_diff + APOE_binary + education + A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+
+summary(trafo_lm(mod_1))
+summary(trafo_lm(mod_2))
+summary(trafo_lm(mod_3))
+
+```
+
+no effect of WMH on PACC change between v1 and v2. No trend of A status
+
+# Model 3: PACC ~ childbirth* wmh
+
+```{r}
+
+
+mod_1<-lm(PACC_diff ~ kids_total*volume_wmh + time_diff + APOE_binary + education +TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_2<-lm(PACC_diff ~ kids_total*volume_wmh + time_diff + APOE_binary + education+TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
+mod_3<-lm(PACC_diff ~ kids_total*volume_wmh + time_diff + APOE_binary + education+TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
+mod_4<-lm(PACC_diff ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "occipital",])
+mod_5<-lm(PACC_diff ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
+
+
+summary(trafo_lm(mod_1))
+summary(trafo_lm(mod_2))
+summary(trafo_lm(mod_3))
+summary(trafo_lm(mod_4))
+summary(trafo_lm(mod_5))
+
+diagnostics(trafo_lm(mod_5))
+plot(trafo_lm(mod_5))
+
+data_wmh_w%>%
+  filter(bilateral_region == "basal ganglia")%>%
+  mutate(tier = ntile(volume_wmh, 3))%>%
+  ggplot(aes(x= kids_total, y= PACC_diff, colour = tier))+
+  geom_jitter()+
+  facet_wrap(~tier)+
+  geom_smooth(method = "lm")
+```
