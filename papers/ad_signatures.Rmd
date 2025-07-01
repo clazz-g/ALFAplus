@@ -1,0 +1,646 @@
+---
+title: "Parity and AD specific neurodegeneration"
+author: "Clazz"
+toc: true
+number-sections: true
+format: 
+  html:
+    code-fold: true
+  docx: default 
+editor: visual
+bibliography: references.bib
+csl: nature-cell-biology.csl
+---
+
+```{r}
+library(readxl)
+#install.packages("ggplot2")
+library(ggplot2)
+#install.packages("psych")
+library(psych)
+#install.packages("tidyverse")
+library(tidyverse)
+#install.packages("ggpubr")
+library(ggpubr)
+#install.packages("broom")
+library(broom)
+#install.packages("ggeffects")
+library(ggeffects)
+#install.packages("MASS")
+library(MASS)
+#install.packages("PResiduals")
+library(PResiduals)
+#install.packages("mice")
+library(mice)
+#install.packages("VIM")
+library(VIM)
+#install.packages("car")
+library(car)
+#install.packages("sjPlot")
+library(sjPlot)
+#install.packages("caret")
+library(caret)
+#install.packages("bestNormalize")
+library(bestNormalize)
+#install.packages("ggrain")
+library(ggrain)
+#install.packages("emmeans")
+library(emmeans)
+#install.packages("skimr")
+library(skimr)
+library(glmnet)
+#install.packages("bullseye")
+library(bullseye)
+#install.packages("lavaan")
+library(lavaan)
+#install.packages("brms")
+library(brms)
+#install.packages("mgcv")
+library(mgcv)
+library(splines)
+#install.packages("fitdistrplus")
+library(fitdistrplus)
+#install.packages("patchwork")
+library(patchwork)
+#install.packages("lme4")
+library(lme4)
+#install.packages("lmerTest")
+library(lmerTest)
+```
+
+```{r, include=F}
+# The structured abstract must include the information described below, and authors are asked to reference recent journal issues for examples.
+# 
+# Background and Objectives: The background should describe what is known on the topic and what gaps the study aims to address. Explicitly state the main research question and the primary objective and key secondary objectives, or the a priori hypothesis that is being tested.
+# 
+# Methods: Describe the key elements of the study design (randomized clinical trial, cohort study, etc.). Explain the setting where the patients or participants were recruited, how they were identified, and what the key inclusion and exclusion criteria were as well as the duration of follow-up, if relevant. The number of participants in the study should go in the Results section and not here. Describe any interventions or exposures considered. Was matching done and if so, how? Describe and define the primary outcome measures and explain how they were ascertained and collected. How were the data analyzed? For manuscripts reporting systematic reviews and meta-analyses, provide information on the databases and years searched. Include the inclusion and exclusion criteria for the systematic search and how data were abstracted.
+# 
+# Results: Describe how many participants were enrolled in the study and provide their key summary clinical and demographic characteristics. The focus of this section must be on the primary outcome. Provide absolute numbers, estimates of effect size/association, and corresponding measures of uncertainty (e.g., 95% CIs). Do not report p-values by themselves. Any secondary outcomes or the results of post hoc analyses must be identified as such. Studies evaluating diagnostic or prognostic tests should provide information on sensitivity, specificity, likelihood ratios, ROCs, and other predictive values. For meta-analysis, provide information on how many studies were included and a rating of the quality of the available evidence. State which outcomes were studied and include measures of effect size/association, and corresponding measures of uncertainty (e.g. 95% CIs).
+# 
+# Discussion: Summarize the main finding of the primary outcome and focus only on those conclusions that are supported by the data presented in the study. Include a sentence highlighting the clinical, research, policy, or public health implications of the study. Do not make inferences that are not supported by the data in the study.
+```
+
+#Abstract
+
+#Introduction
+
+# Methods
+
+## Participants
+
+The sample included 201 women from the ALFA+ project (Clinicaltrials.gov Identifier:NCT01835717) , a longitudinal cohort composed of 440 cognitively unimpaired individuals with heighteined AD risk[@molinuevo2016]. All participants had a Clinical Dementia Rating (CDR) scale = 0, and no history of cardiovascular disease. Women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample.
+
+## MRI acquisition
+
+MRI scans were acquired on a 3.0 T scanner (GE Discovery MR750 W 3 T) using the same protocol for all participants, which included one T1- and three T2- weighted sequences. The 3D-T1w sequence was designed with an isotropic voxel size of1mm3 and a matrix size of256x256x160 (TR/TE/TI = 8.0/3.7/450 ms, NSA = 1, flip angle = 8°). Three 3D-T2w sequences, with a voxel size of1 mm× 1 mm× 3 mm, were also used: fluid attenuation inversion recovery (FLAIR: TR/TE/ TI = 11,000/90/2600 ms, flip angle = 160°), fast spin echo (FSE: TR/TE = 5000/85 ms, flip angle = 110°) and, gradient echo (GRE: TR/TE = 1300/23 ms, flip angle = 15°). All scans were visually assessed to verify their quality and to detect incidental findings by a trained neuroradiologist and have been reported elsewhere (Brugulat-Serrat et al. 2017). In this study, ten participants were excluded due to the presence of a meningioma, as well as 37 participants due to susceptibility, motion artefacts or segmentation problems, resulting in a total of 561 images available for subsequent analysis. The medial temporal lobe atrophy was assessed by Medial Temporal Atrophy scale (Scheltens et al. 1992).
+
+## Hippocampal segmentation
+
+## Lumbar puncture
+
+CSF was collected by lumbar puncture between 9 and 12 a.m. in polypropylene tubes. Samples were processed within 1 hour and centrifuged at 4°C for 10 minutes at 2000 g, stored in polypropylene tubes and frozen at -80°C. Core AD biomarkers (namely Ab42, Ab40, total Tau, and p tau) and other molecules of interest (such as YKL-40, neurogranin and Ab oligomers) were analyzed and determined in Prof. Kaj Blennow’s laboratory (Institute ofNeuroscience and Physiology, Department of Psychiatry and Neurochemistry, The Sahlgrenska Academy at the University of Gothenburg, Sweden).
+
+## Cognitive measures
+
+Cognitive composite z-scores were computed in four different cognitive domains: attention (WAIS-IV: Digit Span, WMS-IV: Symbol Span and TMT-A), episodic memory (Free and Cued Selective Reminding Test, Memory Binding Test, WMS-IV Logical Memory and NIH-toolbox Picture Sequence Memory test), executive functions (TMT-B, Five digits test, WAIS-IV Coding, WAIS-IV Matrix reasoning and NIH-toolbox Flanker Inhibition test), language (Semantic fluency, Boston Naming), and visual processing (WAIS-IV Visual Puzzles and RBANS Judgment of line orientation). In addition, the Preclinical Alzheimer Cognitive Composite (PACC) was used. This cognitive assessment tool was developed to detect subtle cognitive changes in individuals who may be in the pre-clinical stages of AD [@Donohue2014], and includes elements of the Memory Binding Test, the Coding subtest of WAIS-IV, and semantic fluency. Cognitive change for each composite was calculated by subtracting the follow-up visit score from the baseline cognitive score. Negative values indicate worse performance in the follow-up visit.
+
+## Statistical analyses
+
+### Regression models
+
+Statistical analyses were carried using R v4.4.1. Group differences were obtained using the Kruskall-Wallis test of significance for continuous variables and a Chi Square test for categorical variables. All linear regressions were adjusted for age, APOE-4 status, and sex when both men and women were included. Linear regressions with cognitive scores as an outcome variable were also adjusted for the time difference between each visit and years of education. Linear regressions with MRI measures as outcomes were adjusted for the time difference between MRI sessions and Total Intracranial Volume (TIV). Regression models looking at hippocampal volume were performed as follow: the outcome variable used was first whole hippocampal volume, then separate regions of the hippocampus as follows: head, body, tail fissure. If a significant effect was found in the hippocampal head or body, further analyses were carried out on the relevant subfields. When carrying separate regression for each area of interest, p-values were adjusted for False Discovery Rate (FDR) using the Bonferroni method.
+
+#Results
+
+```{r}
+data<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)
+
+date_mri_v1<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_scandates_ALFA_PLUS_V1_20231120_20250210_135308.xlsx")%>%
+  dplyr::select(subject_label, scandate)%>%
+  mutate(subject_label = as.numeric(subject_label))%>%
+  rename(subject = subject_label,
+         scandate_v1 = scandate)
+
+date_mri_v2<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_scandates_ALFA_PLUS_V2_20230518_20250210_135351.xlsx")%>%
+  dplyr::select(subject_label, scandate)%>%
+  mutate(subject_label = as.numeric(subject_label))%>%
+  rename(subject = subject_label,
+         scandate_v2 = scandate)
+
+date_mri_long<-full_join(date_mri_v1, date_mri_v2)%>%
+  mutate(scandate_v1 = as.Date(scandate_v1, format = "%Y-%m-%d"),
+         scandate_v2 = as.Date(scandate_v2, format = "%Y-%m-%d"),
+         diff_mri = as.numeric(difftime(scandate_v2, scandate_v1, units = c("days")))/365.25)
+
+#adding MRI sessions dates to the dataset
+data<-left_join(data, date_mri_long)%>%
+  mutate(DOB = as.Date (DOB, format = "%Y-%m-%d"),
+         age_v1_mri = as.numeric(difftime(scandate_v1, DOB, units= c("days")))/365.25,
+         age_v2_mri = as.numeric(difftime(scandate_v2, DOB, units= c("days")))/365.25)
+
+biomarkers<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  filter(Visit == "V1")%>%
+  dplyr::select(-Visit)
+
+data<-left_join(data, biomarkers)
+
+
+```
+
+## Hippocampal volume and parity on the AD continuum
+
+###cross sectional
+
+```{r}
+
+# summing some groups together: "subject"\
+# "vol_CA1-body" CA1\
+# "vol_CA1-head" CA1\
+# "vol_CA3-body" CA3\
+# "vol_CA3-head" CA3\
+# "vol_CA4-body" CA4 "vol_CA4-head" CA4 "vol_GC-ML-DG-body" GC_ML_DG
+# "vol_GC-ML-DG-head" GC_ML_DG "vol_HATA" HATA "vol_Hippocampal_tail" Tail
+# "vol_Whole_hippocampal_body" Body "vol_Whole_hippocampal_head" Head
+# "vol_Whole_hippocampus" whole "vol_fimbria" fimbria
+# "vol_hippocampal-fissure" fissure "vol_molecular_layer_HP-body"
+# molecular_layer "vol_molecular_layer_HP-head" molecular_layer
+# "vol_parasubiculum" parasubiculum "vol_presubiculum-body" presubiculum
+# "vol_presubiculum-head" presubiculum "vol_subiculum-body" subiculum
+# "vol_subiculum-head" subiculum
+
+hippo<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V1_20231120_20250208_111212.xlsx")%>%
+  group_by(subject, region) %>%
+  summarize(bilateral_volume = sum(value), .groups = "drop")%>%
+ mutate(region = case_when(region == "CA1-body"| region == "CA1-head" ~ "CA1",
+            region == "CA3-body"| region == "CA3-head" ~ "CA3",
+            region == "CA4-body"| region == "CA4-head" ~ "CA4",
+            region == "GC-ML-DG-body" | region == "GC-ML-DG-head" ~ "GC_ML_DG",
+            region == "molecular_layer_HP-body" | region == "molecular_layer_HP-head"~ "molecular_layer_HP",
+            region == "presubiculum-body" | region == "presubiculum-head" ~ "presubiculum",
+            region == "subiculum-body" | region == "subiculum-head" ~ "subiculum",
+            .default = region))%>%
+  group_by(region, subject)%>%
+  summarize( bilateral_volume = sum(bilateral_volume), .groups = "drop")%>%
+  pivot_wider(names_from = region, values_from = bilateral_volume, names_prefix = "vol_")%>%
+  mutate(subject = as.numeric(subject),
+         Visit = "V1")
+
+hippo_data<-left_join(data, hippo)
+
+
+#fucntion to run 
+run_volume_regressions <- function(data, predictors) {
+  # Find all columns that start with "vol_"
+  outcome_vars <- grep("^vol_", names(data), value = TRUE)
+
+  # Create a formula string from predictors
+  predictor_formula <- paste(predictors, collapse = " + ")
+
+  # Run regressions and store summary results
+  summaries <- lapply(outcome_vars, function(outcome) {
+    formula <- as.formula(paste0("`", outcome, "` ~ ", predictor_formula))
+    model <- lm(formula, data = data)
+    summary(model)
+  })
+
+  # Name each summary by its outcome variable
+  names(summaries) <- outcome_vars
+
+  return(summaries)
+}
+
+#No interaction first
+
+hippo_data%>%
+  filter(sex == 2& Visit == "V1")%>%
+   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_regressions( .,c( "kids_total", "age_v1_mri", "APOE_binary", "TIV"))
+
+#fimbria,  has sig main effect but I doubt survive multiple comparison
+
+p_values <- c(0.22051  ,  0.798 ,   0.470134  ,  0.3700  ,  0.09179 ,0.87412    ,0.012556 ,0.7079   , 0.875   , 0.459  ,  0.42763    )
+#None survive
+
+fdr_adjusted_p_values <- p.adjust(p_values)
+fdr_adjusted_p_values
+
+#Interaction
+
+hippo_data%>%
+  filter(sex == 2 & Visit == "V1")%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_regressions( .,c( "kids_total*A", "age_v1_mri", "APOE_binary", "TIV"))
+
+p_values <- c(0.6935  ,  0.165  ,  0.0280, 0.052237 ,0.67701   , 0.09818, 0.842061   , 0.8220  ,  0.00656 ,0.0181 ,0.03944 )
+
+fdr_adjusted_p_values <- p.adjust(p_values)
+fdr_adjusted_p_values
+
+#CA4, parasubiculum, presubiculum and subiculum sig but none survive multiple comparison! except trend for parasubiculum
+```
+
+First, linear regressions were used to examine the influence of parity on hippocampal volume. No significant result were found for the whole hippocampal volume
+
+###Longitudinal
+
+```{r}
+hippo2<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V2_20230518_20250208_112459.xlsx")%>%
+  group_by(subject, region) %>%
+  summarize(bilateral_volume = sum(value), .groups = "drop")%>%
+  mutate(region = case_when(region == "CA1-body"| region == "CA1-head" ~ "CA1",
+            region == "CA3-body"| region == "CA3-head" ~ "CA3",
+            region == "CA4-body"| region == "CA4-head" ~ "CA4",
+            region == "GC-ML-DG-body" | region == "GC-ML-DG-head" ~ "GC_ML_DG",
+            region == "molecular_layer_HP-body" | region == "molecular_layer_HP-head"~ "molecular_layer_HP",
+            region == "presubiculum-body" | region == "presubiculum-head" ~ "presubiculum",
+            region == "subiculum-body" | region == "subiculum-head" ~ "subiculum",
+            .default = region))%>%
+  group_by(region, subject)%>%
+  summarize( bilateral_volume = sum(bilateral_volume), .groups = "drop")%>%
+  pivot_wider(names_from = region, values_from = bilateral_volume, names_prefix = "vol_")%>%
+  mutate(subject = as.numeric(subject),
+         Visit = "V2")
+
+hippo_data2<-left_join(data, hippo2)
+  
+
+hippo_data_long<-bind_rows(hippo_data, hippo_data2)%>%
+  mutate(Visit = factor(Visit))%>%
+  mutate(age_mri = case_when(
+    Visit == "V1" ~ age_v1_mri,
+    Visit == "V2" ~ age_v2_mri
+  ))%>%
+  dplyr::select(-age_v1_mri, -age_v2_mri)%>%
+  drop_na(scandate_v2)
+
+
+
+
+#fucntion to run 
+run_volume_lmer_regressions <- function(data, predictors) {
+  # Find all columns that start with "vol_"
+  outcome_vars <- grep("^vol_", names(data), value = TRUE)
+
+  # Create a formula string from predictors
+  predictor_formula <- paste(predictors, collapse = " + ")
+
+  # Run regressions and store summary results
+  summaries <- lapply(outcome_vars, function(outcome) {
+    formula <- as.formula(paste0("`", outcome, "` ~ ", predictor_formula))
+    model <- lmer(formula, data = data)
+    summary(model)
+  })
+
+  # Name each summary by its outcome variable
+  names(summaries) <- outcome_vars
+
+  return(summaries)
+}
+
+
+hippo_data_long%>%
+  filter(sex == 2 )%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_lmer_regressions( .,c( "kids_total*A", "age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+
+p_values <- c(0.6607 ,   0.14130   , 0.0158, 0.0326, 0.718  ,  0.0965, 0.8346  ,0.582  ,  0.00403, 0.0139 ,0.0253  )
+
+fdr_adjusted_p_values <- p.adjust(p_values)
+fdr_adjusted_p_values
+
+#CA4, GC_ML_DG   parasubiculum presubiculum and subiculum significant. parasubiculum survives mutiple comparison
+
+hippo_data_long%>%
+  filter(sex == 2 & Visit == "V2")%>%
+  ggplot(aes(x=kids_total, y= vol_parasubiculum))+
+  geom_jitter()+
+  geom_smooth(method = "lm")+
+  facet_wrap(~A)
+```
+
+Longitudinal results show significant interaction effect in the CA4, dGC_ML_DG, parasubiculum, presubiculum and subiculu, with only the parasubiculum surviving multiple comparison.
+
+#Linear models - cross sectional
+
+```{r}
+#first check Anna's findings
+data%>%
+  filter(sex==2)%>%
+  dplyr::select(age_v1)%>%
+  hist()
+
+
+data%>%
+  filter(sex==1)%>%
+  dplyr::select(diff_PACC)%>%
+  hist()
+
+mod<-lm(Z_PACC_v1 ~ kids_total*A + age_v1 + education + APOE_binary +age_menopause_pmm, data = data[data$sex ==2,])
+summary(mod)
+
+data_lmer<-data%>%
+  drop_na(Z_PACC_v2)%>%
+  pivot_longer(cols = starts_with("Z_PACC"), names_to = "Visit", values_to = "all_Z_PACC")
+
+
+fit_pacc<-lmer(all_Z_PACC ~ kids_total*A + Visit + age_v1  + education + APOE_binary + age_menopause_pmm + (1| subject), data = data_lmer[data_lmer$sex == 2,])
+
+summary(fit_pacc)
+
+
+#dbatable significance
+anna_data<-read_excel("C:/Users/U253662/Downloads/ALFA+_dataset_pregnancy_14052025onlywomen.xlsx")%>%
+  mutate(A = ifelse(ab42_40_ratio>=0.071, 0, 1),
+         ID = as.numeric(ID))%>%
+  rename(subject = ID)
+
+
+data%>%
+  filter(sex == 2)%>%
+  drop_na(A)%>%
+  ggplot(aes(x = kids_total, y= diff_PACC, colour = A))+
+  geom_jitter()+
+  facet_wrap(~A)+
+  geom_smooth(method = "lm")
+
+data_lmer%>%
+  drop_na(A)%>%
+  ggplot(aes(x= Visit, y = all_Z_PACC, colour = A, group = subject))+
+  geom_point()+
+  geom_boxplot(data = subset(data_lmer, !is.na(A)), aes(x=Visit,y= all_Z_PACC, colour = A ), inherit.aes = F, na.rm = T)+
+  geom_line(alpha =0.5)+
+  facet_wrap(~sex)
+```
+
+##Jack's signature
+
+```{r}
+jack<-read_excel("G:/My Drive/Data/ALFA+/Jack signature ALFA+/bx_signature_jack_ALFA_PLUS_V1_20231120_20250527_142751.xlsx")%>%
+  filter(weighted == "TRUE")%>%
+  dplyr::select(-ID, -signature, -weighted)%>%
+  pivot_wider(names_from = measurement, values_from = value, names_prefix = "jack_")%>%
+  mutate(subject = as.numeric(subject),
+         Visit = "V1")
+
+jack2<-read_excel("G:/My Drive/Data/ALFA+/Jack signature ALFA+/bx_signature_jack_ALFA_PLUS_V2_20230518_20250210_114442.xlsx")%>%
+  filter(weighted == "TRUE")%>%
+  dplyr::select(-ID, -signature, -weighted)%>%
+  pivot_wider(names_from = measurement, values_from = value, names_prefix = "jack_")%>%
+  mutate(subject = as.numeric(subject),
+         Visit = "V2")
+
+jack_data<-left_join(data, jack)
+jack_data2<-left_join(data, jack2)
+
+```
+
+###Cross sectional
+
+```{r}
+mod1<-lm(jack_ThickAvg ~ kids_total*A + age_v1_mri + APOE_binary +TIV,data = jack_data[jack_data$sex == 2,])
+mod2<-lm(jack_ThickAvg ~ kids_dicho*A + age_v1_mri + APOE_binary +TIV,data = jack_data[jack_data$sex == 2,])
+mod3<-lm(jack_ThickAvg ~ parous_group*A + age_v1_mri + APOE_binary +TIV,data = jack_data[jack_data$sex == 2,])
+
+summary(mod1)
+summary(mod2)
+summary(mod3)
+
+
+mod1<-lm(jack_GrayVol ~ kids_total *A+ age_v1_mri + APOE_binary +TIV,data= jack_data[jack_data$sex == 2,])
+mod2<-lm(jack_GrayVol ~ kids_dicho *A+ age_v1_mri + APOE_binary +TIV,data = jack_data[jack_data$sex == 2,])
+mod3<-lm(jack_GrayVol ~ parous_group *A+ age_v1_mri + APOE_binary +TIV,data = jack_data[jack_data$sex == 2,])
+
+
+summary(mod1)
+summary(mod2)
+summary(mod3)
+
+plot(mod1)
+```
+
+###Longitudinal
+
+```{r}
+data_test<-right_join(jack, jack2, suffix = c("V1", "V2"), by = join_by(subject))
+
+plot(data_test$jack_GrayVolV1, data_test$jack_GrayVolV2)
+plot(data_test$jack_ThickAvgV1, data_test$jack_ThickAvgV2)
+
+
+jack_data_long<-bind_rows(jack_data, jack_data2)%>%
+  mutate(Visit = factor(Visit))%>%
+  mutate(age_mri = case_when(
+    Visit == "V1" ~ age_v1_mri,
+    Visit == "V2" ~ age_v2_mri
+  ))%>%
+  dplyr::select(-age_v1_mri, -age_v2_mri)%>%
+  drop_na(scandate_v2)
+
+fit <- lmer(jack_ThickAvg ~ kids_total*A +Visit +age_mri + APOE_binary + TIV + (1 | subject) , jack_data_long[jack_data_long$sex == 2,]) 
+summary(fit)
+fit <- lmer(jack_GrayVol ~ kids_total*A +Visit +age_mri + APOE_binary + TIV + (1 | subject) , jack_data_long[jack_data_long$sex == 2,]) 
+summary(fit)
+
+plot_model(fit, type = "int")
+```
+
+##Cognitive results
+
+```{r}
+install.packages("MuMIn")
+library(MuMIn)
+
+cognition<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+  dplyr::select(IdParticipante, Visit, Z_PACC, Z_FCSRTI_RT, Z_aWMS_DR_RS, Z_Wclave_totalscr, Z_FS_totalcnswr, FechaResultado)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = as.numeric(subject))
+
+data_cog_long<- left_join(data, cognition)%>%
+  mutate(age_cog = as.numeric(difftime(FechaResultado, DOB, units= c("days")))/365.25)%>%
+  group_by(subject) %>%
+  filter(n() == 3) %>%
+  ungroup()
+
+# when looking at v3 there is sig interaction of Ptau181 and kids_total, but only when looking at jsut compelte cases of visit 1, 2 and 3, 108 subjects and having age_menopause
+fit_cog<-lmer(Z_PACC ~ kids_total*pTau181 +age_cog + APOE_binary + education +(1 | subject) + age_menopause_pmm, data_cog_long[data_cog_long$sex == 2,])
+summary(fit_cog)
+r.squaredGLMM(fit_cog)
+
+plot_model(fit_cog, type = "int")
+
+#test diference; results have changed because david's dataset has more datapoints. Testing stratified regression does nto improve adjusted R squared.
+
+test_dat%>%
+  filter(sex==2)%>%
+  drop_na(A)%>%
+  ggplot(aes(x=kids_total, y=diff_PACC))+
+  geom_jitter()+
+  geom_smooth()
+
+```
+
+```{r}
+mod_nfl<-lm(NFL ~ kids_total*A + age_v1 + APOE_binary, data = data[data$sex==2,])
+summary(mod_nfl)
+
+data%>%
+  filter(sex==2)%>%
+ggplot(aes(x=kids_total, y= NFL))+
+  geom_jitter()+
+  facet_wrap(~ A)
+```
+
+#create table
+
+```{r}
+mod_CA1<-lm(vol_CA1 ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,])
+mod_CA3<-lm(vol_CA3 ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,])
+mod_CA4<-lm(vol_CA4 ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,])
+mod_GC_ML_DG<-lm(vol_GC_ML_DG ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,])
+mod_HATA<-lm(vol_HATA ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,])
+mod_Tail<-lm(vol_Hippocampal_tail ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,])
+mod_fimbria<-lm(vol_fimbria ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,])
+mod_fissure<-lm(`vol_hippocampal-fissure` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,])
+mod_molecular_layer<-lm(vol_molecular_layer_HP ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,])
+mod_parasubiculum<-lm(vol_parasubiculum ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,])
+mod_presubiculum<-lm(vol_presubiculum~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,])
+mod_subiculum<-lm(vol_subiculum ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,])
+
+
+
+library(modelsummary)
+
+models <- list(
+ "CA1" = lm(vol_CA1 ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"CA3" = lm(vol_CA3 ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"CA4" = lm(vol_CA4 ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"GC-ML-DG" = lm(vol_GC_ML_DG ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"HATA" = lm(vol_HATA ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Tail" = lm(vol_Hippocampal_tail ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Fimbria" = lm(vol_fimbria ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Fissure" = lm(`vol_hippocampal-fissure` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Molecular layer" = lm(vol_molecular_layer_HP ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Parasubiculum" = lm(vol_parasubiculum ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Presubiculum" = lm(vol_presubiculum~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Subiculum" = lm(vol_subiculum ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]))
+
+
+modelsummary(models, output = "html", estimate = "{estimate}", coef_omit = "Intercept", statistic = "s.e. ={std.error} ({p.value}{stars})", coef_rename = c("kids_total" = "Number of births", "age_v1" = "Age", "A1" = "Amyloid positivity (1)", "APOE_binary" = "APOE-E4 carriership (1)"), gof_map = c("nobs", "r.squared"))|>
+  save_tt("table.html")
+
+
+
+```
+
+table with head/body separation body:`vol_CA1-body`,`vol_CA3-body`, `vol_CA4-body`, `vol_presubiculum-body`, `vol_subiculum-body`, `vol_GC-ML-DG-body`, `vol_molecular_layer_HP-body`, vol_fimbria head:`vol_CA1-head`,`vol_CA3-head`, `vol_CA4-head`, `vol_presubiculum-head`, `vol_subiculum-head`, `vol_GC-ML-DG-head`, `vol_molecular_layer_HP-head`, vol_parasubiculum, vol_HATA
+
+```{r}
+
+library(modelsummary)
+
+models_head <- list(
+ "CA1 head" = lm(`vol_CA1-head` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"CA3 head" = lm(`vol_CA3-head` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"CA4 head" = lm(`vol_CA4-head` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Presubiculum head" = lm(`vol_presubiculum-head` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Subiculum head" = lm(`vol_subiculum-head` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"GC-ML-DG head" = lm(`vol_GC-ML-DG-head` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Molecular layer head" = lm(`vol_molecular_layer_HP-head` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"HATA" = lm(vol_HATA ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Parasubiculum" = lm(vol_parasubiculum ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]))
+
+
+
+modelsummary(models_head, output = "html", estimate = "{estimate}", coef_omit = "Intercept", statistic = "s.e. ={std.error} ({p.value}{stars})", coef_rename = c("kids_total" = "Number of births", "age_v1" = "Age", "A1" = "Amyloid positivity (1)", "APOE_binary" = "APOE-E4 carriership (1)"), gof_map = c("nobs", "r.squared"))|>
+  save_tt("table_head.html")
+
+models_body <- list(
+ "CA1 body" = lm(`vol_CA1-body` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"CA3 body" = lm(`vol_CA3-body` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"CA4 body" = lm(`vol_CA4-body` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Presubiculum body" = lm(`vol_presubiculum-body` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Subiculum body" = lm(`vol_subiculum-body` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"GC-ML-DG body" = lm(`vol_GC-ML-DG-body` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Molecular layer body" = lm(`vol_molecular_layer_HP-body` ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]),
+"Fimbria" = lm(vol_fimbria ~ kids_total*A +age_v1 + APOE_binary + TIV, hippo_data[hippo_data$sex == 2,]))
+
+
+
+
+
+
+
+modelsummary(models_body, output = "html", estimate = "{estimate}", coef_omit = "Intercept", statistic = "s.e. ={std.error} ({p.value}{stars})", coef_rename = c("kids_total" = "Number of births", "age_v1" = "Age", "A1" = "Amyloid positivity (1)", "APOE_binary" = "APOE-E4 carriership (1)"), gof_map = c("nobs", "r.squared"))|>
+  save_tt("table_body.html")
+
+```
+
+# Graphs!
+
+```{r}
+#head
+p_ca1_head<-hippo_data%>%
+  filter(sex == 2)%>%
+  drop_na(A)%>%
+  dplyr::select(subject, sex, kids_total, age_v1, APOE_binary, TIV, A, `vol_CA1-head`)%>%
+  ggplot(aes(x=kids_total, y= `vol_CA1-head`))+
+  geom_jitter(size=2)+
+  geom_smooth(method = "lm", size=1.1)
+
+p_HATA<-hippo_data%>%
+  filter(sex == 2)%>%
+  drop_na(A)%>%
+  dplyr::select(subject, sex, kids_total, age_v1, APOE_binary, TIV, A, `vol_HATA`)%>%
+  ggplot(aes(x=kids_total, y= `vol_HATA`))+
+  geom_jitter(size=2)+
+  geom_smooth(method = "lm", size=1.1)
+
+p_GC_ML_DG_body<-hippo_data%>%
+  filter(sex == 2)%>%
+  drop_na(A)%>%
+  dplyr::select(subject, sex, kids_total, age_v1, APOE_binary, TIV, A, `vol_GC-ML-DG-head`)%>%
+  ggplot(aes(x=kids_total, y= `vol_GC-ML-DG-head`))+
+  geom_jitter(size=2)+
+  geom_smooth(method = "lm", size=1.1)
+
+
+
+p_ca1_head+p_HATA+p_GC_ML_DG_body
+
+#body
+p_ca4_body<-hippo_data%>%
+  filter(sex == 2)%>%
+  drop_na(A)%>%
+  dplyr::select(subject, sex, kids_total, age_v1, APOE_binary, TIV, A, `vol_CA4-body`)%>%
+  ggplot(aes(x=kids_total, y= `vol_CA4-body`, colour = A))+
+  geom_jitter(size=2)+
+  geom_smooth(method = "lm", size=1.1)
+
+p_GC_ML_DG_body<-hippo_data%>%
+  filter(sex == 2)%>%
+  drop_na(A)%>%
+  dplyr::select(subject, sex, kids_total, age_v1, APOE_binary, TIV, A, `vol_GC-ML-DG-body`)%>%
+  ggplot(aes(x=kids_total, y= `vol_GC-ML-DG-body`, colour = A))+
+  geom_jitter(size=2)+
+  geom_smooth(method = "lm", size=1.1)
+
+p_subiculum_body<-hippo_data%>%
+  filter(sex == 2)%>%
+  drop_na(A)%>%
+  dplyr::select(subject, sex, kids_total, age_v1, APOE_binary, TIV, A, `vol_subiculum-body`)%>%
+  ggplot(aes(x=kids_total, y= `vol_subiculum-body`, colour = A))+
+  geom_jitter(size=2)+
+  geom_smooth(method = "lm", size=1.1)
+
+p_presubiculum_body<-hippo_data%>%
+  filter(sex == 2)%>%
+  drop_na(A)%>%
+  dplyr::select(subject, sex, kids_total, age_v1, APOE_binary, TIV, A, `vol_presubiculum-body`)%>%
+  ggplot(aes(x=kids_total, y= `vol_presubiculum-body`, colour = A))+
+  geom_jitter(size=2)+
+  geom_smooth(method = "lm", size=1.1)
+
+(p_ca4_body+p_GC_ML_DG_body)/(p_subiculum_body+p_presubiculum_body)
+```
