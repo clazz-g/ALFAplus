@@ -1,0 +1,119 @@
+---
+title: "WMH_v1_new"
+output: html_document
+date: "2024-10-08"
+---
+
+
+```{r}
+library(readxl)
+#install.packages("ggplot2")
+library(ggplot2)
+#install.packages("psych")
+library(psych)
+#install.packages("tidyverse")
+library(tidyverse)
+#install.packages("ggpubr")
+library(ggpubr)
+#install.packages("broom")
+library(broom)
+#install.packages("ggeffects")
+library(ggeffects)
+#install.packages("MASS")
+library(MASS)
+#install.packages("PResiduals")
+library(PResiduals)
+#install.packages("mice")
+library(mice)
+#install.packages("VIM")
+library(VIM)
+#install.packages("car")
+library(car)
+#install.packages("sjPlot")
+library(sjPlot)
+#install.packages("caret")
+library(caret)
+#install.packages("bestNormalize")
+library(bestNormalize)
+#install.packages("ggrain")
+library(ggrain)
+#install.packages("emmeans")
+library(emmeans)
+#install.packages("skimr")
+library(skimr)
+library(glmnet)
+#install.packages("bullseye")
+library(bullseye)
+#install.packages("lavaan")
+library(lavaan)
+#install.packages("brms")
+library(brms)
+#install.packages("mgcv")
+library(mgcv)
+library(splines)
+#install.packages("fitdistrplus")
+library(fitdistrplus)
+#install.packages("patchwork")
+library(patchwork)
+```
+
+This code processes ALFA+ cohort data into a main dataset. variable specs can be found in the READ_ME file
+
+
+#WMH files by region for v1 and v2
+```{r}
+wmh_V1<- read_excel("G:/My Drive/Data/ALFA+/WMH/bx_bamos_stats_ALFA_PLUS_V1_20231120_20231223_015120.xlsx")%>%
+  dplyr::select(subject, volume, region, depth)%>%
+  filter(region!= "background", 
+         region!= "infratentorial")%>%
+  mutate(region = factor(region))%>%
+  rename(volume_wmh = volume)%>%
+  mutate(Visit ="V1")
+
+
+wmh_V2<- read_excel("G:/My Drive/Data/ALFA+/WMH/bx_bamos_stats_ALFA_PLUS_V2_20230518_20231025_084845.xlsx")%>%
+  dplyr::select(subject, volume, region, depth)%>%
+  filter(region!= "background", 
+         region!= "infratentorial")%>%
+  mutate(region = factor(region))%>%
+  rename(volume_wmh = volume)%>%
+  mutate(Visit ="V2")
+
+# "background"      "basal ganglia"   "infratentorial"  "left frontal"    "left occipital"  "left parietal"  "left temporal"   "right frontal"   "right occipital" "right parietal"  "right temporal"
+wmh_data<-bind_rows(wmh_V1, wmh_V2)%>%
+  mutate(bilateral_region= case_when(region == "left frontal" | region == "right frontal" ~ "frontal",
+                               region == "left occipital" | region == "right occipital" ~ "occipital",
+                               region == "left parietal" | region == "right parietal" ~ "parietal",
+                               region == "left temporal" | region == "right temporal" ~ "temporal",
+                               region == "basal ganglia" ~ "basal ganglia"))%>%
+  dplyr::select(-region)%>%
+  group_by(subject, bilateral_region, Visit)%>%
+  summarise(volume_wmh = sum(volume_wmh), .groups = "drop")
+
+
+write.csv(wmh_data, file = "G:/My Drive/Data/ALFA+/WMH/wmh_processed_regional_lobes.csv", row.names = F)
+  
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
