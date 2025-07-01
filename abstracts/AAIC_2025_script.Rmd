@@ -78,7 +78,7 @@ cognition<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete)
 biomarkers<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
     delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
   filter(Visit == "V1")%>%
-  dplyr::select(subject, A)
+  dplyr::select(subject, A, AT)
 
 data_wmh<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
     delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
@@ -154,6 +154,12 @@ summary(trafo_lm(mod_5))
 diagnostics(trafo_lm(mod_5))
 plot(trafo_lm(mod_5))
 
+p_values <- c(0.14037 ,  0.57345  , 0.54029  , 0.8180 ,  0.01995 )
+#None survive, basal ganglia becomes trend
+
+fdr_adjusted_p_values <- p.adjust(p_values)
+fdr_adjusted_p_values
+
 data_wmh_w%>%
   filter(bilateral_region == "basal ganglia")%>%
   mutate(tier = ntile(volume_wmh, 3))%>%
@@ -162,3 +168,12 @@ data_wmh_w%>%
   facet_wrap(~tier)+
   geom_smooth(method = "lm")
 ```
+# sensitivity analysis
+```{r}
+mod_5<-lm(PACC_diff ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
+mod_5_a<-lm(PACC_diff ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
+
+summary(trafo_lm(mod_5))
+summary(trafo_lm(mod_5_a))
+```
+
