@@ -602,10 +602,14 @@ aggr_plot <- VIM::aggr(master_nd_pmm, numbers = T, sortVars= T)
 ```{r}
 #recompute reproductive_span variable
 master_nd_pmm<-master_nd_pmm%>%
-  mutate(repro_span = age_menopause_pmm - age_menarche)
+  mutate(repro_span = age_menopause_pmm - age_menarche,
+         kids_dicho = factor(ifelse(kids_total == 0, 0, 1)),
+         parous_group = case_when(
+  kids_total >= 2 ~ "2+",
+  kids_total == 1 ~ "1",
+  TRUE ~ "0"))
 
-master_nd_pmm%>%
-  filter(repro_span < 0)
+
 ```
 
 
