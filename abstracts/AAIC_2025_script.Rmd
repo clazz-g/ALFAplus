@@ -1,0 +1,110 @@
+---
+title: "Poster AAIC 2025"
+author: "Clazz"
+date: "2025-07-01"
+output: html_document
+---
+
+```{r}
+library(readxl)
+#install.packages("ggplot2")
+library(ggplot2)
+#install.packages("psych")
+library(psych)
+#install.packages("tidyverse")
+library(tidyverse)
+#install.packages("ggpubr")
+library(ggpubr)
+#install.packages("broom")
+library(broom)
+#install.packages("ggeffects")
+library(ggeffects)
+#install.packages("MASS")
+library(MASS)
+#install.packages("PResiduals")
+library(PResiduals)
+#install.packages("mice")
+library(mice)
+#install.packages("VIM")
+library(VIM)
+#install.packages("car")
+library(car)
+#install.packages("sjPlot")
+library(sjPlot)
+#install.packages("caret")
+library(caret)
+#install.packages("bestNormalize")
+library(bestNormalize)
+#install.packages("ggrain")
+library(ggrain)
+#install.packages("emmeans")
+library(emmeans)
+#install.packages("skimr")
+library(skimr)
+library(glmnet)
+#install.packages("bullseye")
+library(bullseye)
+#install.packages("lavaan")
+library(lavaan)
+#install.packages("brms")
+library(brms)
+#install.packages("mgcv")
+library(mgcv)
+library(splines)
+#install.packages("fitdistrplus")
+library(fitdistrplus)
+#install.packages("patchwork")
+library(patchwork)
+library(trafo)
+```
+
+#Read in data
+```{r}
+wmh<-read_delim("G:/My Drive/Data/ALFA+/WMH/wmh_processed_regional_lobes.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  filter(Visit == "V1")%>%
+  dplyr::select(-Visit)
+
+cognition<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+  dplyr::select(IdParticipante, Visit, Z_PACC, FechaResultado)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = as.numeric(subject))%>%
+  filter(Visit != 3)%>%
+  pivot_wider(names_from = Visit, values_from = c(Z_PACC, FechaResultado))%>%
+  mutate(PACC_diff = Z_PACC_2 - Z_PACC_1,
+         time_diff = as.numeric(difftime(FechaResultado_2, FechaResultado_1, units= c("days"))))%>%
+  dplyr::select(subject, PACC_diff, time_diff)
+
+biomarkers<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  filter(Visit == "V1")%>%
+  dplyr::select(subject, A)
+
+data_wmh<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  left_join(., wmh)%>%
+  left_join(., cognition)%>%
+  left_join(., biomarkers)
+
+data_wmh_w<-data_wmh%>%
+  filter(sex == 2)
+```
+
+#Model 1 - PACC ~ WMH
+
+```{r}
+mod_1<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education + A, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_2<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
+mod_3<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
+mod_4<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A, data = data_wmh_w[data_wmh_w$bilateral_region == "occipital",])
+mod_5<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
+
+summary(trafo_lm(mod_1))
+summary(trafo_lm(mod_2))
+summary(trafo_lm(mod_3))
+summary(trafo_lm(mod_4))
+summary(trafo_lm(mod_5))
+```
+
+no effect of WMH on PACC change between v1 and v2
+
