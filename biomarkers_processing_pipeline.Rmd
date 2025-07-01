@@ -63,8 +63,12 @@ library(gander)
 #CSF values
 ```{r}
 
-#ptau/ttau: elecsys 
-#amyloids: NTK
+#ptau181, ttau: elecsys 
+#p-tau217 (CSF): In-house  (Thijssen et al. Lancet Neurol 2021)
+#Abeta40, Abta42, a-synuclein, IL-6, Neurogranin, NFL, sTREM2: NTK
+#GAP43: In-house (Sandelius et al. 2019. PMID 30321501)
+#sICAM1, VCAM1: Vascular Injury Panel 2 (human) kits #K15198D
+#SNAP25: In-house (Brinkmalm et al. 2014. PMID 25418885)
 
 biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Alfa_Cohort__Biomarkers_alfa_cohort_20241220142704(in).csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE)%>%
@@ -86,14 +90,15 @@ biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Al
          !(Kit == "In-house" & Assay == "pTau217"))%>%
   mutate(Result = ifelse(is.na(Result)&!is.na(ResultRecalc), as.numeric(gsub("\\.", "", ResultRecalc)) / 1000, Result))%>%
   dplyr::select(-ResultRecalc)%>%
-  pivot_wider(names_from = Assay, values_from = Result, names_prefix = "CSF_")
-  #rename(subject = idparticipante, 
-         #Abeta40 = `CSF_Abeta1-40`,
-         #Abeta42 = `CSF_Abeta1-42`)
+  dplyr::select(-Kit)%>%
+  pivot_wider(names_from = Assay, values_from = Result, names_prefix = "CSF_")%>%
+  rename(subject = idparticipante, 
+         Abeta40 = `CSF_Abeta1-40`,
+         Abeta42 = `CSF_Abeta1-42`)
+  
   
 
-levels(biomarcadores$Kit)
-levels(biomarcadores$Assay)
+
 
 #using NTK for amyloid means some NA with abeta42. Is this the best course of action still?
 ```
