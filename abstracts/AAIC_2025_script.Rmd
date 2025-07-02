@@ -75,6 +75,24 @@ cognition<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete)
          time_diff = as.numeric(difftime(FechaResultado_2, FechaResultado_1, units= c("days"))))%>%
   dplyr::select(subject, PACC_diff, time_diff)
 
+composites1<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 1 - Cognition Z Scores.xlsx")%>%
+  dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -Z_PACC_Composite_1.2._v1 )%>%
+  rename(subject = IdParticipante)
+
+composites2<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 2 - Cognition Z Scores.xlsx")%>%
+  dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -V2S1_dt, -Z_PACC_Composite_1.2._V2 )%>%
+  rename(subject = IdParticipante)
+
+composite_all<-full_join(composites1, composites2)%>%
+  mutate(diff_Attention = Z_Attention_Composite_V2 - Z_Attention_Composite_v1,
+         diff_Memory = Z_Memory_Composite_V2 - Z_Memory_Composite_v1,
+         diff_Executive = Z_Executive_Composite_V2 - Z_Executive_Composite_v1,
+         diff_Language = Z_Language_Composite_V2 - Z_Language_Composite_v1,
+         diff_Visual = Z_Visual_Composite_V2 - Z_Visual_Composite_v1,
+         subject = as.numeric(subject))%>%
+  dplyr:: select(subject, diff_Attention, diff_Memory, diff_Executive, diff_Language, diff_Visual)
+
+
 biomarkers<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
     delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
   filter(Visit == "V1")%>%
@@ -84,7 +102,9 @@ data_wmh<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv",
     delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
   left_join(., wmh)%>%
   left_join(., cognition)%>%
-  left_join(., biomarkers)
+  left_join(., biomarkers)%>%
+  left_join(., composite_all)%>%
+  mutate(APOE_binary = factor(APOE_binary))
 
 data_wmh_w<-data_wmh%>%
   filter(sex == 2)
@@ -103,11 +123,11 @@ data_wmh%>%
 #Model 1 - PACC ~ WMH
 
 ```{r}
-mod_1<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education + A + TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
-mod_2<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
-mod_3<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
-mod_4<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "occipital",])
-mod_5<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
+mod_1<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education  + TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_2<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
+mod_3<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
+mod_4<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "occipital",])
+mod_5<-lm(PACC_diff ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
 
 summary(trafo_lm(mod_1))
 summary(trafo_lm(mod_2))
@@ -121,9 +141,9 @@ no effect of WMH on PACC change between v1 and v2. No trend of A status
 # Model 2: PACC ~ childbirth 
 
 ```{r}
-mod_1<-lm(PACC_diff ~ kids_total + time_diff + APOE_binary + education + A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
-mod_2<-lm(PACC_diff ~ kids_dicho + time_diff + APOE_binary + education + A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
-mod_3<-lm(PACC_diff ~ parous_group + time_diff + APOE_binary + education + A+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_1<-lm(PACC_diff ~ kids_total + time_diff + APOE_binary + education + TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_2<-lm(PACC_diff ~ kids_dicho + time_diff + APOE_binary + education + TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_3<-lm(PACC_diff ~ parous_group + time_diff + APOE_binary + education + TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
 
 summary(trafo_lm(mod_1))
 summary(trafo_lm(mod_2))
@@ -169,11 +189,85 @@ data_wmh_w%>%
   geom_smooth(method = "lm")
 ```
 # sensitivity analysis
+
+##CVR in original model 
 ```{r}
 mod_5<-lm(PACC_diff ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
-mod_5_a<-lm(PACC_diff ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1+ age_menopause_pmm, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
+mod_5_a<-lm(PACC_diff ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1+ Fuma2 + hypertension, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
 
 summary(trafo_lm(mod_5))
 summary(trafo_lm(mod_5_a))
 ```
+Smoking status and hypertension makes Rsquared higher 
+
+## different domains
+```{r}
+#main effect
+
+mod_1<-lm(diff_Visual ~ volume_wmh + time_diff + APOE_binary + education  + TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_2<-lm(diff_Executive ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
+mod_3<-lm(diff_Visual ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
+mod_4<-lm(diff_Visual ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "occipital",])
+mod_5<-lm(diff_Visual ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
+
+summary(trafo_lm(mod_1))
+summary(trafo_lm(mod_2))
+summary(trafo_lm(mod_3))
+summary(trafo_lm(mod_4))
+summary(trafo_lm(mod_5))
+
+tr <- trafo_lm(mod_2)
+
+# Extract the transformed model
+transformed_model <- tr$trafo_mod
+
+# Now use plot_model()
+plot_model(transformed_model, type = "pred")
+
+#Interaction
+
+mod_1<-lm(diff_Visual ~ kids_total*volume_wmh + time_diff + APOE_binary + education +TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_2<-lm(diff_Visual ~ kids_total*volume_wmh + time_diff + APOE_binary + education+TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
+mod_3<-lm(diff_Visual ~ kids_total*volume_wmh + time_diff + APOE_binary + education+TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
+mod_4<-lm(diff_Visual ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "occipital",])
+mod_5<-lm(diff_Visual ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
+
+
+summary(trafo_lm(mod_1))
+summary(trafo_lm(mod_2))
+summary(trafo_lm(mod_3))
+summary(trafo_lm(mod_4))
+summary(trafo_lm(mod_5))
+```
+Main effect:
+WMH load in parietal positive relation with Executive change?? lol
+Negative relation between WMH and Language in pparietal and temporal
+
+Interaction: 
+Significant in frontal and very significant in temporal lobes for executive
+Significant in basal ganglia for Language
+
+#Results
+
+## Significant interaction of kids and wmh on PACC change in basal ganglia
+```{r}
+
+```
+
+##Significant positive main effect of WMH on Executive change in Parietal lobes
+```{r}
+
+```
+
+##Significant negative main effect of WMH on Language in parietal and temporal
+```{r}
+
+```
+
+##Significant interaction of kids and wmh on executive in frontal and temporal lobes
+```{r}
+
+```
+
+
 
