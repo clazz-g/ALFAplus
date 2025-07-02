@@ -204,11 +204,11 @@ Smoking status and hypertension makes Rsquared higher
 ```{r}
 #main effect
 
-mod_1<-lm(diff_Visual ~ volume_wmh + time_diff + APOE_binary + education  + TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
-mod_2<-lm(diff_Executive ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
-mod_3<-lm(diff_Visual ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
-mod_4<-lm(diff_Visual ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "occipital",])
-mod_5<-lm(diff_Visual ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
+mod_1<-lm(diff_Language ~ volume_wmh + time_diff + APOE_binary + education  + TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_2<-lm(diff_Language ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
+mod_3<-lm(diff_Language ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
+mod_4<-lm(diff_Language ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "occipital",])
+mod_5<-lm(diff_Language ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
 
 summary(trafo_lm(mod_1))
 summary(trafo_lm(mod_2))
@@ -226,11 +226,11 @@ plot_model(transformed_model, type = "pred")
 
 #Interaction
 
-mod_1<-lm(diff_Visual ~ kids_total*volume_wmh + time_diff + APOE_binary + education +TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
-mod_2<-lm(diff_Visual ~ kids_total*volume_wmh + time_diff + APOE_binary + education+TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
-mod_3<-lm(diff_Visual ~ kids_total*volume_wmh + time_diff + APOE_binary + education+TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
-mod_4<-lm(diff_Visual ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "occipital",])
-mod_5<-lm(diff_Visual ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
+mod_1<-lm(diff_Executive ~ kids_total*volume_wmh + time_diff + APOE_binary + education +TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_2<-lm(diff_Executive ~ kids_total*volume_wmh + time_diff + APOE_binary + education+TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
+mod_3<-lm(diff_Executive ~ kids_total*volume_wmh + time_diff + APOE_binary + education+TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
+mod_4<-lm(diff_Executive ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "occipital",])
+mod_5<-lm(diff_Executive ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
 
 
 summary(trafo_lm(mod_1))
@@ -251,22 +251,88 @@ Significant in basal ganglia for Language
 
 ## Significant interaction of kids and wmh on PACC change in basal ganglia
 ```{r}
+mod_pacc_bas<-lm(PACC_diff ~ kids_total*volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "basal ganglia",])
+
+summary(trafo_lm(mod_pacc_bas))
+
+tr <- trafo_lm(mod_pacc_bas)
+
+# Extract the transformed model
+transformed_model <- tr$trafo_mod
+
+# Now use plot_model()
+plot_model(transformed_model, type = "int")
+
+data_wmh_w%>%
+  filter(bilateral_region == "basal ganglia")%>%
+  mutate(tier = ntile(volume_wmh, 3))%>%
+  ggplot(aes(x= kids_total, y= PACC_diff, colour = tier))+
+  geom_jitter()+
+  facet_wrap(~tier)+
+  geom_smooth(method = "lm")
+
+p_values <- c(0.14037 ,  0.57345  , 0.54029  , 0.8180 ,  0.01995 )
+#None survive, basal ganglia becomes trend
+
+fdr_adjusted_p_values <- p.adjust(p_values)
+fdr_adjusted_p_values
 
 ```
 
 ##Significant positive main effect of WMH on Executive change in Parietal lobes
 ```{r}
+mod_executive_par<-lm(diff_Executive ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
 
+summary(trafo_lm(mod_executive_par))
+
+p_values <- c(0.17234 ,  0.01078 ,0.11089 ,  0.8536  , 0.72301   )
+#Becomes trend but just barely?
+
+fdr_adjusted_p_values <- p.adjust(p_values)
+fdr_adjusted_p_values
+
+data_wmh_w%>%
+  filter(bilateral_region == "parietal")%>%
+  ggplot(aes(x= volume_wmh, y= PACC_diff))+
+  geom_jitter()+
+  geom_smooth(method = "lm")
 ```
 
 ##Significant negative main effect of WMH on Language in parietal and temporal
 ```{r}
+mod_lang_par<-lm(diff_Language ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "parietal",])
+mod_lang_temp<-lm(diff_Language ~ volume_wmh + time_diff + APOE_binary + education+ TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
 
+summary(trafo_lm(mod_lang_par))
+summary(trafo_lm(mod_lang_temp))
+
+p_values <- c(0.17234 ,  0.0204 ,0.0394, 0.5135 , 0.5503   )
+#not significant after adjusting
+
+fdr_adjusted_p_values <- p.adjust(p_values)
+fdr_adjusted_p_values
 ```
 
-##Significant interaction of kids and wmh on executive in frontal and temporal lobes
+##Significant interaction of kids and wmh on executive score in frontal and temporal lobes 
 ```{r}
+mod_exe_front_int<-lm(diff_Executive ~ kids_total*volume_wmh + time_diff + APOE_binary + education +TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "frontal",])
+mod_exe_temp_int<-lm(diff_Executive ~ kids_total*volume_wmh + time_diff + APOE_binary + education +TIV+ age_v1, data = data_wmh_w[data_wmh_w$bilateral_region == "temporal",])
 
+summary(trafo_lm(mod_exe_front_int))
+summary(trafo_lm(mod_exe_temp_int))
+
+p_values <- c(0.0392 ,0.100464   , 0.00183, 0.1812 ,  0.10534   )
+#temporal remains very significant
+
+fdr_adjusted_p_values <- p.adjust(p_values)
+fdr_adjusted_p_values
+
+data_wmh_w%>%
+  filter(bilateral_region == "temporal")%>%
+  mutate(tier = as.factor(ntile(volume_wmh, 3)))%>%
+  ggplot(aes(x= as.factor(kids_total), y= diff_Executive, colour = tier, group = tier))+
+  geom_jitter()+
+  geom_smooth(method = "lm")
 ```
 
 
