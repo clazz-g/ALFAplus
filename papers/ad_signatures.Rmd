@@ -223,7 +223,7 @@ run_volume_regressions( .,c( "kids_total", "age_v1_mri", "APOE_binary", "TIV"))
 p_values <- c(0.22051  ,  0.798 ,   0.470134  ,  0.3700  ,  0.09179 ,0.87412    ,0.012556 ,0.7079   , 0.875   , 0.459  ,  0.42763    )
 #None survive
 
-fdr_adjusted_p_values <- p.adjust(p_values)
+fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
 fdr_adjusted_p_values
 
 #Interaction
@@ -235,7 +235,7 @@ run_volume_regressions( .,c( "kids_total*A", "age_v1_mri", "APOE_binary", "TIV")
 
 p_values <- c(0.6935  ,  0.165  ,  0.0280, 0.052237 ,0.67701   , 0.09818, 0.842061   , 0.8220  ,  0.00656 ,0.0181 ,0.03944 )
 
-fdr_adjusted_p_values <- p.adjust(p_values)
+fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
 fdr_adjusted_p_values
 
 #CA4, parasubiculum, presubiculum and subiculum sig but none survive multiple comparison! except trend for parasubiculum
@@ -307,7 +307,7 @@ run_volume_lmer_regressions( .,c( "kids_total*A", "age_mri", "APOE_binary", "sca
 
 p_values <- c(0.6607 ,   0.14130   , 0.0158, 0.0326, 0.718  ,  0.0965, 0.8346  ,0.582  ,  0.00403, 0.0139 ,0.0253  )
 
-fdr_adjusted_p_values <- p.adjust(p_values)
+fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
 fdr_adjusted_p_values
 
 #CA4, GC_ML_DG   parasubiculum presubiculum and subiculum significant. parasubiculum survives mutiple comparison
