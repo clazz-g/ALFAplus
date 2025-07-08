@@ -21,8 +21,6 @@ library(broom)
 library(ggeffects)
 #install.packages("MASS")
 library(MASS)
-#install.packages("PResiduals")
-library(PResiduals)
 #install.packages("mice")
 library(mice)
 #install.packages("VIM")
@@ -388,7 +386,7 @@ transformed_model <- tr$trafo_mod
 plot_model(transformed_model, type = "int")
 ```
 #Plots! 
-##JT's aesthetics
+##Plot aesthetics
 this is needed to run the plot code (creates a function used in them)
 ```{r}
 
@@ -464,35 +462,7 @@ data_wmh_w%>%
   geom_jitter(size = 2)+
   facet_wrap(~tier)
 
-#this one maybe better
-data_wmh_w%>%
-  filter(bilateral_region %in% c("temporal"))%>%
-  mutate(tier = ntile(volume_wmh, 3),
-         kids_total_factor = as.factor(ifelse(kids_total >= 3, "3+", kids_total)))%>%
-  ggplot(aes(x= kids_total, y= diff_Executive))+
-  geom_jitter(size = 2)+
-  geom_line(data = preds, aes(x= x, y= predicted_bt, group=`WMH Load`, colour=`WMH Load`), inherit.aes = F, size=2)+
-  geom_ribbon(data = preds, aes(x= x, ymin = conf.low_bt, ymax = conf.high_bt, fill=`WMH Load`),  alpha=.2, inherit.aes = F)+
-  call_aesthethics(25)+
-  labs(y = "Executive score difference (V2-V1)", x = "Number of childbirths")+
-  scale_color_manual(labels = c("Low", "Mid", "High"), values = c("#345DA4", "#7D9DE5", "#AABDF3")) +
-  scale_fill_manual(labels = c("Low", "Mid", "High"), values = c("#345DA4", "#7D9DE5", "#AABDF3")) +
-  facet_wrap(~bilateral_region,labeller = labeller(bilateral_region = custom_labels))
-
-data_wmh_w%>%
-  filter(bilateral_region %in% c("frontal"))%>%
-  mutate(tier = ntile(volume_wmh, 3),
-         kids_total_factor = as.factor(ifelse(kids_total >= 3, "3+", kids_total)))%>%
-  ggplot(aes(x= kids_total, y= diff_Executive))+
-  geom_jitter(size = 2)+
-  geom_line(data = preds2, aes(x= x, y= predicted_bt, group=`WMH Load`, colour=`WMH Load`), inherit.aes = F, size=2)+
-  geom_ribbon(data = preds2, aes(x= x, ymin = conf.low_bt, ymax = conf.high_bt, fill=`WMH Load`),  alpha=.2, inherit.aes = F)+
-  call_aesthethics(25)+
-  labs(y = "Executive score difference (V2-V1)", x = "Number of childbirths")+
-  scale_color_manual(labels = c("Low", "Mid", "High"), values = c("#345DA4", "#7D9DE5", "#AABDF3")) +
-  scale_fill_manual(labels = c("Low", "Mid", "High"), values = c("#345DA4", "#7D9DE5", "#AABDF3")) +
-  facet_wrap(~bilateral_region, labeller = labeller(bilateral_region = custom_labels))
-  
+#######
 #Creating pred values for fitting lines on plot for temporal
 
 tr <- trafo_lm(mod_exe_temp_int)
@@ -532,7 +502,41 @@ preds2 <-as_tibble(ggpredict(transformed_model2, terms = c("kids_total [0:4]", "
          conf.high_bt = ((tr2$lambda * preds2$conf.high + 1)^(1 / tr2$lambda))- 2.598893,
          conf.low_bt = ((tr2$lambda * preds2$conf.low + 1)^(1 / tr2$lambda))- 2.598893)
 
-preds_all<-full_join(preds, preds2)
+
+########
+#this one maybe better, uses pred values
+data_wmh_w%>%
+  filter(bilateral_region %in% c("temporal"))%>%
+  mutate(tier = ntile(volume_wmh, 3),
+         kids_total_factor = as.factor(ifelse(kids_total >= 3, "3+", kids_total)))%>%
+  ggplot(aes(x= kids_total, y= diff_Executive))+
+  geom_jitter(size = 2)+
+  geom_line(data = preds, aes(x= x, y= predicted_bt, group=`WMH Load`, colour=`WMH Load`), inherit.aes = F, size=2)+
+  geom_ribbon(data = preds, aes(x= x, ymin = conf.low_bt, ymax = conf.high_bt, fill=`WMH Load`),  alpha=.2, inherit.aes = F)+
+  call_aesthethics(25)+
+  labs(y = "Executive score difference (V2-V1)", x = "Number of childbirths")+
+  scale_color_manual(labels = c("Low", "Mid", "High"), values = c("#345DA4", "#7D9DE5", "#AABDF3")) +
+  scale_fill_manual(labels = c("Low", "Mid", "High"), values = c("#345DA4", "#7D9DE5", "#AABDF3")) +
+  facet_wrap(~bilateral_region,labeller = labeller(bilateral_region = custom_labels))
+
+ggsave("G:/My Drive/AAIC 2025/poster/mod3plottemp.png", width = 10, height = 8)
+
+
+data_wmh_w%>%
+  filter(bilateral_region %in% c("frontal"))%>%
+  mutate(tier = ntile(volume_wmh, 3),
+         kids_total_factor = as.factor(ifelse(kids_total >= 3, "3+", kids_total)))%>%
+  ggplot(aes(x= kids_total, y= diff_Executive))+
+  geom_jitter(size = 2)+
+  geom_line(data = preds2, aes(x= x, y= predicted_bt, group=`WMH Load`, colour=`WMH Load`), inherit.aes = F, size=2)+
+  geom_ribbon(data = preds2, aes(x= x, ymin = conf.low_bt, ymax = conf.high_bt, fill=`WMH Load`),  alpha=.2, inherit.aes = F)+
+  call_aesthethics(25)+
+  labs(y = "Executive score difference (V2-V1)", x = "Number of childbirths")+
+  scale_color_manual(labels = c("Low", "Mid", "High"), values = c("#345DA4", "#7D9DE5", "#AABDF3")) +
+  scale_fill_manual(labels = c("Low", "Mid", "High"), values = c("#345DA4", "#7D9DE5", "#AABDF3")) +
+  facet_wrap(~bilateral_region, labeller = labeller(bilateral_region = custom_labels))
+  ggsave("G:/My Drive/AAIC 2025/poster/mod3plotfront.png", width = 10, height = 8)
+
 ```
 
 
