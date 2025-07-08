@@ -28,8 +28,6 @@ library(broom)
 library(ggeffects)
 #install.packages("MASS")
 library(MASS)
-#install.packages("PResiduals")
-library(PResiduals)
 #install.packages("mice")
 library(mice)
 #install.packages("VIM")
@@ -323,21 +321,11 @@ hippo_data_long%>%
 Longitudinal results show significant interaction effect in the CA4, dGC_ML_DG, parasubiculum, presubiculum and subiculu, with only the parasubiculum surviving multiple comparison.
 
 #Linear models - cross sectional
-
+need to rewrite this to coincide with new dataset
 ```{r}
 #first check Anna's findings
-data%>%
-  filter(sex==2)%>%
-  dplyr::select(age_v1)%>%
-  hist()
 
-
-data%>%
-  filter(sex==1)%>%
-  dplyr::select(diff_PACC)%>%
-  hist()
-
-mod<-lm(Z_PACC_v1 ~ kids_total*A + age_v1 + education + APOE_binary +age_menopause_pmm, data = data[data$sex ==2,])
+mod<-lm(diff_PACC ~ kids_total*A + age_v1 + education + APOE_binary +age_menopause_pmm, data = data[data$sex ==2,])
 summary(mod)
 
 data_lmer<-data%>%
@@ -350,11 +338,6 @@ fit_pacc<-lmer(all_Z_PACC ~ kids_total*A + Visit + age_v1  + education + APOE_bi
 summary(fit_pacc)
 
 
-#dbatable significance
-anna_data<-read_excel("C:/Users/U253662/Downloads/ALFA+_dataset_pregnancy_14052025onlywomen.xlsx")%>%
-  mutate(A = ifelse(ab42_40_ratio>=0.071, 0, 1),
-         ID = as.numeric(ID))%>%
-  rename(subject = ID)
 
 
 data%>%
