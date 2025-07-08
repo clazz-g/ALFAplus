@@ -420,7 +420,15 @@ custom_labels <- c("basal ganglia" = "Basal Ganglia", "frontal" = "Frontal Lobes
 
 ## Descriptives
 ```{r}
+install.packages("gtsummary")
+library(gtsummary)
 
+data_descriptive<-data_wmh_w%>%
+  drop_na(PACC_diff)%>%
+  dplyr::select(subject, age_v1, education, APOE_binary, A)%>%
+  unique()
+
+tbl_summary(data_descriptive)
 ```
 
 ##Mod 0
