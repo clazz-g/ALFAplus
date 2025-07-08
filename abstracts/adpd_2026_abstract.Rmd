@@ -1,0 +1,346 @@
+---
+title: "ADPD 2026 abstract"
+author: "Clazz"
+date: "2025-07-07"
+output: html_document
+---
+
+```{r}
+library(readxl)
+#install.packages("ggplot2")
+library(ggplot2)
+#install.packages("psych")
+library(psych)
+#install.packages("tidyverse")
+library(tidyverse)
+#install.packages("ggpubr")
+library(ggpubr)
+#install.packages("broom")
+library(broom)
+#install.packages("ggeffects")
+library(ggeffects)
+#install.packages("MASS")
+library(MASS)
+#install.packages("mice")
+library(mice)
+#install.packages("VIM")
+library(VIM)
+#install.packages("car")
+library(car)
+#install.packages("sjPlot")
+library(sjPlot)
+#install.packages("caret")
+library(caret)
+#install.packages("bestNormalize")
+library(bestNormalize)
+#install.packages("ggrain")
+library(ggrain)
+#install.packages("emmeans")
+library(emmeans)
+#install.packages("skimr")
+library(skimr)
+library(glmnet)
+#install.packages("bullseye")
+library(bullseye)
+#install.packages("lavaan")
+library(lavaan)
+#install.packages("brms")
+library(brms)
+#install.packages("mgcv")
+library(mgcv)
+library(splines)
+#install.packages("fitdistrplus")
+library(fitdistrplus)
+#install.packages("patchwork")
+library(patchwork)
+#install.packages("lme4")
+library(lme4)
+#install.packages("lmerTest")
+library(lmerTest)
+#install.packages("MuMIn")
+library(MuMIn)
+```
+
+# Read in data
+
+reading in basic, biomarkers and mri dates
+
+```{r, echo=FALSE}
+data<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)
+
+date_mri_v1<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_scandates_ALFA_PLUS_V1_20231120_20250210_135308.xlsx")%>%
+  dplyr::select(subject_label, scandate)%>%
+  mutate(subject_label = as.numeric(subject_label))%>%
+  rename(subject = subject_label,
+         scandate_v1 = scandate)
+
+date_mri_v2<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_scandates_ALFA_PLUS_V2_20230518_20250210_135351.xlsx")%>%
+  dplyr::select(subject_label, scandate)%>%
+  mutate(subject_label = as.numeric(subject_label))%>%
+  rename(subject = subject_label,
+         scandate_v2 = scandate)
+
+date_mri_long<-full_join(date_mri_v1, date_mri_v2)%>%
+  mutate(scandate_v1 = as.Date(scandate_v1, format = "%Y-%m-%d"),
+         scandate_v2 = as.Date(scandate_v2, format = "%Y-%m-%d"),
+         diff_mri = as.numeric(difftime(scandate_v2, scandate_v1, units = c("days")))/365.25)
+
+#adding MRI sessions dates to the dataset
+data<-left_join(data, date_mri_long)%>%
+  mutate(DOB = as.Date (DOB, format = "%Y-%m-%d"),
+         age_v1_mri = as.numeric(difftime(scandate_v1, DOB, units= c("days")))/365.25,
+         age_v2_mri = as.numeric(difftime(scandate_v2, DOB, units= c("days")))/365.25)
+
+biomarkers<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  filter(Visit == "V1")%>%
+  dplyr::select(-Visit)
+
+data<-left_join(data, biomarkers)
+
+
+```
+
+#Cognitive results - LMM
+
+```{r, echo=FALSE}
+
+
+cognition<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+  dplyr::select(IdParticipante, Visit, Z_PACC, Z_FCSRTI_RT, Z_aWMS_DR_RS, Z_Wclave_totalscr, Z_FS_totalcnswr, FechaResultado)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = as.numeric(subject))
+
+data_cog_long<- left_join(data, cognition)%>%
+  mutate(age_cog = as.numeric(difftime(FechaResultado, DOB, units= c("days")))/365.25)%>%
+  group_by(subject) %>%
+  filter(Visit != 3,
+         n() == 2) %>%
+  ungroup()
+
+
+fit_cog<-lmer(Z_FS_totalcnswr ~ kids_total*A +age_cog + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
+summary(fit_cog)
+r.squaredGLMM(fit_cog)
+
+plot_model(fit_cog, type = "int")
+
+###Composites
+
+composites1<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 1 - Cognition Z Scores.xlsx")%>%
+  dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -Z_PACC_Composite_1.2._v1 )%>%
+  rename(subject = IdParticipante,
+         Z_Attention_Composite = Z_Attention_Composite_v1,
+         Z_Memory_Composite = Z_Memory_Composite_v1,
+         Z_Executive_Composite = Z_Executive_Composite_v1,
+         Z_Language_Composite = Z_Language_Composite_v1,
+         Z_Visual_Composite = Z_Visual_Composite_v1)%>%
+  mutate(Visit = "1")
+
+composites2<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 2 - Cognition Z Scores.xlsx")%>%
+  dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -V2S1_dt, -Z_PACC_Composite_1.2._V2 )%>%
+  rename(subject = IdParticipante,
+         Z_Attention_Composite = Z_Attention_Composite_V2,
+         Z_Memory_Composite = Z_Memory_Composite_V2,
+         Z_Executive_Composite = Z_Executive_Composite_V2,
+         Z_Language_Composite = Z_Language_Composite_V2,
+         Z_Visual_Composite = Z_Visual_Composite_V2)%>%
+  mutate(Visit = "2")
+
+composite_all<-full_join(composites1, composites2)%>%
+  group_by(subject) %>%
+  ungroup()%>%
+  mutate(subject = as.numeric(subject))
+
+data_cog_long<-left_join(data_cog_long, composite_all)
+
+fit_cog_domain<-lmer(Z_Visual_Composite ~ kids_total*A +age_cog + APOE_binary + education +age_menopause+(1 | subject), data_cog_long[data_cog_long$sex == 2,])
+summary(fit_cog_domain)
+r.squaredGLMM(fit_cog_domain)
+```
+
+#Cognitive results - LM of change
+test
+test again
+```{r}
+composites1<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 1 - Cognition Z Scores.xlsx")%>%
+  dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -Z_PACC_Composite_1.2._v1 )%>%
+  rename(subject = IdParticipante)
+
+composites2<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 2 - Cognition Z Scores.xlsx")%>%
+  dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -V2S1_dt, -Z_PACC_Composite_1.2._V2 )%>%
+  rename(subject = IdParticipante)
+
+PACC_diff<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+  dplyr::select(IdParticipante, Visit, Z_PACC, FechaResultado)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = as.numeric(subject))%>%
+  filter(Visit != 3)%>%
+  pivot_wider(names_from = Visit, values_from = c(Z_PACC, FechaResultado))%>%
+  mutate(PACC_diff = Z_PACC_2 - Z_PACC_1,
+         time_diff = as.numeric(difftime(FechaResultado_2, FechaResultado_1, units= c("days"))))%>%
+  dplyr::select(subject, PACC_diff, time_diff)
+
+composite_all_diff<-full_join(composites1, composites2)%>%
+  mutate(diff_Attention = Z_Attention_Composite_V2 - Z_Attention_Composite_v1,
+         diff_Memory = Z_Memory_Composite_V2 - Z_Memory_Composite_v1,
+         diff_Executive = Z_Executive_Composite_V2 - Z_Executive_Composite_v1,
+         diff_Language = Z_Language_Composite_V2 - Z_Language_Composite_v1,
+         diff_Visual = Z_Visual_Composite_V2 - Z_Visual_Composite_v1,
+         subject = as.numeric(subject))%>%
+  dplyr:: select(subject, diff_Attention, diff_Memory, diff_Executive, diff_Language, diff_Visual)
+
+data_cog_diff<-left_join(data, composite_all_diff)%>%
+  left_join(., PACC_diff)%>%
+  mutate(A=factor(A),
+         APOE_binary=factor(APOE_binary),
+         AT=factor(AT))
+
+mod_pacc<-lm(PACC_diff ~ kids_total*A*sex + age_v1 + education + APOE_binary + time_diff, data = data_cog_diff)
+summary(mod_pacc)
+
+mod_pacc_w<-lm(PACC_diff ~ kids_total*A + age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
+summary(mod_pacc_w)
+
+tidy_mod1_es<-tidy(mod_pacc_w)$estimate
+tidy_mod1_p<-tidy(mod_pacc_w)$p.value
+
+
+hist(data_cog_diff$PACC_diff)
+
+plot_model(mod_pacc_w, type = "int")
+```
+
+#hippo vol change
+```{r}
+hippo<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V1_20231120_20250208_111212.xlsx")%>%
+  group_by(subject, region) %>%
+  summarize(bilateral_volume = sum(value), .groups = "drop")%>%
+ mutate(region = case_when(region == "CA1-body"| region == "CA1-head" ~ "CA1",
+            region == "CA3-body"| region == "CA3-head" ~ "CA3",
+            region == "CA4-body"| region == "CA4-head" ~ "CA4",
+            region == "GC-ML-DG-body" | region == "GC-ML-DG-head" ~ "GC_ML_DG",
+            region == "molecular_layer_HP-body" | region == "molecular_layer_HP-head"~ "molecular_layer_HP",
+            region == "presubiculum-body" | region == "presubiculum-head" ~ "presubiculum",
+            region == "subiculum-body" | region == "subiculum-head" ~ "subiculum",
+            .default = region))%>%
+  group_by(region, subject)%>%
+  summarize( bilateral_volume = sum(bilateral_volume), .groups = "drop")%>%
+  pivot_wider(names_from = region, values_from = bilateral_volume, names_prefix = "vol_")%>%
+  mutate(subject = as.numeric(subject),
+         Visit = "V1")
+
+hippo_data<-left_join(data, hippo)
+
+hippo2<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V2_20230518_20250208_112459.xlsx")%>%
+  group_by(subject, region) %>%
+  summarize(bilateral_volume = sum(value), .groups = "drop")%>%
+  mutate(region = case_when(region == "CA1-body"| region == "CA1-head" ~ "CA1",
+            region == "CA3-body"| region == "CA3-head" ~ "CA3",
+            region == "CA4-body"| region == "CA4-head" ~ "CA4",
+            region == "GC-ML-DG-body" | region == "GC-ML-DG-head" ~ "GC_ML_DG",
+            region == "molecular_layer_HP-body" | region == "molecular_layer_HP-head"~ "molecular_layer_HP",
+            region == "presubiculum-body" | region == "presubiculum-head" ~ "presubiculum",
+            region == "subiculum-body" | region == "subiculum-head" ~ "subiculum",
+            .default = region))%>%
+  group_by(region, subject)%>%
+  summarize( bilateral_volume = sum(bilateral_volume), .groups = "drop")%>%
+  pivot_wider(names_from = region, values_from = bilateral_volume, names_prefix = "vol_")%>%
+  mutate(subject = as.numeric(subject),
+         Visit = "V2")
+
+hippo_data2<-left_join(data, hippo2)
+  
+
+hippo_data_long<-bind_rows(hippo_data, hippo_data2)%>%
+  mutate(Visit = factor(Visit))%>%
+  mutate(age_mri = case_when(
+    Visit == "V1" ~ age_v1_mri,
+    Visit == "V2" ~ age_v2_mri
+  ))%>%
+  dplyr::select(-age_v1_mri, -age_v2_mri)%>%
+  drop_na(scandate_v2)
+
+#fucntion to run 
+run_volume_lmer_regressions <- function(data, predictors) {
+  # Find all columns that start with "vol_"
+  outcome_vars <- grep("^vol_", names(data), value = TRUE)
+
+  # Create a formula string from predictors
+  predictor_formula <- paste(predictors, collapse = " + ")
+
+  # Run regressions and store summary results
+  summaries <- lapply(outcome_vars, function(outcome) {
+    formula <- as.formula(paste0("`", outcome, "` ~ ", predictor_formula))
+    model <- lmer(formula, data = data)
+    summary(model)
+  })
+
+  # Name each summary by its outcome variable
+  names(summaries) <- outcome_vars
+
+  return(summaries)
+}
+
+##no interaction
+
+hippo_data_long%>%
+  filter(sex == 2 )%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_lmer_regressions( .,c( "kids_total", "age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+
+p_values <- c(0.0915 ,0.551245  ,  0.5645  ,  0.4297   , 0.0825, 0.83811 ,   0.0025, 0.1691  ,  0.934 ,   0.548,    0.455    )
+
+fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
+fdr_adjusted_p_values
+
+#fimbria significant, fimbria survives
+
+##interaction
+
+hippo_data_long%>%
+  filter(sex == 2 )%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_lmer_regressions( .,c( "kids_total*A", "age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+
+p_values <- c(0.6607 ,   0.14130   , 0.0158, 0.0326, 0.718  ,  0.0965, 0.8346  ,0.582  ,  0.00403, 0.0139 ,0.0253  )
+
+fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
+fdr_adjusted_p_values
+
+#CA4 0.0158 , GC 0.0326, parasubiculum 0.00403, presubiculum 0.0139, subiculum 0.0253 sig
+#parasubiculum survives, trend for the others
+
+mod_test<-lmer(vol_parasubiculum ~ kids_total*A + age_mri+ APOE_binary+ scale(TIV)+ (1 | subject), data = hippo_data_long[hippo_data_long$sex==2,])
+summary(mod_test)
+plot_model(mod_test, type="int")
+r.squaredGLMM(mod_test)
+
+```
+
+
+#Abstract
+
+Objectives: Pregnancy impacts provokes lasting changes in brain volume and connectivity. Little is known about the later impact of these changes on Alzheimer's Disease (AD) neuropathology trajectory. We examined the association between past childbriths and AD pathlogy on cognitive decline, and related it to hippocampal volume change in cognitively unimpaired (CU) post-menopausal women at risk of AD.
+
+```{r, echo=F}
+
+pt_number<-data%>%
+  nrow()%>%
+  as.numeric()
+  
+pt_number_women<-data%>%
+  filter(sex==2)%>%
+  nrow()%>%
+  as.numeric()
+
+```
+
+Methods: Our sample includes `r pt_number_women` CU postmenopausal women from the ALFA+ study. Hippocampus subfield segmentation was obtained using Freesurfer 7. Amyloid (Aβ) positivity was defined as CSF Aβ42/40 ratio\<0.071. Cognitive performance was measured using PACC scores from visit 1-2, separated by 3 years. We first examined the impact of childbirths on cognitive change between visit 1 and 2 (model 1), and any moderation effect of Aβ positivity (model 2). We then built linear models to assess the effect of childbirth on hippocampal subfield volume change (model 3), and interaction effects of Aβ positivity (model 4). All models included APOE-ε4 carriership, age, time difference between visits and total intracranial volume as covariates (Table 1). FDR corection was used in models 3 and 4.
+
+Results: We found a trending interaction between number of childbirths and amyloid positivity (F=`r tidy_mod1_es[8]`, p= `r tidy_mod1_p[8]`), where Aβ+ women showed worse decline with higher parity.
+A significant positive main effect of childbirths was found on volume change in the fimbria (F= 5.240, adj. p.= 0.020). A significant interaction of childbirths and Aβ+ was found in the parasubiculum (F= 6.8155, adj. p.= 0.0443), such that Aβ+ women showed worse volume reduction with higher parity. This interaction was trending in the CA4, dentate gyrus, presubiculum and subiculum.
+
+Conclusion: In CU post-menopausal women at risk of AD, parity might mediate the impact of AD pathology on cognitive decline over 3 years. Additionally, parity independently influence volume change in the fimbria, and moderates the impact of Aβ pathology in the parasubiculum and potentially more subfields. Results highlight the effect of parity on AD-related neuropathology via hippocampal volume change. Further studies are needed to investigate the scope of this impact on AD trajectory.
+
