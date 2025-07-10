@@ -372,11 +372,18 @@ data_cog_diff%>%
 ## hipp ~ childbirth*AB
 
 ### plotting both timepoints
+
+uglyyy
 ```{r}
-hippo_data_plot_long%>%
+hippo_data_long%>%
   filter(sex== 2)%>%
   drop_na(A)%>%
-  
+  mutate(A=factor(A))%>%
+  ggplot(aes(x=Visit, y=vol_parasubiculum, color = A))+
+  geom_violin(size=1.1, position = position_dodge(width = 0.5))+
+  geom_line( aes(group = subject), alpha=.2, size=1, position = position_dodge(width = 0.5))+
+  geom_point( aes(group = subject), alpha=.2, size=1.3, position = position_dodge(width = 0.5))+
+  facet_wrap(~kids_total)
 ```
 
 
@@ -415,18 +422,54 @@ for (base in base_names) {
 hippo_data_plot<-hippo_data_plot%>%
   dplyr::select(subject, vol_CA1_diff, vol_CA3_diff, vol_CA4_diff, vol_GC_ML_DG_diff, vol_HATA_diff, vol_Hippocampal_tail_diff, vol_Whole_hippocampal_body_diff, vol_Whole_hippocampal_head_diff, vol_Whole_hippocampus_diff, vol_fimbria_diff, vol_molecular_layer_HP_diff, vol_parasubiculum_diff, vol_presubiculum_diff, vol_subiculum_diff)
 
-hippo_data_plot<-left_join(data, hippo_data_plot)
 
-hippo_data_plot%>%
+hippo_data_plot_all <- left_join(data, hippo_data_plot) %>%
+  mutate(across(starts_with("vol_"), ~ .x / diff_mri, .names = "{.col}_annual"))
+
+
+hippo_data_plot_all%>%
   filter(sex==2)%>%
   mutate(A=factor(A))%>%
   drop_na(A)%>%
-ggplot(aes(x=kids_total, y=vol_parasubiculum_diff, group=A, colour=A))+
+ggplot(aes(x=kids_total, y=vol_parasubiculum_diff_annual, group=A, colour=A))+
   geom_jitter()+
   geom_smooth(method = "lm")+
   call_aesthethics(15)+
   labs(x = "Number of childbirths", y = "Volume change")
 ```
+### Plot effect sizes
+
+```{r}
+mod_plot<-lmer(vol_parasubiculum ~ kids_total*A + Visit + as.factor(APOE_binary) + scale(TIV) +(1| subject), data=hippo_data_long[hippo_data_long$sex==2,] )
+summary(mod_plot)
+
+plot_model(mod_plot)
+
+preds <- ggpredict(mod_plot, terms = c("kids_total", "A", "Visit")) 
+
+
+
+
+hippo_data_long %>%
+  filter(sex == 2) %>%
+  drop_na(A) %>%
+  mutate(kids_total_factor=ifelse(kids_total>=3, "3+", kids_total))%>%
+  mutate(A = factor(A, labels = c("A-", "A+"))) %>%
+  ggplot(aes(x = Visit, y = vol_parasubiculum, color = kids_total_factor, fill=kids_total_factor)) +
+  geom_point(alpha = 0.6, position = position_dodge(width = 1)) +
+  geom_boxplot(position = position_dodge(width = 0.9), alpha=.5)+
+  facet_wrap(~A) +
+  th +
+  labs(x = "Number of childbirths", y = "Parasubiculum volume", color = "Number of childbirths", fill= "Number of childbirths")+
+  scale_color_manual(values = c("0" = "lightblue", "1" = "steelblue", "2" = "darkblue", "3+" = "navy", "4" = "midnightblue")) +
+  scale_fill_manual(values = c("0" = "lightblue", "1" = "steelblue", "2" = "darkblue", "3+" = "navy", "4" = "midnightblue"))+
+  scale_x_discrete(expand = expansion(mult = c(0.8, 0.8)))
+
+```
+
+
+
+
 
 #Abstract
 
@@ -450,4 +493,23 @@ Methods: Our sample includes `r pt_number_women` CU post-menopausal women from t
 Results: A trending interaction between number of childbirths and amyloid positivity on cognitive change was found (F=`r tidy_mod1_es[8]`, p=`r tidy_mod1_p[8]`), where Aβ+ women showed worse decline with higher parity. Childbirths had a significant positive main effect on volume change in the fimbria (F=5.240, adj.p.=0.020). A significant interaction of childbirths and Aβ+ was found in the parasubiculum (F=6.8155, adj.p.=0.0443), such that Aβ+ women showed worse volume reduction with higher parity. This interaction was trending in the CA4, dentate gyrus, presubiculum and subiculum.
 
 Conclusion: In CU post-menopausal women at risk of AD, parity might moderate the impact of AD pathology on cognitive change at 3 years. Additionally, parity independently influences volume change in the fimbria, and interacts with AD pathology on parasubiculum volume. Results highlight the effect of parity on AD-related neuropathology via hippocampal volume change. 
+
+```{r}
+
+data %>% 
+  group_by(sex) %>% 
+  summarise(
+    n = n(),
+    mean_diff = mean(diff_mri, na.rm = TRUE),
+    sd_diff = sd(diff_mri, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(x = factor(sex), y = mean_diff)) +
+  geom_col(fill = "steelblue", alpha = 0.7) +
+  geom_errorbar(aes(ymin = mean_diff - sd_diff, ymax = mean_diff + sd_diff), 
+                width = 0.2) +
+  labs(x = "Sex", y = "Mean MRI time difference (years)") +
+  th
+
+```
 
