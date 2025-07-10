@@ -200,7 +200,7 @@ data_cog_diff<-left_join(data, composite_all_diff)%>%
 mod_pacc<-lm(PACC_diff ~ kids_total*A*sex + age_v1 + education + APOE_binary + time_diff, data = data_cog_diff)
 summary(mod_pacc)
 
-mod_pacc_w<-lm(PACC_diff ~ kids_total*A + age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
+mod_pacc_w<-lm(PACC_diff ~ kids_total*A + A+age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
 summary(mod_pacc_w)
 
 tidy_mod1_es<-tidy(mod_pacc_w)$estimate
@@ -210,6 +210,10 @@ tidy_mod1_p<-tidy(mod_pacc_w)$p.value
 hist(data_cog_diff$PACC_diff)
 
 plot_model(mod_pacc_w, type = "int")
+
+#trying with poly
+mod_pacc_w_poly<-lm(PACC_diff ~ poly(kids_total, 2, raw = TRUE)*A+ age_menopause_pmm +age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
+summary(mod_pacc_w_poly)
 ```
 
 #hippo vol change
@@ -319,10 +323,114 @@ r.squaredGLMM(mod_test)
 
 ```
 
+# plots
+
+## Plot aesthetics
+this is needed to run the plot code (creates a function used in them)
+```{r}
+
+call_aesthethics <- function(text_size){
+  th <- theme(   panel.grid.major = element_blank(),
+                 panel.grid.minor = element_blank(),
+                 panel.border = element_blank(),
+                 panel.background = element_blank(),
+                 axis.line = element_line(linewidth = 0.5),
+                 legend.position = 'right',
+                 legend.text = element_text(size= text_size, family="Helvetica"),
+                 text = element_text(size= text_size, family="Helvetica"),
+                 strip.text.x = element_text(size = rel(0.90)),
+                 strip.text.y = element_text(size = rel(0.90)),
+                 axis.title.x = element_text(vjust=-0.3),
+                 plot.title = element_text(hjust = 0.5, vjust = 0),
+                 axis.ticks = element_line(linewidth = 0.4),
+                 axis.text.x.bottom  = element_text(size = rel(0.90), margin = unit(c(t = 2.5, r = 0, b = 0, l = 0), "mm")),
+                 axis.title.y = element_text(vjust = 1),
+                 axis.text.y = element_text(size = rel(0.90), margin = unit(c(t = 0, r = 2.5, b = 0, l = 0), "mm")),
+                 axis.ticks.length = unit(-1.2, "mm"),
+                 axis.text.x.top = element_text(size = rel(0.90), margin = unit(c(t = 0, r = 0, b = 2.5, l = 0), "mm")))
+  return(th)
+}
+
+
+th <- call_aesthethics(13)
+
+```
+
+## PACC ~ childbirth*AB
+
+```{r}
+data_cog_diff%>%
+  filter(sex == 2)%>%
+  drop_na(A)%>%
+  ggplot(aes(x=kids_total, y=PACC_diff, group=A, colour=A))+
+  geom_jitter()+
+  geom_smooth(method = "lm")+
+  call_aesthethics(15)+
+  labs(x = "Number of childbirths", y = "PACC change (Z-score)")
+```
+
+## hipp ~ childbirth*AB
+
+### plotting both timepoints
+```{r}
+hippo_data_plot_long%>%
+  filter(sex== 2)%>%
+  drop_na(A)%>%
+  
+```
+
+
+
+### plotting differences
+```{r}
+#I'm aware how clunky this code is... I was fighting with pivots for a while and getting nowhere. So this is the best I could do for now sorry! 
+
+hippo_data_plot<-hippo
+colnames(hippo_data_plot) <- paste(colnames(hippo_data_plot), 'V1', sep = '_')
+hippo_data_plot<-hippo_data_plot%>%
+  rename(subject = subject_V1)%>%
+  dplyr::select(-Visit_V1)
+
+hippo_data_plot2<-hippo2
+colnames(hippo_data_plot2) <- paste(colnames(hippo_data_plot2), 'V2', sep = '_')
+hippo_data_plot2<-hippo_data_plot2%>%
+  rename(subject = subject_V2)%>%
+  dplyr::select(-Visit_V2)
+
+hippo_data_plot<-left_join(hippo_data_plot, hippo_data_plot2)
+
+base_names <- names(hippo_data_plot) %>%
+  str_subset("^vol_.*_V1$") %>%
+  str_remove("_V1$")
+
+
+for (base in base_names) {
+  v1_col <- paste0(base, "_V1")
+  v2_col <- paste0(base, "_V2")
+  diff_col <- paste0(base, "_diff")
+  
+  hippo_data_plot[[diff_col]] <- hippo_data_plot[[v2_col]] - hippo_data_plot[[v1_col]]
+}
+
+hippo_data_plot<-hippo_data_plot%>%
+  dplyr::select(subject, vol_CA1_diff, vol_CA3_diff, vol_CA4_diff, vol_GC_ML_DG_diff, vol_HATA_diff, vol_Hippocampal_tail_diff, vol_Whole_hippocampal_body_diff, vol_Whole_hippocampal_head_diff, vol_Whole_hippocampus_diff, vol_fimbria_diff, vol_molecular_layer_HP_diff, vol_parasubiculum_diff, vol_presubiculum_diff, vol_subiculum_diff)
+
+hippo_data_plot<-left_join(data, hippo_data_plot)
+
+hippo_data_plot%>%
+  filter(sex==2)%>%
+  mutate(A=factor(A))%>%
+  drop_na(A)%>%
+ggplot(aes(x=kids_total, y=vol_parasubiculum_diff, group=A, colour=A))+
+  geom_jitter()+
+  geom_smooth(method = "lm")+
+  call_aesthethics(15)+
+  labs(x = "Number of childbirths", y = "Volume change")
+```
 
 #Abstract
 
-Objectives: Pregnancy impacts provokes lasting changes in brain volume and connectivity. Little is known about the later impact of these changes on Alzheimer's Disease (AD) neuropathology trajectory. We examined the association between past childbriths and AD pathlogy on cognitive decline, and related it to hippocampal volume change in cognitively unimpaired (CU) post-menopausal women at risk of AD.
+Objectives: Little is known about the impact of pregnancy on Alzheimer's Disease (AD) trajectory. We examined the impact of childbriths and AD pathlogy on cognitive decline, and related it to hippocampal volume change in cognitively unimpaired (CU) post-menopausal women at risk of AD.
 
 ```{r, echo=F}
 
@@ -337,10 +445,9 @@ pt_number_women<-data%>%
 
 ```
 
-Methods: Our sample includes `r pt_number_women` CU postmenopausal women from the ALFA+ study. Hippocampus subfield segmentation was obtained using Freesurfer 7. Amyloid (Aβ) positivity was defined as CSF Aβ42/40 ratio\<0.071. Cognitive performance was measured using PACC scores from visit 1-2, separated by 3 years. We first examined the impact of childbirths on cognitive change between visit 1 and 2 (model 1), and any moderation effect of Aβ positivity (model 2). We then built linear models to assess the effect of childbirth on hippocampal subfield volume change (model 3), and interaction effects of Aβ positivity (model 4). All models included APOE-ε4 carriership, age, time difference between visits and total intracranial volume as covariates (Table 1). FDR corection was used in models 3 and 4.
+Methods: Our sample includes `r pt_number_women` CU post-menopausal women from the ALFA+ study. Hippocampus subfield segmentation was obtained using Freesurfer 7. Amyloid (Aβ) positivity was defined as CSF Aβ42/40 ratio\<0.071. Cognition was measured at visit 1 and 2 using PACC scores. We first examined the impact of childbirths on cognitive change, and moderation by Aβ positivity. We then assessed the effect of childbirth on hippocampal subfield volume change, and moderation by Aβ positivity. All linear models included APOE-ε4 carriership, age, time difference between visits and total intracranial volume as covariates (Table 1). FDR correction was used in models 3 and 4.
 
-Results: We found a trending interaction between number of childbirths and amyloid positivity (F=`r tidy_mod1_es[8]`, p= `r tidy_mod1_p[8]`), where Aβ+ women showed worse decline with higher parity.
-A significant positive main effect of childbirths was found on volume change in the fimbria (F= 5.240, adj. p.= 0.020). A significant interaction of childbirths and Aβ+ was found in the parasubiculum (F= 6.8155, adj. p.= 0.0443), such that Aβ+ women showed worse volume reduction with higher parity. This interaction was trending in the CA4, dentate gyrus, presubiculum and subiculum.
+Results: A trending interaction between number of childbirths and amyloid positivity on cognitive change was found (F=`r tidy_mod1_es[8]`, p=`r tidy_mod1_p[8]`), where Aβ+ women showed worse decline with higher parity. Childbirths had a significant positive main effect on volume change in the fimbria (F=5.240, adj.p.=0.020). A significant interaction of childbirths and Aβ+ was found in the parasubiculum (F=6.8155, adj.p.=0.0443), such that Aβ+ women showed worse volume reduction with higher parity. This interaction was trending in the CA4, dentate gyrus, presubiculum and subiculum.
 
-Conclusion: In CU post-menopausal women at risk of AD, parity might mediate the impact of AD pathology on cognitive decline over 3 years. Additionally, parity independently influence volume change in the fimbria, and moderates the impact of Aβ pathology in the parasubiculum and potentially more subfields. Results highlight the effect of parity on AD-related neuropathology via hippocampal volume change. Further studies are needed to investigate the scope of this impact on AD trajectory.
+Conclusion: In CU post-menopausal women at risk of AD, parity might moderate the impact of AD pathology on cognitive change at 3 years. Additionally, parity independently influences volume change in the fimbria, and interacts with AD pathology on parasubiculum volume. Results highlight the effect of parity on AD-related neuropathology via hippocampal volume change. 
 
