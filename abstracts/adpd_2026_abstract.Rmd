@@ -352,21 +352,42 @@ call_aesthethics <- function(text_size){
 }
 
 
-th <- call_aesthethics(13)
+th <- call_aesthethics(15)
 
 ```
 
 ## PACC ~ childbirth*AB
 
 ```{r}
+
+mod_pacc_w<-lm(PACC_diff ~ kids_total*A + A+age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
+pred_pacc<-ggpredict(mod_pacc_w, terms=c("kids_total", "A"))
+
+
+
 data_cog_diff%>%
   filter(sex == 2)%>%
   drop_na(A)%>%
   ggplot(aes(x=kids_total, y=PACC_diff, group=A, colour=A))+
-  geom_jitter()+
-  geom_smooth(method = "lm")+
+  geom_jitter(width = 0.1)+
+  geom_line(data=pred_pacc, 
+            aes( x=x,
+                 y=predicted,
+                 group=group,
+                 colour=group), 
+            inherit.aes = F, 
+            size=1)+
+  geom_ribbon(data = pred_pacc, 
+              aes(x=x, 
+                  ymin= conf.low, 
+                  ymax = conf.high, 
+                  group=group), 
+              inherit.aes = F, 
+              alpha=.2)+
   call_aesthethics(15)+
-  labs(x = "Number of childbirths", y = "PACC change (Z-score)")
+  labs(x = "Number of childbirths", y = "PACC change (Z-score)", group="Aβ+", colour="Aβ+")
+
+ggsave("G:/My Drive/ADPD 2026/plot_PACC_interaction.png", width = 8, height = 5)
 ```
 
 ## hipp ~ childbirth*AB
@@ -389,6 +410,7 @@ hippo_data_long%>%
 
 
 ### plotting differences
+uglyyyy
 ```{r}
 #I'm aware how clunky this code is... I was fighting with pivots for a while and getting nowhere. So this is the best I could do for now sorry! 
 
@@ -437,13 +459,16 @@ ggplot(aes(x=kids_total, y=vol_parasubiculum_diff_annual, group=A, colour=A))+
   call_aesthethics(15)+
   labs(x = "Number of childbirths", y = "Volume change")
 ```
-### Plot effect sizes
 
+
+
+### Plot effect sizes (using this)
+using this!
 ```{r}
 mod_plot<-lmer(vol_parasubiculum ~ kids_total*A + Visit + as.factor(APOE_binary) + scale(TIV) +(1| subject), data=hippo_data_long[hippo_data_long$sex==2,] )
 summary(mod_plot)
 
-plot_model(mod_plot)
+plot_model(mod_plot, type= "est", title = "", axis.title = "Parasubiculum volume change model estimate" )
 
 preds <- ggpredict(mod_plot, terms = c("kids_total", "A", "Visit")) 
 
@@ -456,39 +481,98 @@ hippo_data_long %>%
   mutate(kids_total_factor=ifelse(kids_total>=3, "3+", kids_total))%>%
   mutate(A = factor(A, labels = c("A-", "A+"))) %>%
   ggplot(aes(x = Visit, y = vol_parasubiculum, color = kids_total_factor, fill=kids_total_factor)) +
-  geom_point(alpha = 0.6, position = position_dodge(width = 1)) +
-  geom_boxplot(position = position_dodge(width = 0.9), alpha=.5)+
+  geom_point(alpha = 0.6, 
+             position = position_dodge(width = 1)) +
+  geom_boxplot(position = position_dodge(width = 0.9), 
+               alpha=.5)+
   facet_wrap(~A) +
   th +
-  labs(x = "Number of childbirths", y = "Parasubiculum volume", color = "Number of childbirths", fill= "Number of childbirths")+
+  labs(x = "Number of childbirths", 
+       y = "Parasubiculum volume", 
+       color = "Number of childbirths", 
+       fill= "Number of childbirths")+
   scale_color_manual(values = c("0" = "lightblue", "1" = "steelblue", "2" = "darkblue", "3+" = "navy", "4" = "midnightblue")) +
   scale_fill_manual(values = c("0" = "lightblue", "1" = "steelblue", "2" = "darkblue", "3+" = "navy", "4" = "midnightblue"))+
   scale_x_discrete(expand = expansion(mult = c(0.8, 0.8)))
 
+ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_interaction.png", width = 9, height = 5)
+
+
+plot_model(mod_plot, 
+           type = "est", 
+           title=" ", 
+           axis.labels = c("Childbirths*Aβ+", "TIV", "APOE-ε4 carrier", "Visit", "Aβ+", "Number of childbirths")) + 
+  th+
+  labs(y = "Parasubiculum volume change model estimate")+
+  geom_pointrange(aes(y = estimate, 
+                      ymin = conf.low, 
+                      ymax = conf.high),
+                  size = 0.8)
+ 
+ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_estimation.png", width = 8, height = 5)
 ```
 
+#Table
+
+```{r}
+library(gtsummary)
+library(gt)
+
+
+data_table<-data%>%
+  filter(sex==2)%>%
+  drop_na(age_v2_mri)%>%
+  drop_na(A)%>%
+  dplyr::select(age_v1, kids_total, A, APOE_binary)%>%
+  mutate(A=factor(A),
+         APOE_binary=factor(APOE_binary))%>%
+  rename( `Number of childbirths` = kids_total,
+         `Aβ+` = A,
+         `APOE-ε4 carrier` = APOE_binary,
+         `Age at first visit` = age_v1)
+
+
+
+desc_table<-tbl_summary(data_table,
+            by = `Number of childbirths`, 
+            missing = "no")%>%
+  add_n()%>%
+  add_p%>%
+  modify_header(label = "**Variable**") %>% # update the column header
+  bold_labels()
+
+
+desc_table%>%
+  as_gt()%>%
+  gtsave(filename = "G:/My Drive/ADPD 2026/table.docx")
+#modify the total number of participants depending on availability of T1 and PACC difference
+```
 
 
 
 
 #Abstract
 
-Objectives: Little is known about the impact of pregnancy on Alzheimer's Disease (AD) trajectory. We examined the impact of childbriths and AD pathlogy on cognitive decline, and related it to hippocampal volume change in cognitively unimpaired (CU) post-menopausal women at risk of AD.
+Objectives: Little is known about the impact of pregnancy on Alzheimer's Disease (AD) trajectory. We examined the impact of childbirths and AD pathology on cognitive decline, and related it to hippocampal volume change in cognitively unimpaired (CU) post-menopausal women at risk of AD.
 
 ```{r, echo=F}
 
 pt_number<-data%>%
+  drop_na(age_v2_mri)%>%
+    drop_na(A)%>%
   nrow()%>%
   as.numeric()
   
 pt_number_women<-data%>%
+  drop_na(age_v2_mri)%>%
+    drop_na(A)%>%
   filter(sex==2)%>%
   nrow()%>%
   as.numeric()
 
 ```
 
-Methods: Our sample includes `r pt_number_women` CU post-menopausal women from the ALFA+ study. Hippocampus subfield segmentation was obtained using Freesurfer 7. Amyloid (Aβ) positivity was defined as CSF Aβ42/40 ratio\<0.071. Cognition was measured at visit 1 and 2 using PACC scores. We first examined the impact of childbirths on cognitive change, and moderation by Aβ positivity. We then assessed the effect of childbirth on hippocampal subfield volume change, and moderation by Aβ positivity. All linear models included APOE-ε4 carriership, age, time difference between visits and total intracranial volume as covariates (Table 1). FDR correction was used in models 3 and 4.
+Methods: Our sample includes `r pt_number_women` CU post-menopausal women from the ALFA+ study. Hippocampus subfield segmentation was obtained using Freesurfer7. Amyloid (Aβ) positivity was defined as CSF Aβ42/40 ratio\<0.071. Cognition was measured at visit 1 and 2 using PACC scores. We first examined the impact of childbirths on cognitive change, and moderation by Aβ positivity. We then assessed the effect of childbirth on hippocampal subfield volume change, and moderation by Aβ positivity. All linear models included APOE-ε4 carriership, age, time difference between visits and total intracranial volume as covariates (Table 1). FDR correction was used in models 3 and 4.
 
 Results: A trending interaction between number of childbirths and amyloid positivity on cognitive change was found (F=`r tidy_mod1_es[8]`, p=`r tidy_mod1_p[8]`), where Aβ+ women showed worse decline with higher parity. Childbirths had a significant positive main effect on volume change in the fimbria (F=5.240, adj.p.=0.020). A significant interaction of childbirths and Aβ+ was found in the parasubiculum (F=6.8155, adj.p.=0.0443), such that Aβ+ women showed worse volume reduction with higher parity. This interaction was trending in the CA4, dentate gyrus, presubiculum and subiculum.
 
