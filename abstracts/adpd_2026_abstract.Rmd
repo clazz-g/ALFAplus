@@ -512,6 +512,60 @@ plot_model(mod_plot,
 ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_estimation.png", width = 8, height = 5)
 ```
 
+### Plot all coefficients for all regressions
+```{r}
+library(forestplot)
+
+data_forest_plot<-hippo_data_long%>%
+  filter(sex == 2 )
+
+models<-list(
+  mod_ca1 = lmer(vol_CA1 ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  mod_ca3 = lmer(vol_CA3 ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  mod_ca4 = lmer(vol_CA4 ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  mod_gc = lmer(vol_GC_ML_DG ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  mod_hata = lmer(vol_HATA ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  mod_tail = lmer(vol_Hippocampal_tail ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  mod_fimb = lmer(vol_fimbria ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  mod_ml = lmer(vol_molecular_layer_HP ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  mod_para = lmer(vol_parasubiculum ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  mod_pre = lmer(vol_presubiculum ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  mod_sub = lmer(vol_subiculum ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot)
+)
+
+# Extract coefficients and CIs
+install.packages("broom.mixed")
+library(broom.mixed)
+library(purrr)
+
+pred_hippo_all <- map_dfr(models, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "A"))   # Add consistent term column
+}, .id = "region")%>%
+  filter(term %in% c("kids_total", "A", "kids_total:A"))%>%
+  dplyr::select(region, term, estimate, std.error)%>%
+  pivot_wider(names_from = term, values_from = c(estimate, std.error))%>%
+  mutate(plot_estimate_kids_A0 = estimate_kids_total,
+         plot_estimate_kids_A1 = estimate_kids_total + `estimate_kids_total:A`,
+         plot_conf.low_kids_A0 = estimate_kids_total - 1.96 * std.error_kids_total,
+         plot_conf.high_kids_A0 = estimate_kids_total + 1.96 * std.error_kids_total,
+         plot_conf.low_kids_A1 = (estimate_kids_total + `estimate_kids_total:A` - 1.96 * `std.error_kids_total:A`),
+         plot_conf.high_kids_A1 = (estimate_kids_total + `estimate_kids_total:A` + 1.96 * `std.error_kids_total:A`))%>%
+  dplyr::select(-estimate_kids_total, -estimate_A,-`estimate_kids_total:A` ,-`std.error_kids_total`, -std.error_A ,         -`std.error_kids_total:A`)%>%
+  pivot_longer(
+    cols = starts_with("plot_"),  # Keep 'term' as-is
+    names_to = c(".value", "A"),  # .value creates columns like estimate, conf.low, etc.
+    names_pattern = "plot_(.*)_kids_A(\\d+)"
+  )
+
+
+
+pred_hippo_all %>%
+  ggplot(aes(x = estimate, y = region, group = A, color = A)) +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high), 
+                  position = position_dodge(width = 0.8))
+```
+
+
 #Table
 
 ```{r}
