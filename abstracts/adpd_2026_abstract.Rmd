@@ -121,7 +121,7 @@ data_cog_long<- left_join(data, cognition)%>%
   ungroup()
 
 
-fit_cog<-lmer(Z_FS_totalcnswr ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + repro_span +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
+fit_cog<-lmer(Z_PACC ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + repro_span +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
 summary(fit_cog)
 r.squaredGLMM(fit_cog)
 
@@ -156,9 +156,15 @@ composite_all<-full_join(composites1, composites2)%>%
 
 data_cog_long_composites<-left_join(data_cog_long, composite_all)
 
-fit_cog_domain<-lmer(Z_Visual_Composite ~ kids_total*A +age_cog + APOE_binary + education +age_menopause+(1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
+fit_cog_domain<-lmer(Z_Executive_Composite ~ kids_total*A +age_cog + APOE_binary + education + repro_span + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
 summary(fit_cog_domain)
 r.squaredGLMM(fit_cog_domain)
+
+p_values <- c(0.0256, 0.4011  ,  0.962  ,  0.4655  ,  0.1276    )
+
+fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
+fdr_adjusted_p_values
+
 ```
 
 #Cognitive results - LM of change
@@ -330,7 +336,7 @@ does not yield much
 ```{r}
 
 cols<-data_cog_long_composites%>%
-  dplyr::select(subject, Visit, Z_Attention_Composite, Z_Executive_Composite, Z_Memory_Composite, Z_Language_Composite, Z_Visual_Composite)
+  dplyr::select(subject, Visit, Z_Attention_Composite, Z_Executive_Composite, Z_Memory_Composite, Z_Language_Composite, Z_Visual_Composite, age_cog)
 
 mediation_data<-hippo_data_long%>%
   mutate(Visit = ifelse(Visit == "V2", "2", "1"))%>%
@@ -472,6 +478,67 @@ data_cog_diff%>%
 ggsave("G:/My Drive/ADPD 2026/plot_PACC_interaction.png", width = 8, height = 5)
 ```
 
+
+## test for model estimates of cognition?
+```{r}
+data_forest_plot_cog<-mediation_data%>%
+  filter(sex == 2 )
+
+models<-list(
+  Attention = lmer(Z_Attention_Composite ~ kids_total*A +age_cog + APOE_binary + education  + Fuma2 +(1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,]),
+  Memory = lmer(Z_Memory_Composite ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,]),
+  Executive = lmer(Z_Executive_Composite ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,]),
+  Language = lmer(Z_Language_Composite ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,]),
+  Visual = lmer(Z_Visual_Composite ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
+)
+
+# Extract coefficients and CIs
+#install.packages("broom.mixed")
+#library(broom.mixed)
+#library(purrr)
+
+pred_cog_all <- map_dfr(models, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "A"))   
+}, .id = "cog")%>%
+  filter(term %in% c("kids_total", "A", "kids_total:A"))%>%
+  dplyr::select(cog, term, estimate, std.error)%>%
+  pivot_wider(names_from = term, values_from = c(estimate, std.error))%>%
+  mutate(plot_estimate_kids_A0 = estimate_kids_total,
+         plot_estimate_kids_A1 = estimate_kids_total + `estimate_kids_total:A`,
+         plot_conf.low_kids_A0 = estimate_kids_total - 1.96 * std.error_kids_total,
+         plot_conf.high_kids_A0 = estimate_kids_total + 1.96 * std.error_kids_total,
+         plot_conf.low_kids_A1 = (estimate_kids_total + `estimate_kids_total:A` - 1.96 * `std.error_kids_total:A`),
+         plot_conf.high_kids_A1 = (estimate_kids_total + `estimate_kids_total:A` + 1.96 * `std.error_kids_total:A`))%>%
+  dplyr::select(-estimate_kids_total, -estimate_A,-`estimate_kids_total:A` ,-`std.error_kids_total`, -std.error_A ,         -`std.error_kids_total:A`)%>%
+  pivot_longer(
+    cols = starts_with("plot_"),  # Keep 'term' as-is
+    names_to = c(".value", "A"),  # .value creates columns like estimate, conf.low, etc.
+    names_pattern = "plot_(.*)_kids_A(\\d+)"
+  )
+  mutate(colour_group = case_when(region == "CA4" ~ "trend",
+                                  region == "GC-ML-DG" ~ "trend",
+                                  region == "Presubiculum" ~ "trend",
+                                  region == "Subiculum" ~ "trend",
+                                  region == "Parasubiculum" ~ "significant",
+                                  .default = "normal"))
+
+
+
+pred_cog_all %>%
+  mutate(A = factor(A, levels = c("1", "0"), labels = c("Positive", "Negative"))) %>%
+  ggplot(aes(x = estimate, y = cog, group = A, colour = A)) +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high), 
+                  position = position_dodge(width = 0.8),
+                  size = 0.6) +
+  labs(x = "Estimated effect of parity on cog trajectory", 
+       y = "Cog domain") +
+  scale_shape_manual(values = c("Negative" = 15, "Positive" = 16))
+  
+
+
+#ggsave("G:/My Drive/ADPD 2026/plot_all_regressions_estimates.png", width = 8, height = 6)
+```
+
 ## hipp ~ childbirth*AB
 
 ### plotting both timepoints
@@ -544,8 +611,8 @@ ggplot(aes(x=kids_total, y=vol_parasubiculum_diff_annual, group=A, colour=A))+
 
 
 
-### Plot effect sizes (using this)
-using this!
+### Plot effect sizes 
+
 ```{r}
 mod_plot<-lmer(vol_parasubiculum ~ kids_total*A + Visit + as.factor(APOE_binary) + scale(TIV) +(1| subject), data=hippo_data_long[hippo_data_long$sex==2,] )
 summary(mod_plot)
