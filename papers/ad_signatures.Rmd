@@ -66,17 +66,24 @@ library(lme4)
 library(lmerTest)
 ```
 
-```{r, include=F}
-# The structured abstract must include the information described below, and authors are asked to reference recent journal issues for examples.
-# 
-# Background and Objectives: The background should describe what is known on the topic and what gaps the study aims to address. Explicitly state the main research question and the primary objective and key secondary objectives, or the a priori hypothesis that is being tested.
-# 
-# Methods: Describe the key elements of the study design (randomized clinical trial, cohort study, etc.). Explain the setting where the patients or participants were recruited, how they were identified, and what the key inclusion and exclusion criteria were as well as the duration of follow-up, if relevant. The number of participants in the study should go in the Results section and not here. Describe any interventions or exposures considered. Was matching done and if so, how? Describe and define the primary outcome measures and explain how they were ascertained and collected. How were the data analyzed? For manuscripts reporting systematic reviews and meta-analyses, provide information on the databases and years searched. Include the inclusion and exclusion criteria for the systematic search and how data were abstracted.
-# 
-# Results: Describe how many participants were enrolled in the study and provide their key summary clinical and demographic characteristics. The focus of this section must be on the primary outcome. Provide absolute numbers, estimates of effect size/association, and corresponding measures of uncertainty (e.g., 95% CIs). Do not report p-values by themselves. Any secondary outcomes or the results of post hoc analyses must be identified as such. Studies evaluating diagnostic or prognostic tests should provide information on sensitivity, specificity, likelihood ratios, ROCs, and other predictive values. For meta-analysis, provide information on how many studies were included and a rating of the quality of the available evidence. State which outcomes were studied and include measures of effect size/association, and corresponding measures of uncertainty (e.g. 95% CIs).
-# 
-# Discussion: Summarize the main finding of the primary outcome and focus only on those conclusions that are supported by the data presented in the study. Include a sentence highlighting the clinical, research, policy, or public health implications of the study. Do not make inferences that are not supported by the data in the study.
-```
+Lancet Guidelines
+
+Be up to 3500 words (4500 for randomised controlled trials) with 30 references (the word count is for the manuscript text only)
+• Include an abstract (semi-structured summary), with five paragraphs (Background, Methods, Findings, Interpretation, and
+Funding), not exceeding 300 words. Our electronic submission system will ask you to copy and paste this section at the “Submit
+Abstract” stage
+• For randomised trials, the abstract should adhere to CONSORT extensions: abstracts (see Lancet 2008; 371: 281–83)
+• When reporting Kaplan-Meier survival data, at each timepoint, authors must include numbers at risk, and are encouraged to
+include the number of censored patients.
+• For intervention studies, the abstract should include the primary outcome expressed as the difference between groups with a
+confidence interval on that difference (absolute differences are more useful than relative ones). Secondary outcomes can be included as long as they are clearly marked as secondary and all such outcomes are reported
+• Use the recommended international non-proprietary name (rINN) for drug names. Ensure that the dose, route, and frequency of administration of any drug you mention are correct
+• All accepted Articles should include a link to the full study protocol published on the authors’ institutional website (see Lancet 2009; 373: 992 and Lancet 2010; 375: 348)
+• We encourage researchers to enrol women and ethnic groups into clinical trials of all phases, and to plan to analyse data by sex
+and by race
+
+All research papers (including systematic reviews/meta-analyses) submitted to any journal in The Lancet family must include a panel putting their research into context with previous work in the format outlined below (see Lancet 2014; 384: 2176–77, for the original rationale). This panel should not contain references. Editors will use this information at the first assessment stage and peer reviewers will be specifically asked to check the content and accuracy
+• The Discussion section should contain a full description and discussion of the context. Authors are also invited to either report their own, up-to-date systematic review or cite a recent systematic review of other trials, putting their trial into context of the review
 
 #Abstract
 
@@ -86,13 +93,15 @@ library(lmerTest)
 
 ## Participants
 
-The sample included 201 women from the ALFA+ project (Clinicaltrials.gov Identifier:NCT01835717) , a longitudinal cohort composed of 440 cognitively unimpaired individuals with heighteined AD risk[@molinuevo2016]. All participants had a Clinical Dementia Rating (CDR) scale = 0, and no history of cardiovascular disease. Women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample.
+The sample included (include r object) women from the ALFA+ project (Clinicaltrials.gov Identifier:NCT01835717) , a longitudinal cohort composed of 440 cognitively unimpaired individuals with heighteined AD risk[@molinuevo2016]. All participants had a Clinical Dementia Rating (CDR) scale = 0, and no history of cardiovascular disease. Women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample.
 
 ## MRI acquisition
 
 MRI scans were acquired on a 3.0 T scanner (GE Discovery MR750 W 3 T) using the same protocol for all participants, which included one T1- and three T2- weighted sequences. The 3D-T1w sequence was designed with an isotropic voxel size of1mm3 and a matrix size of256x256x160 (TR/TE/TI = 8.0/3.7/450 ms, NSA = 1, flip angle = 8°). Three 3D-T2w sequences, with a voxel size of1 mm× 1 mm× 3 mm, were also used: fluid attenuation inversion recovery (FLAIR: TR/TE/ TI = 11,000/90/2600 ms, flip angle = 160°), fast spin echo (FSE: TR/TE = 5000/85 ms, flip angle = 110°) and, gradient echo (GRE: TR/TE = 1300/23 ms, flip angle = 15°). All scans were visually assessed to verify their quality and to detect incidental findings by a trained neuroradiologist and have been reported elsewhere (Brugulat-Serrat et al. 2017). In this study, ten participants were excluded due to the presence of a meningioma, as well as 37 participants due to susceptibility, motion artefacts or segmentation problems, resulting in a total of 561 images available for subsequent analysis. The medial temporal lobe atrophy was assessed by Medial Temporal Atrophy scale (Scheltens et al. 1992).
 
 ## Hippocampal segmentation
+
+Hippocampal subfield volumes were automatically calculated by FreeSurfer 7 using whole hippocampal segmentation provided by the standard ‘recon-all’ pipeline, which renders the most standard and widely-used volumetric estimation of hippocampal volumes. 
 
 ## Lumbar puncture
 
@@ -104,9 +113,9 @@ Cognitive composite z-scores were computed in four different cognitive domains: 
 
 ## Statistical analyses
 
-### Regression models
+### Linear regression models
 
-Statistical analyses were carried using R v4.4.1. Group differences were obtained using the Kruskall-Wallis test of significance for continuous variables and a Chi Square test for categorical variables. All linear regressions were adjusted for age, APOE-4 status, and sex when both men and women were included. Linear regressions with cognitive scores as an outcome variable were also adjusted for the time difference between each visit and years of education. Linear regressions with MRI measures as outcomes were adjusted for the time difference between MRI sessions and Total Intracranial Volume (TIV). Regression models looking at hippocampal volume were performed as follow: the outcome variable used was first whole hippocampal volume, then separate regions of the hippocampus as follows: head, body, tail fissure. If a significant effect was found in the hippocampal head or body, further analyses were carried out on the relevant subfields. When carrying separate regression for each area of interest, p-values were adjusted for False Discovery Rate (FDR) using the Bonferroni method.
+Statistical analyses were carried using R v4.5.1. All linear regressions were adjusted for age, APOE-4 status, and sex when both men and women were included. Linear regressions with cognitive scores as an outcome variable were also adjusted for the time difference between each visit and years of education. Linear regressions with hippocampal subfield volumes as outcomes were adjusted for the time difference between MRI sessions and Total Intracranial Volume (TIV). p-values were adjusted using the False Discovery Rate (FDR) method.
 
 #Results
 
@@ -301,7 +310,7 @@ run_volume_lmer_regressions <- function(data, predictors) {
 hippo_data_long%>%
   filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total*A", "age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+run_volume_lmer_regressions( .,c( "kids_total*CSF_NFL", "age_mri", "APOE_binary", "scale(TIV)", "repro_span", "(1 | subject)"))
 
 p_values <- c(0.6607 ,   0.14130   , 0.0158, 0.0326, 0.718  ,  0.0965, 0.8346  ,0.582  ,  0.00403, 0.0139 ,0.0253  )
 
@@ -447,7 +456,7 @@ data_cog_long<- left_join(data, cognition)%>%
   ungroup()
 
 # when looking at v3 there is sig interaction of Ptau181 and kids_total, but only when looking at jsut compelte cases of visit 1, 2 and 3, 108 subjects and having age_menopause
-fit_cog<-lmer(Z_PACC ~ kids_total*pTau181 +age_cog + APOE_binary + education +(1 | subject) + age_menopause_pmm, data_cog_long[data_cog_long$sex == 2,])
+fit_cog<-lmer(Z_PACC ~ kids_total*A +age_cog + APOE_binary + education +(1 | subject) , data_cog_long[data_cog_long$sex==2,])
 summary(fit_cog)
 r.squaredGLMM(fit_cog)
 
@@ -461,6 +470,14 @@ test_dat%>%
   ggplot(aes(x=kids_total, y=diff_PACC))+
   geom_jitter()+
   geom_smooth()
+
+data_cog_long<-data_cog_long%>%
+  group_by(Visit)%>%
+  mutate(PACC_tiers = ntile(Z_PACC, 3))
+
+
+fit_cog_tier<-lmer(PACC_tiers ~ kids_total*A +age_cog + APOE_binary + education +(1 | subject) , data_cog_long)
+summary(fit_cog_tier)
 
 ```
 
