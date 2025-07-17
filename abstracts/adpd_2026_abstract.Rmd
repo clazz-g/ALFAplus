@@ -102,7 +102,7 @@ data<-left_join(data, biomarkers)
 
 ```
 
-#Cognitive results - LMM
+# Cognitive results - LMM
 
 ```{r, echo=FALSE}
 
@@ -114,13 +114,14 @@ cognition<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete)
 
 data_cog_long<- left_join(data, cognition)%>%
   mutate(age_cog = as.numeric(difftime(FechaResultado, DOB, units= c("days")))/365.25)%>%
-  group_by(subject) %>%
-  filter(Visit != 3,
-         n() == 2) %>%
+  group_by(subject)%>%
+  filter(Visit != 3) %>%
+  filter(n()==2)%>%
+  relocate(Visit, .after=sex)%>%
   ungroup()
 
 
-fit_cog<-lmer(Z_FS_totalcnswr ~ kids_total*A +age_cog + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
+fit_cog<-lmer(Z_FS_totalcnswr ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + repro_span +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
 summary(fit_cog)
 r.squaredGLMM(fit_cog)
 
@@ -153,9 +154,9 @@ composite_all<-full_join(composites1, composites2)%>%
   ungroup()%>%
   mutate(subject = as.numeric(subject))
 
-data_cog_long<-left_join(data_cog_long, composite_all)
+data_cog_long_composites<-left_join(data_cog_long, composite_all)
 
-fit_cog_domain<-lmer(Z_Visual_Composite ~ kids_total*A +age_cog + APOE_binary + education +age_menopause+(1 | subject), data_cog_long[data_cog_long$sex == 2,])
+fit_cog_domain<-lmer(Z_Visual_Composite ~ kids_total*A +age_cog + APOE_binary + education +age_menopause+(1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
 summary(fit_cog_domain)
 r.squaredGLMM(fit_cog_domain)
 ```
@@ -215,8 +216,9 @@ plot_model(mod_pacc_w, type = "int")
 mod_pacc_w_poly<-lm(PACC_diff ~ poly(kids_total, 2, raw = TRUE)*A+ age_menopause_pmm +age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
 summary(mod_pacc_w_poly)
 ```
+ Do not use anymore! obsolete
 
-#hippo vol change
+# hippo vol change
 ```{r}
 hippo<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V1_20231120_20250208_111212.xlsx")%>%
   group_by(subject, region) %>%
@@ -323,6 +325,81 @@ r.squaredGLMM(mod_test)
 
 ```
 
+#Mediation test
+does not yield much
+```{r}
+
+cols<-data_cog_long_composites%>%
+  dplyr::select(subject, Visit, Z_Attention_Composite, Z_Executive_Composite, Z_Memory_Composite, Z_Language_Composite, Z_Visual_Composite)
+
+mediation_data<-hippo_data_long%>%
+  mutate(Visit = ifelse(Visit == "V2", "2", "1"))%>%
+  left_join(., cols)%>%
+  drop_na(Z_Language_Composite)%>%
+  drop_na(vol_parasubiculum)
+
+#library(boot)
+
+# Fit the models
+med_model <- lmer(vol_parasubiculum ~ kids_total * A + age_mri + APOE_binary + TIV  +(1 | subject), 
+                  data = mediation_data)
+
+out_model <- lmer(Z_Memory_Composite ~ vol_parasubiculum + kids_total * A + age_mri + APOE_binary + TIV  +(1 | subject), 
+                  data = mediation_data)
+
+# Extract coefficients for indirect effect
+a_coef <- fixef(med_model)["kids_total:A"]  # interaction effect on mediator
+b_coef <- fixef(out_model)["vol_parasubiculum"]  # mediator effect on outcome
+
+# Point estimate of indirect effect
+indirect_effect <- a_coef * b_coef
+print(paste("Indirect effect:", indirect_effect))
+
+# For confidence intervals, use parametric bootstrap
+bootstrap_indirect <- function(n_sims = 1000) {
+  # Get variance-covariance matrices
+  vcov_med <- vcov(med_model)
+  vcov_out <- vcov(out_model)
+  
+  # Simulate coefficients
+  a_sims <- rnorm(n_sims, a_coef, sqrt(vcov_med["kids_total:A", "kids_total:A"]))
+  b_sims <- rnorm(n_sims, b_coef, sqrt(vcov_out["vol_parasubiculum", "vol_parasubiculum"]))
+  
+  # Calculate indirect effects
+  indirect_sims <- a_sims * b_sims
+  
+  return(indirect_sims)
+}
+
+# Get bootstrap distribution
+indirect_boot <- bootstrap_indirect(1000)
+
+# Calculate confidence intervals
+ci_lower <- quantile(indirect_boot, 0.025)
+ci_upper <- quantile(indirect_boot, 0.975)
+
+print(paste("95% CI: [", round(ci_lower, 4), ", ", round(ci_upper, 4), "]"))
+
+## Test 
+install.packages("RMediation")
+library(RMediation)
+
+# Extract coefficients and standard errors
+a_coef <- fixef(med_model)["kids_total:A"]
+a_se <- sqrt(vcov(med_model)["kids_total:A", "kids_total:A"])
+
+b_coef <- fixef(out_model)["vol_parasubiculum"] 
+b_se <- sqrt(vcov(out_model)["vol_parasubiculum", "vol_parasubiculum"])
+
+# Test mediation
+mediation_test <- medci(mu.x = a_coef, mu.y = b_coef, 
+                        se.x = a_se, se.y = b_se,
+                        alpha = 0.05, type = "prodclin")
+
+print(mediation_test)
+```
+
+
 # plots
 
 ## Plot aesthetics
@@ -356,7 +433,7 @@ th <- call_aesthethics(15)
 
 ```
 
-## PACC ~ childbirth*AB
+## PACC ~ childbirth*AB - not in use anymore because using mixed effect model
 
 ```{r}
 
