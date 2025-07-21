@@ -116,12 +116,12 @@ data_cog_long<- left_join(data, cognition)%>%
   mutate(age_cog = as.numeric(difftime(FechaResultado, DOB, units= c("days")))/365.25)%>%
   group_by(subject)%>%
   filter(Visit != 3) %>%
-  filter(n()==2)%>%
+  filter(n()>=2)%>%
   relocate(Visit, .after=sex)%>%
   ungroup()
 
 
-fit_cog<-lmer(Z_PACC ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + repro_span +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
+fit_cog<-lmer(Z_FS_totalcnswr ~ kids_total*A +age_cog + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
 summary(fit_cog)
 r.squaredGLMM(fit_cog)
 
@@ -156,7 +156,7 @@ composite_all<-full_join(composites1, composites2)%>%
 
 data_cog_long_composites<-left_join(data_cog_long, composite_all)
 
-fit_cog_domain<-lmer(Z_Executive_Composite ~ kids_total*A +age_cog + APOE_binary + education + repro_span + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
+fit_cog_domain<-lmer(Z_Language_Composite ~ kids_total*A +age_cog + APOE_binary + education + repro_span + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
 summary(fit_cog_domain)
 r.squaredGLMM(fit_cog_domain)
 
@@ -718,7 +718,7 @@ pred_hippo_all %>%
   geom_pointrange(aes(xmin = conf.low, xmax = conf.high), 
                   position = position_dodge(width = 0.8),
                   size = 0.6) +
-  labs(x = "Estimated effect of parity on volume change", 
+  labs(x = "Estimated effect of parity", 
        y = "Hippocampal subfield", 
        shape = "Aβ status",
        color = "Significance level (FDR corrected)") +
