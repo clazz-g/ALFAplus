@@ -9,10 +9,9 @@ format:
   docx: default 
 editor: visual
 bibliography: references.bib
-csl: nature-cell-biology.csl
 ---
 
-```{r}
+```{r, include = F}
 library(readxl)
 #install.packages("ggplot2")
 library(ggplot2)
@@ -69,12 +68,6 @@ library(broom.mixed)
 library(purrr)
 ```
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(digits = 3,        # Set number of significant digits
-  scipen = 999,      # Prevent scientific notation
-  out.width = '100%')  # This sets global rounding to 3 decimal places
-
-```
 
 Lancet Guidelines
 
@@ -82,9 +75,9 @@ Be up to 3500 words (4500 for randomised controlled trials) with 30 references (
 
 All research papers (including systematic reviews/meta-analyses) submitted to any journal in The Lancet family must include a panel putting their research into context with previous work in the format outlined below (see Lancet 2014; 384: 2176–77, for the original rationale). This panel should not contain references. Editors will use this information at the first assessment stage and peer reviewers will be specifically asked to check the content and accuracy • The Discussion section should contain a full description and discussion of the context. Authors are also invited to either report their own, up-to-date systematic review or cite a recent systematic review of other trials, putting their trial into context of the review
 
-#Abstract
+# Abstract
 
-#Introduction
+# Introduction
 
 # Methods
 
@@ -150,7 +143,7 @@ pt_number_w<-data_desc%>%
 
 ```
 
-Our sample includes `r pt_number` participants from the ALFA+ project of which `r pt_number_w` are women (Clinicaltrials.gov Identifier:NCT01835717). This longitudinal cohort is composed of cognitively unimpaired individuals with heighteined AD risk[@molinuevo2016]. All participants had a Clinical Dementia Rating (CDR) scale = 0, and no history of cardiovascular disease. Women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample.
+Our sample includes `r pt_number` participants from the ALFA+ project, of which `r pt_number_w` are women (Clinicaltrials.gov Identifier: NCT01835717). This longitudinal cohort is composed of cognitively unimpaired individuals with heighteined AD risk [@molinuevo2016]. All participants had a Clinical Dementia Rating (CDR) scale = 0, and no history of cardiovascular disease. Women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample.
 
 ## MRI acquisition
 
@@ -174,9 +167,9 @@ Cognitive composite z-scores were computed in four different cognitive domains: 
 
 Statistical analyses were carried using R v4.5.1. All linear regressions were adjusted for age, APOE-4 status, and sex when both men and women were included. Linear regressions with cognitive scores as an outcome variable were also adjusted for the time difference between each visit and years of education. Linear regressions with hippocampal subfield volumes as outcomes were adjusted for the time difference between MRI sessions and Total Intracranial Volume (TIV). p-values were adjusted using the False Discovery Rate (FDR) method.
 
-#Results
+# Results
 
-##Descriptive results
+## Descriptive results
 
 ```{r, include = F}
 
@@ -204,7 +197,7 @@ Table 1 shows demographics and characteristics of the ALFA+ cohort, for all part
 
 ## Longitudinal trajecotry of hippocampal subfield volumes
 
-```{r}
+```{r, include = F}
 # summing some groups together: "subject"\   
   # "vol_CA1-body" CA1\   
   # "vol_CA1-head" CA1\   
@@ -288,12 +281,13 @@ run_volume_lmer_regressions <- function(data, predictors) {
   names(summaries) <- outcome_vars
 
   return(summaries)
+}
 
   ##no interaction
 
 hippo_data_long%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total", ,"A","sex", "age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+run_volume_lmer_regressions( .,c( "kids_total" ,"A","sex", "age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
 
 outcome_vars <- c(
   "vol_CA1", "vol_CA3", "vol_CA4", "vol_GC_ML_DG", "vol_HATA", 
@@ -326,12 +320,14 @@ tidy_models_hip <- map_dfr(models_hip, ~ {
 fdr_hip_sex<-tidy_models_hip%>%
   filter(term == "sex2")%>%
   pull(p.value)%>%
-  p.adjust(method = "fdr")
-  
+  p.adjust(method = "fdr")%>%
+  format(., scientific = FALSE)
+
 fdr_hip_parity<-tidy_models_hip%>%
   filter(term == "kids_total")%>%
   pull(p.value)%>%
-  p.adjust(method = "fdr")
+  p.adjust(method = "fdr")%>%
+  format(., scientific = FALSE)
 ```
 
 Mixed effect longitudinal models applied to our entire sample showed a significant main effect of sex in the CA1, CA3, CA4, GC-ML-DG, HATA, molecular layer and parasubiculum, where women appeared to show greater decline than men in these subfields. A significant main positive effect of parity was found in the fimbria.
@@ -361,13 +357,11 @@ tidy_models_hip_w <- map_dfr(models_hip_w, ~ {
 }, .id = "region")%>%
   filter(term == "A"| term == "kids_total")
 
-fdr_hip_w<-(
-  tidy_models_hip_w%>%
+fdr_hip_w<-tidy_models_hip_w%>%
   filter(term == "kids_total")%>%
   pull(p.value)%>%
   p.adjust(., method = "fdr")%>%
-  sprintf("%.10f", .)
-  )
+  format(., scientific = FALSE)
 
 #fimbria significant, fimbria trend
 
@@ -394,20 +388,18 @@ tidy_models_hip_w_int <- map_dfr(models_hip_w_int, ~ {
 }, .id = "region")%>%
   filter(term == "A"| term == "kids_total" | term == "kids_total:A")
 
-fdr_hip_w_int<-(
-  tidy_models_hip_w_int%>%
+fdr_hip_w_int<-tidy_models_hip_w_int%>%
   filter(term == "kids_total:A")%>%
   pull(p.value)%>%
   p.adjust(., method = "fdr")%>%
-  sprintf("%.10f", .)
-  )
+  format(., scientific = FALSE)
 
 #CA4, GC_ML_DG   parasubiculum presubiculum and subiculum significant. parasubiculum survives mutiple comparison
 ```
 
 When stratifying by sex, a trending positive main effect of parity was found in the fimbria, suggesting women with higher parity showed greater fimbria volume. No effect of parity was found for men in any of the subfields. A significant parity\*Aβ status interaction was found in the parasubiculum, where Aβ+ women with higher parity showed greater volume reduction. This effect was also trending in the CA4, GC-ML-DG, subiculum and presubiculum. This interaction did not significantly affect men.
 
-##Jack's signature
+## Jack's signature
 
 ```{r, include = F}
 jack<-read_excel("G:/My Drive/Data/ALFA+/Jack signature ALFA+/bx_signature_jack_ALFA_PLUS_V1_20231120_20250527_142751.xlsx")%>%
@@ -443,11 +435,9 @@ fit_jack_grey_w <- lmer(jack_GrayVol ~ kids_total*A  +Visit +age_mri + APOE_bina
 summary(fit_jack_grey_w)
 ```
 
-##Cognitive results
+## Cognitive trajectory
 
-# Cognitive results - LMM
-
-```{r, echo=FALSE}
+```{r, include=F}
 
 
 cognition<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
@@ -466,7 +456,7 @@ data_cog_long<- left_join(data, cognition)%>%
 
 fit_cog<-lmer(Z_FS_totalcnswr ~ kids_total*A +age_cog + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
 summary(fit_cog)
-r.squaredGLMM(fit_cog)
+
 
 plot_model(fit_cog, type = "int")
 
@@ -501,7 +491,7 @@ data_cog_long_composites<-left_join(data_cog_long, composite_all)
 
 fit_cog_domain<-lmer(Z_Language_Composite ~ kids_total*A +age_cog + APOE_binary + education + repro_span + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
 summary(fit_cog_domain)
-r.squaredGLMM(fit_cog_domain)
+
 
 p_values <- c(0.0256, 0.4011  ,  0.962  ,  0.4655  ,  0.1276    )
 
@@ -512,7 +502,36 @@ fdr_adjusted_p_values
 
 # Graphs!
 
-## Plot all coefficients for women only interaction MEM
+```{r, include=F}
+
+call_aesthethics <- function(text_size){
+  th <- theme(   panel.grid.major = element_blank(),
+                 panel.grid.minor = element_blank(),
+                 panel.border = element_blank(),
+                 panel.background = element_blank(),
+                 axis.line = element_line(linewidth = 0.5),
+                 legend.position = 'right',
+                 legend.text = element_text(size= text_size, family="Helvetica"),
+                 text = element_text(size= text_size, family="Helvetica"),
+                 strip.text.x = element_text(size = rel(0.90)),
+                 strip.text.y = element_text(size = rel(0.90)),
+                 axis.title.x = element_text(vjust=-0.3),
+                 plot.title = element_text(hjust = 0.5, vjust = 0),
+                 axis.ticks = element_line(linewidth = 0.4),
+                 axis.text.x.bottom  = element_text(size = rel(0.90), margin = unit(c(t = 2.5, r = 0, b = 0, l = 0), "mm")),
+                 axis.title.y = element_text(vjust = 1),
+                 axis.text.y = element_text(size = rel(0.90), margin = unit(c(t = 0, r = 2.5, b = 0, l = 0), "mm")),
+                 axis.ticks.length = unit(-1.2, "mm"),
+                 axis.text.x.top = element_text(size = rel(0.90), margin = unit(c(t = 0, r = 0, b = 2.5, l = 0), "mm")))
+  return(th)
+}
+
+
+th <- call_aesthethics(15)
+
+```
+
+## Figure 1: Estimated effect of parity on observed volume trajectory across hippocampal subfield regions.
 
 ```{r, include=F}
 data_forest_plot<-hippo_data_long%>%
@@ -562,7 +581,7 @@ pred_hippo_all <- map_dfr(models, ~ {
                                   .default = "normal"))
 ```
 
-```{r}
+```{r, echo=F, warning=F}
 pred_hippo_all %>%
   mutate(A = factor(A, levels = c("1", "0"), labels = c("Positive", "Negative"))) %>%
   ggplot(aes(x = estimate, y = region, group = A, shape = A, color = colour_group)) +
@@ -581,61 +600,5 @@ pred_hippo_all %>%
   
 ```
 
-# Miscellaneous
-
-hippo volume cross sectional
-
-```{r, include = F}
-#No interaction first   
-
-  hippo_data%>%   
-    filter(sex == 2& Visit == "V1")%>%   
-     dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%   
-  run_volume_regressions( .,c( "kids_total", "age_v1_mri", "APOE_binary", "TIV"))   
-
-  #fimbria,  has sig main effect but I doubt survive multiple comparison   
-
-  p_values <- c(0.22051  ,  0.798 ,   0.470134  ,  0.3700  ,  0.09179 ,0.87412    ,0.012556 ,0.7079   , 0.875   , 0.459  ,  0.42763    )   
-  #None survive   
-
-  fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")   
-  fdr_adjusted_p_values   
-
-  #Interaction   
-
-  hippo_data%>%   
-    filter(sex == 2 & Visit == "V1")%>%   
-    dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%   
-  run_volume_regressions( .,c( "kids_total*A", "age_v1_mri", "APOE_binary", "TIV"))   
-
-  p_values <- c(0.6935  ,  0.165  ,  0.0280, 0.052237 ,0.67701   , 0.09818, 0.842061   , 0.8220  ,  0.00656 ,0.0181 ,0.03944 )   
-
-fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")   
-fdr_adjusted_p_values   
-
-#CA4, parasubiculum, presubiculum and subiculum sig but none survive multiple comparison! except trend for parasubiculum 
-```
-
-jacks' values cross sectional
-
-```{r}
-mod1<-lm(jack_ThickAvg ~ kids_total*A + age_v1_mri + APOE_binary +TIV,data = jack_data[jack_data$sex == 2,])
-mod2<-lm(jack_ThickAvg ~ kids_dicho*A + age_v1_mri + APOE_binary +TIV,data = jack_data[jack_data$sex == 2,])
-mod3<-lm(jack_ThickAvg ~ parous_group*A + age_v1_mri + APOE_binary +TIV,data = jack_data[jack_data$sex == 2,])
-
-summary(mod1)
-summary(mod2)
-summary(mod3)
 
 
-mod1<-lm(jack_GrayVol ~ kids_total *A+ age_v1_mri + APOE_binary +TIV,data= jack_data[jack_data$sex == 2,])
-mod2<-lm(jack_GrayVol ~ kids_dicho *A+ age_v1_mri + APOE_binary +TIV,data = jack_data[jack_data$sex == 2,])
-mod3<-lm(jack_GrayVol ~ parous_group *A+ age_v1_mri + APOE_binary +TIV,data = jack_data[jack_data$sex == 2,])
-
-
-summary(mod1)
-summary(mod2)
-summary(mod3)
-
-plot(mod1)
-```
