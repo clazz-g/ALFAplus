@@ -64,6 +64,13 @@ library(patchwork)
 library(lme4)
 #install.packages("lmerTest")
 library(lmerTest)
+library(gtsummary)
+```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(digits = 3,        # Set number of significant digits
+  scipen = 999,      # Prevent scientific notation
+  out.width = '100%')  # This sets global rounding to 3 decimal places
+
 ```
 
 Lancet Guidelines
@@ -93,36 +100,16 @@ All research papers (including systematic reviews/meta-analyses) submitted to an
 
 ## Participants
 
-The sample included (include r object) women from the ALFA+ project (Clinicaltrials.gov Identifier:NCT01835717) , a longitudinal cohort composed of 440 cognitively unimpaired individuals with heighteined AD risk[@molinuevo2016]. All participants had a Clinical Dementia Rating (CDR) scale = 0, and no history of cardiovascular disease. Women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample.
+```{r, include=FALSE}
 
-## MRI acquisition
+# creating basic dataset
 
-MRI scans were acquired on a 3.0 T scanner (GE Discovery MR750 W 3 T) using the same protocol for all participants, which included one T1- and three T2- weighted sequences. The 3D-T1w sequence was designed with an isotropic voxel size of1mm3 and a matrix size of256x256x160 (TR/TE/TI = 8.0/3.7/450 ms, NSA = 1, flip angle = 8°). Three 3D-T2w sequences, with a voxel size of1 mm× 1 mm× 3 mm, were also used: fluid attenuation inversion recovery (FLAIR: TR/TE/ TI = 11,000/90/2600 ms, flip angle = 160°), fast spin echo (FSE: TR/TE = 5000/85 ms, flip angle = 110°) and, gradient echo (GRE: TR/TE = 1300/23 ms, flip angle = 15°). All scans were visually assessed to verify their quality and to detect incidental findings by a trained neuroradiologist and have been reported elsewhere (Brugulat-Serrat et al. 2017). In this study, ten participants were excluded due to the presence of a meningioma, as well as 37 participants due to susceptibility, motion artefacts or segmentation problems, resulting in a total of 561 images available for subsequent analysis. The medial temporal lobe atrophy was assessed by Medial Temporal Atrophy scale (Scheltens et al. 1992).
-
-## Hippocampal segmentation
-
-Hippocampal subfield volumes were automatically calculated by FreeSurfer 7 using whole hippocampal segmentation provided by the standard ‘recon-all’ pipeline, which renders the most standard and widely-used volumetric estimation of hippocampal volumes. 
-
-## Lumbar puncture
-
-CSF was collected by lumbar puncture between 9 and 12 a.m. in polypropylene tubes. Samples were processed within 1 hour and centrifuged at 4°C for 10 minutes at 2000 g, stored in polypropylene tubes and frozen at -80°C. Core AD biomarkers (namely Ab42, Ab40, total Tau, and p tau) and other molecules of interest (such as YKL-40, neurogranin and Ab oligomers) were analyzed and determined in Prof. Kaj Blennow’s laboratory (Institute ofNeuroscience and Physiology, Department of Psychiatry and Neurochemistry, The Sahlgrenska Academy at the University of Gothenburg, Sweden).
-
-## Cognitive measures
-
-Cognitive composite z-scores were computed in four different cognitive domains: attention (WAIS-IV: Digit Span, WMS-IV: Symbol Span and TMT-A), episodic memory (Free and Cued Selective Reminding Test, Memory Binding Test, WMS-IV Logical Memory and NIH-toolbox Picture Sequence Memory test), executive functions (TMT-B, Five digits test, WAIS-IV Coding, WAIS-IV Matrix reasoning and NIH-toolbox Flanker Inhibition test), language (Semantic fluency, Boston Naming), and visual processing (WAIS-IV Visual Puzzles and RBANS Judgment of line orientation). In addition, the Preclinical Alzheimer Cognitive Composite (PACC) was used. This cognitive assessment tool was developed to detect subtle cognitive changes in individuals who may be in the pre-clinical stages of AD [@Donohue2014], and includes elements of the Memory Binding Test, the Coding subtest of WAIS-IV, and semantic fluency. Cognitive change for each composite was calculated by subtracting the follow-up visit score from the baseline cognitive score. Negative values indicate worse performance in the follow-up visit.
-
-## Statistical analyses
-
-### Linear regression models
-
-Statistical analyses were carried using R v4.5.1. All linear regressions were adjusted for age, APOE-4 status, and sex when both men and women were included. Linear regressions with cognitive scores as an outcome variable were also adjusted for the time difference between each visit and years of education. Linear regressions with hippocampal subfield volumes as outcomes were adjusted for the time difference between MRI sessions and Total Intracranial Volume (TIV). p-values were adjusted using the False Discovery Rate (FDR) method.
-
-#Results
-
-```{r}
 data<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
-    delim = ",", escape_double = FALSE, trim_ws = TRUE)
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(sex=factor(sex))
 
+
+#adding scan dates for descriptives, horizontal 
 date_mri_v1<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_scandates_ALFA_PLUS_V1_20231120_20250210_135308.xlsx")%>%
   dplyr::select(subject_label, scandate)%>%
   mutate(subject_label = as.numeric(subject_label))%>%
@@ -146,113 +133,124 @@ data<-left_join(data, date_mri_long)%>%
          age_v1_mri = as.numeric(difftime(scandate_v1, DOB, units= c("days")))/365.25,
          age_v2_mri = as.numeric(difftime(scandate_v2, DOB, units= c("days")))/365.25)
 
-biomarkers<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+data_biomarkers<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
     delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
   filter(Visit == "V1")%>%
   dplyr::select(-Visit)
 
-data<-left_join(data, biomarkers)
+data<-left_join(data, data_biomarkers)
 
+data_cognition_desc<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+  dplyr::select(IdParticipante, Visit, Z_PACC)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = as.numeric(subject))%>%
+  filter(Visit == 2)%>%
+  dplyr::select(subject)
+
+#special dataset for descriptives that includes only participants who have cognition and mri at visit 2
+data_desc<-inner_join(data, data_cognition_desc)%>%
+  drop_na(A)
+
+pt_number <- data_desc%>%
+  nrow()
+
+pt_number_w<-data_desc%>%
+  filter(sex==2)%>%
+  nrow
 
 ```
 
-## Hippocampal volume and parity on the AD continuum
 
-###cross sectional
+Our sample includes `r pt_number` participants from the ALFA+ project of which `r pt_number_w` are women (Clinicaltrials.gov Identifier:NCT01835717). This longitudinal cohort is composed of cognitively unimpaired individuals with heighteined AD risk[@molinuevo2016]. All participants had a Clinical Dementia Rating (CDR) scale = 0, and no history of cardiovascular disease. Women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample.
 
-```{r}
+## MRI acquisition
 
-# summing some groups together: "subject"\
-# "vol_CA1-body" CA1\
-# "vol_CA1-head" CA1\
-# "vol_CA3-body" CA3\
-# "vol_CA3-head" CA3\
-# "vol_CA4-body" CA4 "vol_CA4-head" CA4 "vol_GC-ML-DG-body" GC_ML_DG
-# "vol_GC-ML-DG-head" GC_ML_DG "vol_HATA" HATA "vol_Hippocampal_tail" Tail
-# "vol_Whole_hippocampal_body" Body "vol_Whole_hippocampal_head" Head
-# "vol_Whole_hippocampus" whole "vol_fimbria" fimbria
-# "vol_hippocampal-fissure" fissure "vol_molecular_layer_HP-body"
-# molecular_layer "vol_molecular_layer_HP-head" molecular_layer
-# "vol_parasubiculum" parasubiculum "vol_presubiculum-body" presubiculum
-# "vol_presubiculum-head" presubiculum "vol_subiculum-body" subiculum
-# "vol_subiculum-head" subiculum
+MRI scans were acquired on a 3.0 T scanner (GE Discovery MR750 W 3 T) using the same protocol for all participants, which included one T1- and three T2- weighted sequences. The 3D-T1w sequence was designed with an isotropic voxel size of1mm3 and a matrix size of256x256x160 (TR/TE/TI = 8.0/3.7/450 ms, NSA = 1, flip angle = 8°). Three 3D-T2w sequences, with a voxel size of1 mm× 1 mm× 3 mm, were also used: fluid attenuation inversion recovery (FLAIR: TR/TE/ TI = 11,000/90/2600 ms, flip angle = 160°), fast spin echo (FSE: TR/TE = 5000/85 ms, flip angle = 110°) and, gradient echo (GRE: TR/TE = 1300/23 ms, flip angle = 15°). All scans were visually assessed to verify their quality and to detect incidental findings by a trained neuroradiologist and have been reported elsewhere (Brugulat-Serrat et al. 2017). In this study, ten participants were excluded due to the presence of a meningioma, as well as 37 participants due to susceptibility, motion artefacts or segmentation problems, resulting in a total of 561 images available for subsequent analysis. The medial temporal lobe atrophy was assessed by Medial Temporal Atrophy scale (Scheltens et al. 1992).
 
-hippo<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V1_20231120_20250208_111212.xlsx")%>%
-  group_by(subject, region) %>%
-  summarize(bilateral_volume = sum(value), .groups = "drop")%>%
- mutate(region = case_when(region == "CA1-body"| region == "CA1-head" ~ "CA1",
-            region == "CA3-body"| region == "CA3-head" ~ "CA3",
-            region == "CA4-body"| region == "CA4-head" ~ "CA4",
-            region == "GC-ML-DG-body" | region == "GC-ML-DG-head" ~ "GC_ML_DG",
-            region == "molecular_layer_HP-body" | region == "molecular_layer_HP-head"~ "molecular_layer_HP",
-            region == "presubiculum-body" | region == "presubiculum-head" ~ "presubiculum",
-            region == "subiculum-body" | region == "subiculum-head" ~ "subiculum",
-            .default = region))%>%
-  group_by(region, subject)%>%
-  summarize( bilateral_volume = sum(bilateral_volume), .groups = "drop")%>%
-  pivot_wider(names_from = region, values_from = bilateral_volume, names_prefix = "vol_")%>%
-  mutate(subject = as.numeric(subject),
-         Visit = "V1")
+## Hippocampal segmentation
 
-hippo_data<-left_join(data, hippo)
+Hippocampal subfield volumes were automatically calculated by FreeSurfer 7 using whole hippocampal segmentation provided by the standard ‘recon-all’ pipeline, which renders the most standard and widely-used volumetric estimation of hippocampal volumes. The subefileds were delimited as following: CA1, CA3, CA4, GC-ML-DG, molecular layer, fimbria, parasubiculum, subiculum, presubiculum, HATA and tail.
+
+## Lumbar puncture
+
+CSF was collected by lumbar puncture between 9 and 12 a.m. in polypropylene tubes. Samples were processed within 1 hour and centrifuged at 4°C for 10 minutes at 2000 g, stored in polypropylene tubes and frozen at -80°C. Core AD biomarkers (namely Ab42, Ab40, total Tau, and p tau) and other molecules of interest (such as YKL-40, neurogranin and Ab oligomers) were analyzed and determined in Prof. Kaj Blennow’s laboratory (Institute ofNeuroscience and Physiology, Department of Psychiatry and Neurochemistry, The Sahlgrenska Academy at the University of Gothenburg, Sweden).
+
+## Cognitive measures
+
+Cognitive composite z-scores were computed in four different cognitive domains: attention (WAIS-IV: Digit Span, WMS-IV: Symbol Span and TMT-A), episodic memory (Free and Cued Selective Reminding Test, Memory Binding Test, WMS-IV Logical Memory and NIH-toolbox Picture Sequence Memory test), executive functions (TMT-B, Five digits test, WAIS-IV Coding, WAIS-IV Matrix reasoning and NIH-toolbox Flanker Inhibition test), language (Semantic fluency, Boston Naming), and visual processing (WAIS-IV Visual Puzzles and RBANS Judgment of line orientation). In addition, the Preclinical Alzheimer Cognitive Composite (PACC) was used. This cognitive assessment tool was developed to detect subtle cognitive changes in individuals who may be in the pre-clinical stages of AD [@Donohue2014], and includes elements of the Memory Binding Test, the Coding subtest of WAIS-IV, and semantic fluency. Cognitive change for each composite was calculated by subtracting the follow-up visit score from the baseline cognitive score. Negative values indicate worse performance in the follow-up visit.
+
+## Statistical analyses
+
+### Linear regression models
+
+Statistical analyses were carried using R v4.5.1. All linear regressions were adjusted for age, APOE-4 status, and sex when both men and women were included. Linear regressions with cognitive scores as an outcome variable were also adjusted for the time difference between each visit and years of education. Linear regressions with hippocampal subfield volumes as outcomes were adjusted for the time difference between MRI sessions and Total Intracranial Volume (TIV). p-values were adjusted using the False Discovery Rate (FDR) method.
+
+#Results
 
 
-#fucntion to run 
-run_volume_regressions <- function(data, predictors) {
-  # Find all columns that start with "vol_"
-  outcome_vars <- grep("^vol_", names(data), value = TRUE)
+##Descriptive results
+```{r, include = F}
 
-  # Create a formula string from predictors
-  predictor_formula <- paste(predictors, collapse = " + ")
+data_table<-data_desc%>%
+  dplyr::select(age_v1, sex, kids_total, A, APOE_binary)%>%
+  mutate(A=factor(A),
+         APOE_binary=factor(APOE_binary))%>%
+  rename( `Number of childbirths` = kids_total,
+         `Aβ+` = A,
+         `APOE-ε4 carrier` = APOE_binary,
+         `Age at first visit` = age_v1)
 
-  # Run regressions and store summary results
-  summaries <- lapply(outcome_vars, function(outcome) {
-    formula <- as.formula(paste0("`", outcome, "` ~ ", predictor_formula))
-    model <- lm(formula, data = data)
-    summary(model)
-  })
+desc_table<-tbl_summary(data_table,
+            by = `Number of childbirths`, 
+            missing = "no")%>%
+  add_n()%>%
+  add_p%>%
+  modify_header(label = "**Variable**") %>% # update the column header
+  bold_labels()
 
-  # Name each summary by its outcome variable
-  names(summaries) <- outcome_vars
-
-  return(summaries)
-}
-
-#No interaction first
-
-hippo_data%>%
-  filter(sex == 2& Visit == "V1")%>%
-   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_regressions( .,c( "kids_total", "age_v1_mri", "APOE_binary", "TIV"))
-
-#fimbria,  has sig main effect but I doubt survive multiple comparison
-
-p_values <- c(0.22051  ,  0.798 ,   0.470134  ,  0.3700  ,  0.09179 ,0.87412    ,0.012556 ,0.7079   , 0.875   , 0.459  ,  0.42763    )
-#None survive
-
-fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
-fdr_adjusted_p_values
-
-#Interaction
-
-hippo_data%>%
-  filter(sex == 2 & Visit == "V1")%>%
-  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_regressions( .,c( "kids_total*A", "age_v1_mri", "APOE_binary", "TIV"))
-
-p_values <- c(0.6935  ,  0.165  ,  0.0280, 0.052237 ,0.67701   , 0.09818, 0.842061   , 0.8220  ,  0.00656 ,0.0181 ,0.03944 )
-
-fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
-fdr_adjusted_p_values
-
-#CA4, parasubiculum, presubiculum and subiculum sig but none survive multiple comparison! except trend for parasubiculum
+desc_table
 ```
 
-First, linear regressions were used to examine the influence of parity on hippocampal volume. No significant result were found for the whole hippocampal volume
+Table 1 shows demographics and characteristics of the ALFA+ cohort, for all participants who have completed Visit 1 and 2, goruped by parity. Participants with higher parity were significantly more likely to be older. No difference was seen between groups regarding Aβ status and APOE-ε4 carriership.
 
-###Longitudinal
+## Longitudinal trajecotry of hippocampal subfield volumes
 
-```{r}
+```{r, include = F}   
+# summing some groups together: "subject"\   
+  # "vol_CA1-body" CA1\   
+  # "vol_CA1-head" CA1\   
+  # "vol_CA3-body" CA3\   
+  # "vol_CA3-head" CA3\   
+  # "vol_CA4-body" CA4 "vol_CA4-head" CA4 "vol_GC-ML-DG-body" GC_ML_DG   
+  # "vol_GC-ML-DG-head" GC_ML_DG "vol_HATA" HATA "vol_Hippocampal_tail" Tail   
+  # "vol_Whole_hippocampal_body" Body "vol_Whole_hippocampal_head" Head   
+  # "vol_Whole_hippocampus" whole "vol_fimbria" fimbria   
+  # "vol_hippocampal-fissure" fissure "vol_molecular_layer_HP-body"   
+  # molecular_layer "vol_molecular_layer_HP-head" molecular_layer   
+  # "vol_parasubiculum" parasubiculum "vol_presubiculum-body" presubiculum   
+  # "vol_presubiculum-head" presubiculum "vol_subiculum-body" subiculum   
+  # "vol_subiculum-head" subiculum   
+
+  hippo<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V1_20231120_20250208_111212.xlsx")%>%   
+    group_by(subject, region) %>%   
+    summarize(bilateral_volume = sum(value), .groups = "drop")%>%   
+   mutate(region = case_when(region == "CA1-body"| region == "CA1-head" ~ "CA1",   
+              region == "CA3-body"| region == "CA3-head" ~ "CA3",   
+              region == "CA4-body"| region == "CA4-head" ~ "CA4",   
+              region == "GC-ML-DG-body" | region == "GC-ML-DG-head" ~ "GC_ML_DG",   
+              region == "molecular_layer_HP-body" | region == "molecular_layer_HP-head"~ "molecular_layer_HP",   
+              region == "presubiculum-body" | region == "presubiculum-head" ~ "presubiculum",   
+              region == "subiculum-body" | region == "subiculum-head" ~ "subiculum",   
+              .default = region))%>%   
+    group_by(region, subject)%>%   
+    summarize( bilateral_volume = sum(bilateral_volume), .groups = "drop")%>%   
+    pivot_wider(names_from = region, values_from = bilateral_volume, names_prefix = "vol_")%>%   
+    mutate(subject = as.numeric(subject),   
+           Visit = "V1")   
+
+  hippo_data<-left_join(data, hippo)   
+
+
 hippo2<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V2_20230518_20250208_112459.xlsx")%>%
   group_by(subject, region) %>%
   summarize(bilateral_volume = sum(value), .groups = "drop")%>%
@@ -282,9 +280,6 @@ hippo_data_long<-bind_rows(hippo_data, hippo_data2)%>%
   dplyr::select(-age_v1_mri, -age_v2_mri)%>%
   drop_na(scandate_v2)
 
-
-
-
 #fucntion to run 
 run_volume_lmer_regressions <- function(data, predictors) {
   # Find all columns that start with "vol_"
@@ -304,67 +299,129 @@ run_volume_lmer_regressions <- function(data, predictors) {
   names(summaries) <- outcome_vars
 
   return(summaries)
-}
 
+  ##no interaction
+
+hippo_data_long%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_lmer_regressions( .,c( "kids_total", ,"A","sex", "age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+
+outcome_vars <- c(
+  "vol_CA1", "vol_CA3", "vol_CA4", "vol_GC_ML_DG", "vol_HATA", 
+  "vol_Hippocampal_tail", "vol_fimbria", "vol_molecular_layer_HP", 
+  "vol_parasubiculum", "vol_presubiculum", "vol_subiculum"
+)
+
+
+model_names <- c(
+  "CA1", "CA3", "CA4", "GC-ML-DG", "HATA", 
+  "Tail", "Fimbria", "Molecular layer", 
+  "Parasubiculum", "Presubiculum", "Subiculum"
+)
+
+models_hip <- setNames(
+  lapply(outcome_vars, function(outcome) {
+    formula <- as.formula(
+      paste(outcome, "~ kids_total + sex +A + scale(TIV) + age_mri + APOE_binary + (1 | subject)")
+    )
+    lmer(formula, data = hippo_data_long)
+  }),
+  model_names
+)
+
+tidy_models_hip <- map_dfr(models_hip, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "sex2"))   # Add consistent term column
+}, .id = "region")%>%
+  filter(term == "sex2"| term == "kids_total")
+
+fdr_hip_sex<-tidy_models_hip%>%
+  filter(term == "sex2")%>%
+  pull(p.value)%>%
+p.adjust(., method = "fdr")
+
+
+format(fdr_hip_sex, scientific = FALSE)
+
+fdr_hip_parity<-tidy_models_hip%>%
+  filter(term == "kids_total")%>%
+  pull(p.value)%>%
+p.adjust(., method = "fdr")
+
+format(fdr_hip_parity, scientific = FALSE)
+```
+
+Mixed effect longitudinal models applied to our entire sample showed a significant main effect of sex in the CA1, CA3, CA4, GC-ML-DG, HATA, molecular layer and parasubiculum, where women appeared to show greater decline than men in these subfields. 
+A significant main positive effect of parity was found in the fimbria.
+
+```{r, include = F}   
+##no interaction, women only
 
 hippo_data_long%>%
   filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total*CSF_NFL", "age_mri", "APOE_binary", "scale(TIV)", "repro_span", "(1 | subject)"))
+run_volume_lmer_regressions( .,c( "kids_total", "A","age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
 
-p_values <- c(0.6607 ,   0.14130   , 0.0158, 0.0326, 0.718  ,  0.0965, 0.8346  ,0.582  ,  0.00403, 0.0139 ,0.0253  )
 
-fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
-fdr_adjusted_p_values
+models_hip_w <- setNames(
+  lapply(outcome_vars, function(outcome) {
+    formula <- as.formula(
+      paste(outcome, "~ kids_total +A + scale(TIV) + age_mri + APOE_binary + (1 | subject)")
+    )
+    lmer(formula, data = hippo_data_long[hippo_data_long$sex==2,])
+  }),
+  model_names
+)
+
+
+tidy_models_hip_w <- map_dfr(models_hip_w, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "sex"))   # Add consistent term column
+}, .id = "region")%>%
+  filter(term == "A"| term == "kids_total")
+
+fdr_hip_w<-tidy_models_hip_w%>%
+  filter(term == "kids_total")%>%
+  pull(p.value)%>%
+p.adjust(., method = "fdr")
+
+format(fdr_hip_w, scientific = FALSE)
+
+#fimbria significant, fimbria trend
+
+
+#interaction
+hippo_data_long%>%
+  filter(sex == 2 )%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_lmer_regressions( .,c( "kids_total*A", "age_mri", "APOE_binary", "scale(TIV)", "repro_span", "(1 | subject)"))
+
+models_hip_w_int <- setNames(
+  lapply(outcome_vars, function(outcome) {
+    formula <- as.formula(
+      paste(outcome, "~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject)")
+    )
+    lmer(formula, data = hippo_data_long[hippo_data_long$sex==2,])
+  }),
+  model_names
+)
+
+
+tidy_models_hip_w_int <- map_dfr(models_hip_w_int, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "kids_total:A", "A"))   # Add consistent term column
+}, .id = "region")%>%
+  filter(term == "A"| term == "kids_total" | term == "kids_total:A")
+
+fdr_hip_w_int<-tidy_models_hip_w_int%>%
+  filter(term == "kids_total:A")%>%
+  pull(p.value)%>%
+p.adjust(., method = "fdr")
+
+format(fdr_hip_w_int, scientific = FALSE)
 
 #CA4, GC_ML_DG   parasubiculum presubiculum and subiculum significant. parasubiculum survives mutiple comparison
-
-hippo_data_long%>%
-  filter(sex == 2 & Visit == "V2")%>%
-  ggplot(aes(x=kids_total, y= vol_parasubiculum))+
-  geom_jitter()+
-  geom_smooth(method = "lm")+
-  facet_wrap(~A)
 ```
 
-Longitudinal results show significant interaction effect in the CA4, dGC_ML_DG, parasubiculum, presubiculum and subiculu, with only the parasubiculum surviving multiple comparison.
+When stratifying by sex, a trending positive main effect of parity was found in the fimbria, suggesting women with higher parity showed greater fimbria volume. No effect of parity was found for men in any of the subfields. A significant parity*Aβ status interaction was found in the parasubiculum, where Aβ+ women with higher parity showed greater volume reduction. This effect was also trending in the CA4, GC-ML-DG, subiculum and presubiculum. This interaction did not significantly affect men. 
 
-#Linear models - cross sectional
-need to rewrite this to coincide with new dataset
-```{r}
-#first check Anna's findings
-
-mod<-lm(diff_PACC ~ kids_total*A + age_v1 + education + APOE_binary +age_menopause_pmm, data = data[data$sex ==2,])
-summary(mod)
-
-data_lmer<-data%>%
-  drop_na(Z_PACC_v2)%>%
-  pivot_longer(cols = starts_with("Z_PACC"), names_to = "Visit", values_to = "all_Z_PACC")
-
-
-fit_pacc<-lmer(all_Z_PACC ~ kids_total*A + Visit + age_v1  + education + APOE_binary + age_menopause_pmm + (1| subject), data = data_lmer[data_lmer$sex == 2,])
-
-summary(fit_pacc)
-
-
-
-
-data%>%
-  filter(sex == 2)%>%
-  drop_na(A)%>%
-  ggplot(aes(x = kids_total, y= diff_PACC, colour = A))+
-  geom_jitter()+
-  facet_wrap(~A)+
-  geom_smooth(method = "lm")
-
-data_lmer%>%
-  drop_na(A)%>%
-  ggplot(aes(x= Visit, y = all_Z_PACC, colour = A, group = subject))+
-  geom_point()+
-  geom_boxplot(data = subset(data_lmer, !is.na(A)), aes(x=Visit,y= all_Z_PACC, colour = A ), inherit.aes = F, na.rm = T)+
-  geom_line(alpha =0.5)+
-  facet_wrap(~sex)
-```
 
 ##Jack's signature
 
@@ -644,3 +701,38 @@ p_presubiculum_body<-hippo_data%>%
 
 (p_ca4_body+p_GC_ML_DG_body)/(p_subiculum_body+p_presubiculum_body)
 ```
+
+
+# Miscellaneous
+
+```{r, include = F}
+#No interaction first   
+
+  hippo_data%>%   
+    filter(sex == 2& Visit == "V1")%>%   
+     dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%   
+  run_volume_regressions( .,c( "kids_total", "age_v1_mri", "APOE_binary", "TIV"))   
+
+  #fimbria,  has sig main effect but I doubt survive multiple comparison   
+
+  p_values <- c(0.22051  ,  0.798 ,   0.470134  ,  0.3700  ,  0.09179 ,0.87412    ,0.012556 ,0.7079   , 0.875   , 0.459  ,  0.42763    )   
+  #None survive   
+
+  fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")   
+  fdr_adjusted_p_values   
+
+  #Interaction   
+
+  hippo_data%>%   
+    filter(sex == 2 & Visit == "V1")%>%   
+    dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%   
+  run_volume_regressions( .,c( "kids_total*A", "age_v1_mri", "APOE_binary", "TIV"))   
+
+  p_values <- c(0.6935  ,  0.165  ,  0.0280, 0.052237 ,0.67701   , 0.09818, 0.842061   , 0.8220  ,  0.00656 ,0.0181 ,0.03944 )   
+
+fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")   
+fdr_adjusted_p_values   
+
+#CA4, parasubiculum, presubiculum and subiculum sig but none survive multiple comparison! except trend for parasubiculum 
+```
+
