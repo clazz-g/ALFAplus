@@ -9,6 +9,7 @@ format:
   docx: default 
 editor: visual
 bibliography: references.bib
+csl: elsevier-vancouver.csl
 ---
 
 ```{r, include = F}
@@ -68,6 +69,10 @@ library(broom.mixed)
 library(purrr)
 ```
 
+```{r setup, include=FALSE}
+# Register an inline hook:
+options(scipen = 1, digits = 3)
+```
 
 Lancet Guidelines
 
@@ -321,16 +326,20 @@ fdr_hip_sex<-tidy_models_hip%>%
   filter(term == "sex2")%>%
   pull(p.value)%>%
   p.adjust(method = "fdr")%>%
-  format(., scientific = FALSE)
+  format(., scientific = FALSE)%>%
+  as.numeric()
 
 fdr_hip_parity<-tidy_models_hip%>%
   filter(term == "kids_total")%>%
   pull(p.value)%>%
   p.adjust(method = "fdr")%>%
-  format(., scientific = FALSE)
+  format(., scientific = FALSE)%>%
+  as.numeric()
+
+
 ```
 
-Mixed effect longitudinal models applied to our entire sample showed a significant main effect of sex in the CA1, CA3, CA4, GC-ML-DG, HATA, molecular layer and parasubiculum, where women appeared to show greater decline than men in these subfields. A significant main positive effect of parity was found in the fimbria.
+Mixed effect longitudinal models applied to our entire sample showed a significant main effect of sex in the CA1 (adj.p= `r fdr_hip_sex[1]`), CA3 (adj.p= `r fdr_hip_sex[2]`), CA4 (adj.p= `r fdr_hip_sex[3]`), GC-ML-DG (adj.p= `r fdr_hip_sex[4]`), HATA (adj.p= `r fdr_hip_sex[5]`), molecular layer (adj.p= `r fdr_hip_sex[8]`) and parasubiculum (adj.p= `r fdr_hip_sex[9]`), where women appeared to show greater decline than men in these subfields. A significant main positive effect of parity was found in the fimbria (adj.p= `r fdr_hip_parity[7]`).
 
 ```{r, include = F}
 ##no interaction, women only
@@ -361,7 +370,8 @@ fdr_hip_w<-tidy_models_hip_w%>%
   filter(term == "kids_total")%>%
   pull(p.value)%>%
   p.adjust(., method = "fdr")%>%
-  format(., scientific = FALSE)
+  format(., scientific = FALSE)%>%
+  as.numeric()
 
 #fimbria significant, fimbria trend
 
@@ -392,12 +402,13 @@ fdr_hip_w_int<-tidy_models_hip_w_int%>%
   filter(term == "kids_total:A")%>%
   pull(p.value)%>%
   p.adjust(., method = "fdr")%>%
-  format(., scientific = FALSE)
+  format(., scientific = FALSE)%>%
+  as.numeric()
 
 #CA4, GC_ML_DG   parasubiculum presubiculum and subiculum significant. parasubiculum survives mutiple comparison
 ```
 
-When stratifying by sex, a trending positive main effect of parity was found in the fimbria, suggesting women with higher parity showed greater fimbria volume. No effect of parity was found for men in any of the subfields. A significant parity\*Aβ status interaction was found in the parasubiculum, where Aβ+ women with higher parity showed greater volume reduction. This effect was also trending in the CA4, GC-ML-DG, subiculum and presubiculum. This interaction did not significantly affect men.
+When stratifying by sex, a trending positive main effect of parity was found in the fimbria in women (adj.p= `r fdr_hip_w[7]`), suggesting those with higher parity may show greater fimbria volume. No effect of parity was found for men in any of the subfields. A significant parity*Aβ status interaction was found in the parasubiculum (adj.p= `r fdr_hip_w_int[9]`), where Aβ+ women with higher parity showed greater volume reduction. This effect was also trending in the CA4 (adj.p= `r fdr_hip_w_int[3]`), GC-ML-DG (adj.p= `r fdr_hip_w_int[4]`), subiculum (adj.p= `r fdr_hip_w_int[10]`) and presubiculum (adj.p= `r fdr_hip_w_int[11]`). This interaction did not significantly affect men.
 
 ## Jack's signature
 
