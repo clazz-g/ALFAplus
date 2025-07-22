@@ -388,7 +388,7 @@ ci_upper <- quantile(indirect_boot, 0.975)
 print(paste("95% CI: [", round(ci_lower, 4), ", ", round(ci_upper, 4), "]"))
 
 ## Test 
-install.packages("RMediation")
+#install.packages("RMediation")
 library(RMediation)
 
 # Extract coefficients and standard errors
