@@ -412,6 +412,35 @@ fdr_hip_w_int<-tidy_models_hip_w_int%>%
 
 When stratifying by sex, a trending positive main effect of parity was found in the fimbria in women (adj.p= `r fdr_hip_w[7]`), suggesting those with higher parity may show greater fimbria volume. No effect of parity was found for men in any of the subfields. A significant parity*Aβ status interaction was found in the parasubiculum (adj.p= `r fdr_hip_w_int[9]`), where Aβ+ women with higher parity showed greater volume reduction. This effect was also trending in the CA4 (adj.p= `r fdr_hip_w_int[3]`), GC-ML-DG (adj.p= `r fdr_hip_w_int[4]`), subiculum (adj.p= `r fdr_hip_w_int[10]`) and presubiculum (adj.p= `r fdr_hip_w_int[11]`). This interaction did not significantly affect men.
 
+## NFL
+```{r}
+
+# mediation too?
+
+biomarkers_long<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(subject=as.numeric(subject))
+data_naked<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(sex=factor(sex))
+
+data_biomarkers_long<-left_join(data_naked, biomarkers_long)
+
+mod_nfl<-lmer(CSF_NFL~ kids_total+A +sex+ Visit + APOE_binary + (1 | subject), data = data_biomarkers_long)
+summary(mod_nfl)
+
+mod_nfl_int<-lmer(CSF_NFL~ kids_total*A+sex+ Visit + APOE_binary + (1 | subject), data = data_biomarkers_long)
+summary(mod_nfl_int)
+
+mod_nfl_w<-lmer(CSF_NFL~ kids_total+A + Visit + APOE_binary  +(1 | subject), data = data_biomarkers_long[data_biomarkers_long$sex==2,])
+summary(mod_nfl_w)
+
+mod_nfl_w_int<-lmer(CSF_NFL~ kids_total*A + Visit + APOE_binary + (1 | subject), data = data_biomarkers_long[data_biomarkers_long$sex==2,])
+summary(mod_nfl_w_int)
+
+```
+
+
 ## Jack's signature
 
 ```{r, include = F}
@@ -576,7 +605,7 @@ tidy_models_cog_int_3 <- map_dfr(models_cog_int_3, ~ {
 We used mixed effect modelling to investigate the effect of sex, parity and Aβ status on cognitive trajectory. There was a significant main effect of sex on attention (adj.p< 0.0001), memory (adj.p< 0.0001), executive (adj.p= `r fdr_cog_sex[3]`) and visual domains (adj.p< 0.0001). whilst being a woman was associatied with greater decline in the attention, executive and visual processing domains, the opposite was true for memory. No effect of sex was found on the PACC.
 In addition to this, there was no significant effect of parity, Aβ status or their interaction in any of the cognitive measures tested.
 
-```{r}
+```{r, include = F}
 #women only
 
 models_cog_w <- setNames(
@@ -621,6 +650,17 @@ fdr_cog_int_w<-tidy_models_cog_w_int%>%
 ```
 
 After stratifying by sex, no main effect of parity was found on any of the cognitive measures in women or men. We observed an initially significant interaction of parity*Aβ status on the executive domain (p= 0.023) - however, this did not survive FDR comparison (adj.p= `r fdr_cog_int_w[3]`). 
+
+# Discussion
+
+We aimed to investigate the impact of parity on hippocampal subfield volumes and relation to AD pathology in post-menopausal women at risk of AD and men who share similar age and AD risk. Our results suggest that...
+- parity influence hippocampal subfield volume independently in women
+- parity interacts with A status to influence hippocampal subfield volume, in women
+- these results aren't present in men suggesting it's biological
+- no effect on NFL - not linked with neurodegenerational processes
+- no effect on AD cortical signature - could be because of sample's young age, but no relation with NFL either, so neurodegeneration doesn't seem involved in this effect (yet?)
+- possible impact on execuive functions- results not significant after adjusting but seems normal given the short amount of time between sessions and how early we are catching people
+- Hippocampus region involved are known to be crucial for....
 
 
 # Graphs!
@@ -751,8 +791,6 @@ data_cog_long_composites%>%
 ```{r, include=FALSE}
 mod_plot<-lmer(vol_parasubiculum ~ kids_total*A + Visit + as.factor(APOE_binary) + scale(TIV) +(1| subject), data=hippo_data_long[hippo_data_long$sex==2,] )
 summary(mod_plot)
-
-plot_model(mod_plot, type= "est", title = "", axis.title = "Parasubiculum volume change model estimate" )
 
 preds <- ggpredict(mod_plot, terms = c("kids_total", "A", "Visit"))
 ```
