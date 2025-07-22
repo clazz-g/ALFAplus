@@ -339,7 +339,9 @@ fdr_hip_parity<-tidy_models_hip%>%
 
 ```
 
-Mixed effect longitudinal models applied to our entire sample showed a significant main effect of sex in the CA1 (adj.p= `r fdr_hip_sex[1]`), CA3 (adj.p= `r fdr_hip_sex[2]`), CA4 (adj.p= `r fdr_hip_sex[3]`), GC-ML-DG (adj.p= `r fdr_hip_sex[4]`), HATA (adj.p= `r fdr_hip_sex[5]`), molecular layer (adj.p= `r fdr_hip_sex[8]`) and parasubiculum (adj.p= `r fdr_hip_sex[9]`), where women appeared to show greater decline than men in these subfields. A significant main positive effect of parity was found in the fimbria (adj.p= `r fdr_hip_parity[7]`).
+Mixed effect longitudinal models applied to our entire sample showed a significant main effect of sex in the CA1 (adj.p= `r fdr_hip_sex[1]`), CA3 (adj.p= `r fdr_hip_sex[2]`), CA4 (adj.p= `r fdr_hip_sex[3]`), GC-ML-DG (adj.p= `r fdr_hip_sex[4]`), HATA (adj.p= `r fdr_hip_sex[5]`), molecular layer (adj.p= `r fdr_hip_sex[8]`) and parasubiculum (adj.p= `r fdr_hip_sex[9]`), where women appeared to show greater decline than men in these subfields. A significant main positive effect of parity was found in the fimbria (adj.p= `r fdr_hip_parity[7]`). 
+Include A interaction and maybe mention if 3 way works too?
+What kind of sensitivity analysis could be interesting?
 
 ```{r, include = F}
 ##no interaction, women only
@@ -446,11 +448,11 @@ fit_jack_grey_w <- lmer(jack_GrayVol ~ kids_total*A  +Visit +age_mri + APOE_bina
 summary(fit_jack_grey_w)
 ```
 
+We used mixed effect models to investigate the impact of parity and parity*Aβ status interaction on Jack's signature, for both cortical thickness and gray matter volume. No significant effect was found. 
+
 ## Cognitive trajectory
 
 ```{r, include=F}
-
-
 cognition<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
   dplyr::select(IdParticipante, Visit, Z_PACC, Z_FCSRTI_RT, Z_aWMS_DR_RS, Z_Wclave_totalscr, Z_FS_totalcnswr, FechaResultado)%>%
   rename(subject = IdParticipante)%>%
@@ -465,8 +467,8 @@ data_cog_long<- left_join(data, cognition)%>%
   ungroup()
 
 
-fit_cog<-lmer(Z_FS_totalcnswr ~ kids_total*A +age_cog + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
-summary(fit_cog)
+fit_cog_PACC<-lmer(Z_PACC ~ kids_total*A*sex +age_cog + APOE_binary + education +(1 | subject), data_cog_long)
+summary(fit_cog_PACC)
 
 
 plot_model(fit_cog, type = "int")
@@ -500,16 +502,81 @@ composite_all<-full_join(composites1, composites2)%>%
 
 data_cog_long_composites<-left_join(data_cog_long, composite_all)
 
-fit_cog_domain<-lmer(Z_Language_Composite ~ kids_total*A +age_cog + APOE_binary + education + repro_span + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
-summary(fit_cog_domain)
+#no interaction, men and women
+
+outcome_vars_cog <- c(
+  "Z_Attention_Composite", "Z_Memory_Composite", "Z_Executive_Composite", "Z_Language_Composite", "Z_Visual_Composite"
+)
 
 
-p_values <- c(0.0256, 0.4011  ,  0.962  ,  0.4655  ,  0.1276    )
+model_names_cog <- c(
+  "Attention", "Memory", "Executive", "Language", "Visual"
+)
 
-fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
-fdr_adjusted_p_values
+models_cog <- setNames(
+  lapply(outcome_vars_cog, function(outcome) {
+    formula <- as.formula(
+      paste(outcome, "~ kids_total + A + sex + education + age_cog + APOE_binary + (1 | subject)")
+    )
+    lmer(formula, data = data_cog_long_composites)
+  }),
+  model_names_cog
+)
+
+
+tidy_models_cog <- map_dfr(models_cog, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "A", "sex2"))   # Add consistent term column
+}, .id = "composite")%>%
+  filter(term == "A"| term == "kids_total"| term== "sex2" )
+
+fdr_cog_sex<-tidy_models_cog%>%
+  filter(term == "sex2")%>%
+  pull(p.value)%>%
+  p.adjust(., method = "fdr")%>%
+  format(., scientific = FALSE)
+# sex highly significant in attention , memory, executive and visual but not language. kids and a status not at all
+
+
+# interaction
+
+models_cog_int <- setNames(
+  lapply(outcome_vars_cog, function(outcome) {
+    formula <- as.formula(
+      paste(outcome, "~ kids_total *A+ sex + education + age_cog + APOE_binary + (1 | subject)")
+    )
+    lmer(formula, data = data_cog_long_composites)
+  }),
+  model_names_cog
+)
+
+
+tidy_models_cog_int <- map_dfr(models_cog_int, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "A", "kids_total:A"))   # Add consistent term column
+}, .id = "composite")%>%
+  filter(term == "A"| term == "kids_total"| term == "kids_total:A" )
+
+# interaction 3 way
+
+models_cog_int_3 <- setNames(
+  lapply(outcome_vars_cog, function(outcome) {
+    formula <- as.formula(
+      paste(outcome, "~ kids_total *A*sex + education + age_cog + APOE_binary + (1 | subject)")
+    )
+    lmer(formula, data = data_cog_long_composites)
+  }),
+  model_names_cog
+)
+
+
+tidy_models_cog_int_3 <- map_dfr(models_cog_int_3, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "A", "kids_total:A"))   # Add consistent term column
+}, .id = "composite")%>%
+  filter(term == "A"| term == "kids_total"| term == "kids_total:A:sex2" )
 
 ```
+
+We used mixed effect modelling to investigate the effect of sex, parity and Aβ status on cognitive trajectory. There was a significant main effect of sex on attention, memory, executive and visual domains. whilst being a woman was associatied with greater decline in the attention, executive and visual processing domains, the opposite was true for memory. No effect of sex was found on the PACC.
+In addition to this, there was no significant effect of parity, Aβ status or their interaction in any of the cognitive measures tested.
 
 # Graphs!
 
