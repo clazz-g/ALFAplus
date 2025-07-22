@@ -156,7 +156,7 @@ composite_all<-full_join(composites1, composites2)%>%
 
 data_cog_long_composites<-left_join(data_cog_long, composite_all)
 
-fit_cog_domain<-lmer(Z_Language_Composite ~ kids_total*A +age_cog + APOE_binary + education + repro_span + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
+fit_cog_domain<-lmer(Z_Executive_Composite ~ kids_total*A +age_cog + APOE_binary + education + repro_span + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
 summary(fit_cog_domain)
 r.squaredGLMM(fit_cog_domain)
 
@@ -165,6 +165,7 @@ p_values <- c(0.0256, 0.4011  ,  0.962  ,  0.4655  ,  0.1276    )
 fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
 fdr_adjusted_p_values
 
+plot_model(fit_cog_domain, type= "int")
 ```
 
 #Cognitive results - LM of change
@@ -478,140 +479,36 @@ data_cog_diff%>%
 ggsave("G:/My Drive/ADPD 2026/plot_PACC_interaction.png", width = 8, height = 5)
 ```
 
+## Executive ~ parity * A
 
-## test for model estimates of cognition?
 ```{r}
-data_forest_plot_cog<-mediation_data%>%
-  filter(sex == 2 )
-
-models<-list(
-  Attention = lmer(Z_Attention_Composite ~ kids_total*A +age_cog + APOE_binary + education  + Fuma2 +(1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,]),
-  Memory = lmer(Z_Memory_Composite ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,]),
-  Executive = lmer(Z_Executive_Composite ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,]),
-  Language = lmer(Z_Language_Composite ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,]),
-  Visual = lmer(Z_Visual_Composite ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
-)
-
-# Extract coefficients and CIs
-#install.packages("broom.mixed")
-#library(broom.mixed)
-#library(purrr)
-
-pred_cog_all <- map_dfr(models, ~ {
-  broom.mixed::tidy(.x, terms = c("kids_total", "A"))   
-}, .id = "cog")%>%
-  filter(term %in% c("kids_total", "A", "kids_total:A"))%>%
-  dplyr::select(cog, term, estimate, std.error)%>%
-  pivot_wider(names_from = term, values_from = c(estimate, std.error))%>%
-  mutate(plot_estimate_kids_A0 = estimate_kids_total,
-         plot_estimate_kids_A1 = estimate_kids_total + `estimate_kids_total:A`,
-         plot_conf.low_kids_A0 = estimate_kids_total - 1.96 * std.error_kids_total,
-         plot_conf.high_kids_A0 = estimate_kids_total + 1.96 * std.error_kids_total,
-         plot_conf.low_kids_A1 = (estimate_kids_total + `estimate_kids_total:A` - 1.96 * `std.error_kids_total:A`),
-         plot_conf.high_kids_A1 = (estimate_kids_total + `estimate_kids_total:A` + 1.96 * `std.error_kids_total:A`))%>%
-  dplyr::select(-estimate_kids_total, -estimate_A,-`estimate_kids_total:A` ,-`std.error_kids_total`, -std.error_A ,         -`std.error_kids_total:A`)%>%
-  pivot_longer(
-    cols = starts_with("plot_"),  # Keep 'term' as-is
-    names_to = c(".value", "A"),  # .value creates columns like estimate, conf.low, etc.
-    names_pattern = "plot_(.*)_kids_A(\\d+)"
-  )
-  mutate(colour_group = case_when(region == "CA4" ~ "trend",
-                                  region == "GC-ML-DG" ~ "trend",
-                                  region == "Presubiculum" ~ "trend",
-                                  region == "Subiculum" ~ "trend",
-                                  region == "Parasubiculum" ~ "significant",
-                                  .default = "normal"))
+data_cog_long_composites%>%
+  filter(sex==2)%>%
+  drop_na(A)%>%
+  mutate(kids_total_factor=ifelse(kids_total>=3, "3+", kids_total))%>%
+  mutate(A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+")))%>%
+  ggplot(aes(x= Visit, y = Z_Executive_Composite, group = interaction(Visit, kids_total_factor), color= kids_total_factor, fill= kids_total_factor))+
+  geom_point(alpha=.6, position = position_dodge(width = 1))+
+  geom_boxplot(position = position_dodge(width = 0.9), 
+               alpha=.5)+
+  facet_wrap(~A)+
+  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3+" = "#0A5940")) +
+  scale_fill_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3+" = "#0A5940"))+
+   th +
+  labs(x = "Visit", 
+       y = "Executive composite Z-score", 
+       color = "Number of childbirths", 
+       fill= "Number of childbirths")
 
 
-
-pred_cog_all %>%
-  mutate(A = factor(A, levels = c("1", "0"), labels = c("Positive", "Negative"))) %>%
-  ggplot(aes(x = estimate, y = cog, group = A, colour = A)) +
-  geom_pointrange(aes(xmin = conf.low, xmax = conf.high), 
-                  position = position_dodge(width = 0.8),
-                  size = 0.6) +
-  labs(x = "Estimated effect of parity on cog trajectory", 
-       y = "Cog domain") +
-  scale_shape_manual(values = c("Negative" = 15, "Positive" = 16))
-  
-
-
-#ggsave("G:/My Drive/ADPD 2026/plot_all_regressions_estimates.png", width = 8, height = 6)
+ggsave("G:/My Drive/ADPD 2026/plot_executive.png", width = 9, height = 5)
 ```
+
+
 
 ## hipp ~ childbirth*AB
 
-### plotting both timepoints
-
-uglyyy
-```{r}
-hippo_data_long%>%
-  filter(sex== 2)%>%
-  drop_na(A)%>%
-  mutate(A=factor(A))%>%
-  ggplot(aes(x=Visit, y=vol_parasubiculum, color = A))+
-  geom_violin(size=1.1, position = position_dodge(width = 0.5))+
-  geom_line( aes(group = subject), alpha=.2, size=1, position = position_dodge(width = 0.5))+
-  geom_point( aes(group = subject), alpha=.2, size=1.3, position = position_dodge(width = 0.5))+
-  facet_wrap(~kids_total)
-```
-
-
-
-### plotting differences
-uglyyyy
-```{r}
-#I'm aware how clunky this code is... I was fighting with pivots for a while and getting nowhere. So this is the best I could do for now sorry! 
-
-hippo_data_plot<-hippo
-colnames(hippo_data_plot) <- paste(colnames(hippo_data_plot), 'V1', sep = '_')
-hippo_data_plot<-hippo_data_plot%>%
-  rename(subject = subject_V1)%>%
-  dplyr::select(-Visit_V1)
-
-hippo_data_plot2<-hippo2
-colnames(hippo_data_plot2) <- paste(colnames(hippo_data_plot2), 'V2', sep = '_')
-hippo_data_plot2<-hippo_data_plot2%>%
-  rename(subject = subject_V2)%>%
-  dplyr::select(-Visit_V2)
-
-hippo_data_plot<-left_join(hippo_data_plot, hippo_data_plot2)
-
-base_names <- names(hippo_data_plot) %>%
-  str_subset("^vol_.*_V1$") %>%
-  str_remove("_V1$")
-
-
-for (base in base_names) {
-  v1_col <- paste0(base, "_V1")
-  v2_col <- paste0(base, "_V2")
-  diff_col <- paste0(base, "_diff")
-  
-  hippo_data_plot[[diff_col]] <- hippo_data_plot[[v2_col]] - hippo_data_plot[[v1_col]]
-}
-
-hippo_data_plot<-hippo_data_plot%>%
-  dplyr::select(subject, vol_CA1_diff, vol_CA3_diff, vol_CA4_diff, vol_GC_ML_DG_diff, vol_HATA_diff, vol_Hippocampal_tail_diff, vol_Whole_hippocampal_body_diff, vol_Whole_hippocampal_head_diff, vol_Whole_hippocampus_diff, vol_fimbria_diff, vol_molecular_layer_HP_diff, vol_parasubiculum_diff, vol_presubiculum_diff, vol_subiculum_diff)
-
-
-hippo_data_plot_all <- left_join(data, hippo_data_plot) %>%
-  mutate(across(starts_with("vol_"), ~ .x / diff_mri, .names = "{.col}_annual"))
-
-
-hippo_data_plot_all%>%
-  filter(sex==2)%>%
-  mutate(A=factor(A))%>%
-  drop_na(A)%>%
-ggplot(aes(x=kids_total, y=vol_parasubiculum_diff_annual, group=A, colour=A))+
-  geom_jitter()+
-  geom_smooth(method = "lm")+
-  call_aesthethics(15)+
-  labs(x = "Number of childbirths", y = "Volume change")
-```
-
-
-
-### Plot effect sizes 
+### Boxplot for parasubiculum subfield values per A, parity and visit 
 
 ```{r}
 mod_plot<-lmer(vol_parasubiculum ~ kids_total*A + Visit + as.factor(APOE_binary) + scale(TIV) +(1| subject), data=hippo_data_long[hippo_data_long$sex==2,] )
@@ -621,14 +518,11 @@ plot_model(mod_plot, type= "est", title = "", axis.title = "Parasubiculum volume
 
 preds <- ggpredict(mod_plot, terms = c("kids_total", "A", "Visit")) 
 
-
-
-
 hippo_data_long %>%
   filter(sex == 2) %>%
   drop_na(A) %>%
   mutate(kids_total_factor=ifelse(kids_total>=3, "3+", kids_total))%>%
-  mutate(A = factor(A, labels = c("A-", "A+"))) %>%
+  mutate(A = factor(A, labels = c("Aβ-", "Aβ+"))) %>%
   ggplot(aes(x = Visit, y = vol_parasubiculum, color = kids_total_factor, fill=kids_total_factor)) +
   geom_point(alpha = 0.6, 
              position = position_dodge(width = 1)) +
@@ -636,7 +530,7 @@ hippo_data_long %>%
                alpha=.5)+
   facet_wrap(~A) +
   th +
-  labs(x = "Number of childbirths", 
+  labs(x = "Visit", 
        y = "Parasubiculum volume", 
        color = "Number of childbirths", 
        fill= "Number of childbirths")+
@@ -645,8 +539,10 @@ hippo_data_long %>%
   scale_x_discrete(expand = expansion(mult = c(0.8, 0.8)))
 
 ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_interaction.png", width = 9, height = 5)
+```
 
-
+### Individual model forest plot
+```{r}
 plot_model(mod_plot, 
            type = "est", 
            title=" ", 
@@ -801,21 +697,134 @@ Results: A trending interaction between number of childbirths and amyloid positi
 Conclusion: In CU post-menopausal women at risk of AD, parity might moderate the impact of AD pathology on cognitive change at 3 years. Additionally, parity independently influences volume change in the fimbria, and interacts with AD pathology on parasubiculum volume. Results highlight the effect of parity on AD-related neuropathology via hippocampal volume change. 
 
 ```{r}
-
-data %>% 
-  group_by(sex) %>% 
-  summarise(
-    n = n(),
-    mean_diff = mean(diff_mri, na.rm = TRUE),
-    sd_diff = sd(diff_mri, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  ggplot(aes(x = factor(sex), y = mean_diff)) +
-  geom_col(fill = "steelblue", alpha = 0.7) +
-  geom_errorbar(aes(ymin = mean_diff - sd_diff, ymax = mean_diff + sd_diff), 
-                width = 0.2) +
-  labs(x = "Sex", y = "Mean MRI time difference (years)") +
-  th
-
+stop("Script stopped here intentionally")
 ```
 
+
+# Miscellaneous
+
+## test for model estimates of cognition?
+```{r}
+data_forest_plot_cog<-mediation_data%>%
+  filter(sex == 2 )
+
+models<-list(
+  Attention = lmer(Z_Attention_Composite ~ kids_total*A +age_cog + APOE_binary + education  + Fuma2 +(1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,]),
+  Memory = lmer(Z_Memory_Composite ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,]),
+  Executive = lmer(Z_Executive_Composite ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,]),
+  Language = lmer(Z_Language_Composite ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,]),
+  Visual = lmer(Z_Visual_Composite ~ kids_total*A +age_cog + APOE_binary + education + Fuma2 + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
+)
+
+# Extract coefficients and CIs
+#install.packages("broom.mixed")
+#library(broom.mixed)
+#library(purrr)
+
+pred_cog_all <- map_dfr(models, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "A"))   
+}, .id = "cog")%>%
+  filter(term %in% c("kids_total", "A", "kids_total:A"))%>%
+  dplyr::select(cog, term, estimate, std.error)%>%
+  pivot_wider(names_from = term, values_from = c(estimate, std.error))%>%
+  mutate(plot_estimate_kids_A0 = estimate_kids_total,
+         plot_estimate_kids_A1 = estimate_kids_total + `estimate_kids_total:A`,
+         plot_conf.low_kids_A0 = estimate_kids_total - 1.96 * std.error_kids_total,
+         plot_conf.high_kids_A0 = estimate_kids_total + 1.96 * std.error_kids_total,
+         plot_conf.low_kids_A1 = (estimate_kids_total + `estimate_kids_total:A` - 1.96 * `std.error_kids_total:A`),
+         plot_conf.high_kids_A1 = (estimate_kids_total + `estimate_kids_total:A` + 1.96 * `std.error_kids_total:A`))%>%
+  dplyr::select(-estimate_kids_total, -estimate_A,-`estimate_kids_total:A` ,-`std.error_kids_total`, -std.error_A ,         -`std.error_kids_total:A`)%>%
+  pivot_longer(
+    cols = starts_with("plot_"),  # Keep 'term' as-is
+    names_to = c(".value", "A"),  # .value creates columns like estimate, conf.low, etc.
+    names_pattern = "plot_(.*)_kids_A(\\d+)"
+  )%>%
+  mutate(colour_group = case_when(region == "CA4" ~ "trend",
+                                  region == "GC-ML-DG" ~ "trend",
+                                  region == "Presubiculum" ~ "trend",
+                                  region == "Subiculum" ~ "trend",
+                                  region == "Parasubiculum" ~ "significant",
+                                  .default = "normal"))
+
+
+
+pred_cog_all %>%
+  mutate(A = factor(A, levels = c("1", "0"), labels = c("Positive", "Negative"))) %>%
+  ggplot(aes(x = estimate, y = cog, group = A, colour = A)) +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high), 
+                  position = position_dodge(width = 0.8),
+                  size = 0.6) +
+  labs(x = "Estimated effect of parity on cog trajectory", 
+       y = "Cog domain") +
+  scale_shape_manual(values = c("Negative" = 15, "Positive" = 16))
+  
+
+
+#ggsave("G:/My Drive/ADPD 2026/plot_all_regressions_estimates.png", width = 8, height = 6)
+```
+
+### plotting both timepoints
+
+uglyyy
+```{r}
+hippo_data_long%>%
+  filter(sex== 2)%>%
+  drop_na(A)%>%
+  mutate(A=factor(A))%>%
+  ggplot(aes(x=Visit, y=vol_parasubiculum, color = A))+
+  geom_violin(size=1.1, position = position_dodge(width = 0.5))+
+  geom_line( aes(group = subject), alpha=.2, size=1, position = position_dodge(width = 0.5))+
+  geom_point( aes(group = subject), alpha=.2, size=1.3, position = position_dodge(width = 0.5))+
+  facet_wrap(~kids_total)
+```
+
+### plotting differences
+uglyyyy
+```{r}
+#I'm aware how clunky this code is... I was fighting with pivots for a while and getting nowhere. So this is the best I could do for now sorry! 
+
+hippo_data_plot<-hippo
+colnames(hippo_data_plot) <- paste(colnames(hippo_data_plot), 'V1', sep = '_')
+hippo_data_plot<-hippo_data_plot%>%
+  rename(subject = subject_V1)%>%
+  dplyr::select(-Visit_V1)
+
+hippo_data_plot2<-hippo2
+colnames(hippo_data_plot2) <- paste(colnames(hippo_data_plot2), 'V2', sep = '_')
+hippo_data_plot2<-hippo_data_plot2%>%
+  rename(subject = subject_V2)%>%
+  dplyr::select(-Visit_V2)
+
+hippo_data_plot<-left_join(hippo_data_plot, hippo_data_plot2)
+
+base_names <- names(hippo_data_plot) %>%
+  str_subset("^vol_.*_V1$") %>%
+  str_remove("_V1$")
+
+
+for (base in base_names) {
+  v1_col <- paste0(base, "_V1")
+  v2_col <- paste0(base, "_V2")
+  diff_col <- paste0(base, "_diff")
+  
+  hippo_data_plot[[diff_col]] <- hippo_data_plot[[v2_col]] - hippo_data_plot[[v1_col]]
+}
+
+hippo_data_plot<-hippo_data_plot%>%
+  dplyr::select(subject, vol_CA1_diff, vol_CA3_diff, vol_CA4_diff, vol_GC_ML_DG_diff, vol_HATA_diff, vol_Hippocampal_tail_diff, vol_Whole_hippocampal_body_diff, vol_Whole_hippocampal_head_diff, vol_Whole_hippocampus_diff, vol_fimbria_diff, vol_molecular_layer_HP_diff, vol_parasubiculum_diff, vol_presubiculum_diff, vol_subiculum_diff)
+
+
+hippo_data_plot_all <- left_join(data, hippo_data_plot) %>%
+  mutate(across(starts_with("vol_"), ~ .x / diff_mri, .names = "{.col}_annual"))
+
+
+hippo_data_plot_all%>%
+  filter(sex==2)%>%
+  mutate(A=factor(A))%>%
+  drop_na(A)%>%
+ggplot(aes(x=kids_total, y=vol_parasubiculum_diff_annual, group=A, colour=A))+
+  geom_jitter()+
+  geom_smooth(method = "lm")+
+  call_aesthethics(15)+
+  labs(x = "Number of childbirths", y = "Volume change")
+```
