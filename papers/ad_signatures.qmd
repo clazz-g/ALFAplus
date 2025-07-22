@@ -72,7 +72,11 @@ library(purrr)
 ```{r setup, include=FALSE}
 # Register an inline hook:
 options(scipen = 1, digits = 3)
+
 ```
+
+
+
 
 Lancet Guidelines
 
@@ -340,6 +344,7 @@ fdr_hip_parity<-tidy_models_hip%>%
 ```
 
 Mixed effect longitudinal models applied to our entire sample showed a significant main effect of sex in the CA1 (adj.p= `r fdr_hip_sex[1]`), CA3 (adj.p= `r fdr_hip_sex[2]`), CA4 (adj.p= `r fdr_hip_sex[3]`), GC-ML-DG (adj.p= `r fdr_hip_sex[4]`), HATA (adj.p= `r fdr_hip_sex[5]`), molecular layer (adj.p= `r fdr_hip_sex[8]`) and parasubiculum (adj.p= `r fdr_hip_sex[9]`), where women appeared to show greater decline than men in these subfields. A significant main positive effect of parity was found in the fimbria (adj.p= `r fdr_hip_parity[7]`). 
+
 Include A interaction and maybe mention if 3 way works too?
 What kind of sensitivity analysis could be interesting?
 
@@ -413,7 +418,7 @@ fdr_hip_w_int<-tidy_models_hip_w_int%>%
 When stratifying by sex, a trending positive main effect of parity was found in the fimbria in women (adj.p= `r fdr_hip_w[7]`), suggesting those with higher parity may show greater fimbria volume. No effect of parity was found for men in any of the subfields. A significant parity*Aβ status interaction was found in the parasubiculum (adj.p= `r fdr_hip_w_int[9]`), where Aβ+ women with higher parity showed greater volume reduction. This effect was also trending in the CA4 (adj.p= `r fdr_hip_w_int[3]`), GC-ML-DG (adj.p= `r fdr_hip_w_int[4]`), subiculum (adj.p= `r fdr_hip_w_int[10]`) and presubiculum (adj.p= `r fdr_hip_w_int[11]`). This interaction did not significantly affect men.
 
 ## NFL
-```{r}
+```{r, include = F}
 
 # mediation too?
 
@@ -438,8 +443,10 @@ summary(mod_nfl_w)
 mod_nfl_w_int<-lmer(CSF_NFL~ kids_total*A + Visit + APOE_binary + (1 | subject), data = data_biomarkers_long[data_biomarkers_long$sex==2,])
 summary(mod_nfl_w_int)
 
-```
+tidy_mod_nfl_w<-broom.mixed::tidy(mod_nfl_w)
 
+```
+We used mixed effect models to investigate the effect of parity, Aβ status and their interaction on our cohort of men and women. No significant effect was found, but sex was highly significant. There was no significant interaction of parity and Aβ status. When stratifying by sex, a positive trending main effect of parity was observed in women (p= `r tidy_mod_nfl_w$p.value[2]`), but not in men. No interactions were significant in either sex group.
 
 ## Jack's signature
 
@@ -654,13 +661,19 @@ After stratifying by sex, no main effect of parity was found on any of the cogni
 # Discussion
 
 We aimed to investigate the impact of parity on hippocampal subfield volumes and relation to AD pathology in post-menopausal women at risk of AD and men who share similar age and AD risk. Our results suggest that...
-- parity influence hippocampal subfield volume independently in women
-- parity interacts with A status to influence hippocampal subfield volume, in women
-- these results aren't present in men suggesting it's biological
-- no effect on NFL - not linked with neurodegenerational processes
+- parity influence hippocampal subfield volume independently in women, higher parity bigger volume
+- parity interacts with A status to influence hippocampal subfield volume, in women, higher parity better in amyloid negative, worse in amyloid positive
+- these results aren't present in men suggesting it's biological?
+- possible effect of parity on NFL - higher parity higher NFL - but no interaction with AD pathology. 
 - no effect on AD cortical signature - could be because of sample's young age, but no relation with NFL either, so neurodegeneration doesn't seem involved in this effect (yet?)
 - possible impact on execuive functions- results not significant after adjusting but seems normal given the short amount of time between sessions and how early we are catching people
 - Hippocampus region involved are known to be crucial for....
+
+Limitations:
+- unequal number of men and women
+- still early stages 
+- uniformity of sample both ethnically and socially
+- no more than 4 kids per women
 
 
 # Graphs!
