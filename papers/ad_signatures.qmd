@@ -471,8 +471,6 @@ fit_cog_PACC<-lmer(Z_PACC ~ kids_total*A*sex +age_cog + APOE_binary + education 
 summary(fit_cog_PACC)
 
 
-plot_model(fit_cog, type = "int")
-
 ###Composites
 
 composites1<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 1 - Cognition Z Scores.xlsx")%>%
@@ -575,8 +573,55 @@ tidy_models_cog_int_3 <- map_dfr(models_cog_int_3, ~ {
 
 ```
 
-We used mixed effect modelling to investigate the effect of sex, parity and Aβ status on cognitive trajectory. There was a significant main effect of sex on attention, memory, executive and visual domains. whilst being a woman was associatied with greater decline in the attention, executive and visual processing domains, the opposite was true for memory. No effect of sex was found on the PACC.
+We used mixed effect modelling to investigate the effect of sex, parity and Aβ status on cognitive trajectory. There was a significant main effect of sex on attention (adj.p< 0.0001), memory (adj.p< 0.0001), executive (adj.p= `r fdr_cog_sex[3]`) and visual domains (adj.p< 0.0001). whilst being a woman was associatied with greater decline in the attention, executive and visual processing domains, the opposite was true for memory. No effect of sex was found on the PACC.
 In addition to this, there was no significant effect of parity, Aβ status or their interaction in any of the cognitive measures tested.
+
+```{r}
+#women only
+
+models_cog_w <- setNames(
+  lapply(outcome_vars_cog, function(outcome) {
+    formula <- as.formula(
+      paste(outcome, "~ kids_total + A + education + age_cog + APOE_binary + (1 | subject)")
+    )
+    lmer(formula, data = data_cog_long_composites[data_cog_long_composites$sex==2,])
+  }),
+  model_names_cog
+)
+
+
+tidy_models_cog_w <- map_dfr(models_cog_w, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "A"))   # Add consistent term column
+}, .id = "composite")%>%
+  filter(term == "A"| term == "kids_total")
+
+# interaction
+
+models_cog_w_int <- setNames(
+  lapply(outcome_vars_cog, function(outcome) {
+    formula <- as.formula(
+      paste(outcome, "~ kids_total *A + education + age_cog + APOE_binary + (1 | subject)")
+    )
+    lmer(formula, data = data_cog_long_composites[data_cog_long_composites$sex==2,])
+  }),
+  model_names_cog
+)
+
+
+tidy_models_cog_w_int <- map_dfr(models_cog_w_int, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "A"))   # Add consistent term column
+}, .id = "composite")%>%
+  filter(term == "A"| term == "kids_total"| term== "kids_total:A")
+
+fdr_cog_int_w<-tidy_models_cog_w_int%>%
+  filter(term == "kids_total:A")%>%
+  pull(p.value)%>%
+  p.adjust(., method = "fdr")%>%
+  format(., scientific = FALSE)
+```
+
+After stratifying by sex, no main effect of parity was found on any of the cognitive measures in women or men. We observed an initially significant interaction of parity*Aβ status on the executive domain (p= 0.023) - however, this did not survive FDR comparison (adj.p= `r fdr_cog_int_w[3]`). 
+
 
 # Graphs!
 
@@ -609,7 +654,7 @@ th <- call_aesthethics(15)
 
 ```
 
-## Figure 1: Estimated effect of parity on observed volume trajectory across hippocampal subfield regions.
+## Estimated effect of parity on observed volume trajectory across hippocampal subfield regions.
 
 ```{r, include=F}
 data_forest_plot<-hippo_data_long%>%
@@ -676,6 +721,65 @@ pred_hippo_all %>%
   scale_color_manual(values = c("trend" = "grey3", "significant" = "red", "normal" = "grey48"))+
   guides(colour = "none")
   
+```
+## Executive Z-score composite at visit 1 and 2, grouped by number of childbirths and Aβ status.
+```{r, echo=FALSE, warning=FALSE}
+data_cog_long_composites%>%
+  filter(sex==2)%>%
+  drop_na(A)%>%
+  mutate(kids_total_factor=ifelse(kids_total>=3, "3+", kids_total))%>%
+  mutate(A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+")))%>%
+  ggplot(aes(x= Visit, y = Z_Executive_Composite, group = interaction(Visit, kids_total_factor), color= kids_total_factor, fill= kids_total_factor))+
+  geom_point(alpha=.6, position = position_dodge(width = 1))+
+  geom_boxplot(position = position_dodge(width = 0.9), 
+               alpha=.5)+
+  facet_wrap(~A)+
+  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3+" = "#0A5940")) +
+  scale_fill_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3+" = "#0A5940"))+
+   th +
+  labs(x = "Visit", 
+       y = "Executive composite Z-score", 
+       color = "Number of childbirths", 
+       fill= "Number of childbirths")
+
+
+#ggsave("G:/My Drive/ADPD 2026/plot_executive.png", width = 9, height = 5)
+```
+
+## Parasubiculum volume at visit 1 and 2 in women, grouped by number of childbirths and Aβ status.
+
+```{r, include=FALSE}
+mod_plot<-lmer(vol_parasubiculum ~ kids_total*A + Visit + as.factor(APOE_binary) + scale(TIV) +(1| subject), data=hippo_data_long[hippo_data_long$sex==2,] )
+summary(mod_plot)
+
+plot_model(mod_plot, type= "est", title = "", axis.title = "Parasubiculum volume change model estimate" )
+
+preds <- ggpredict(mod_plot, terms = c("kids_total", "A", "Visit"))
+```
+
+
+```{r, echo=FALSE, warning=FALSE}
+hippo_data_long %>%
+  filter(sex == 2) %>%
+  drop_na(A) %>%
+  mutate(kids_total_factor=ifelse(kids_total>=3, "3+", kids_total))%>%
+  mutate(A = factor(A, labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = Visit, y = vol_parasubiculum, color = kids_total_factor, fill=kids_total_factor)) +
+  geom_point(alpha = 0.6, 
+             position = position_dodge(width = 1)) +
+  geom_boxplot(position = position_dodge(width = 0.9), 
+               alpha=.5)+
+  facet_wrap(~A) +
+  th +
+  labs(x = "Visit", 
+       y = "Parasubiculum volume", 
+       color = "Number of childbirths", 
+       fill= "Number of childbirths")+
+  scale_color_manual(values = c("0" = "lightblue", "1" = "steelblue", "2" = "darkblue", "3+" = "navy", "4" = "midnightblue")) +
+  scale_fill_manual(values = c("0" = "lightblue", "1" = "steelblue", "2" = "darkblue", "3+" = "navy", "4" = "midnightblue"))+
+  scale_x_discrete(expand = expansion(mult = c(0.8, 0.8)))
+
+ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_interaction.png", width = 9, height = 5)
 ```
 
 
