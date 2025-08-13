@@ -106,6 +106,15 @@ data<-left_join(data, biomarkers)
 
 ```{r, echo=FALSE}
 
+#frist getting the time difference beteen cog tests
+time_diff<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+  dplyr::select(IdParticipante, Visit,FechaResultado)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = as.numeric(subject))%>%
+  filter(Visit != 3)%>%
+  pivot_wider(names_from = Visit, values_from = FechaResultado, names_prefix = c("Fecha_Resultado"))%>%
+  mutate(time_diff = as.numeric(difftime(Fecha_Resultado2, Fecha_Resultado1, units= c("days"))))%>%
+  dplyr::select(subject, time_diff)
 
 cognition<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
   dplyr::select(IdParticipante, Visit, Z_PACC, Z_FCSRTI_RT, Z_aWMS_DR_RS, Z_Wclave_totalscr, Z_FS_totalcnswr, FechaResultado)%>%
@@ -118,10 +127,12 @@ data_cog_long<- left_join(data, cognition)%>%
   filter(Visit != 3) %>%
   filter(n()>=2)%>%
   relocate(Visit, .after=sex)%>%
-  ungroup()
+  ungroup()%>%
+  left_join(., time_diff)%>%
+  mutate(time_diff = ifelse(Visit == 1, 0, time_diff))
 
 
-fit_cog<-lmer(Z_FS_totalcnswr ~ kids_total*A +age_cog + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
+fit_cog<-lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
 summary(fit_cog)
 r.squaredGLMM(fit_cog)
 
@@ -156,7 +167,7 @@ composite_all<-full_join(composites1, composites2)%>%
 
 data_cog_long_composites<-left_join(data_cog_long, composite_all)
 
-fit_cog_domain<-lmer(Z_Executive_Composite ~ kids_total*A +age_cog + APOE_binary + education + repro_span + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
+fit_cog_domain<-lmer(Z_Executive_Composite ~ kids_total*A*time_diff +age_v1 + APOE_binary + education + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
 summary(fit_cog_domain)
 r.squaredGLMM(fit_cog_domain)
 
@@ -168,62 +179,6 @@ fdr_adjusted_p_values
 plot_model(fit_cog_domain, type= "int")
 ```
 
-#Cognitive results - LM of change
-test
-test again
-```{r}
-composites1<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 1 - Cognition Z Scores.xlsx")%>%
-  dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -Z_PACC_Composite_1.2._v1 )%>%
-  rename(subject = IdParticipante)
-
-composites2<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 2 - Cognition Z Scores.xlsx")%>%
-  dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -V2S1_dt, -Z_PACC_Composite_1.2._V2 )%>%
-  rename(subject = IdParticipante)
-
-PACC_diff<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
-  dplyr::select(IdParticipante, Visit, Z_PACC, FechaResultado)%>%
-  rename(subject = IdParticipante)%>%
-  mutate(subject = as.numeric(subject))%>%
-  filter(Visit != 3)%>%
-  pivot_wider(names_from = Visit, values_from = c(Z_PACC, FechaResultado))%>%
-  mutate(PACC_diff = Z_PACC_2 - Z_PACC_1,
-         time_diff = as.numeric(difftime(FechaResultado_2, FechaResultado_1, units= c("days"))))%>%
-  dplyr::select(subject, PACC_diff, time_diff)
-
-composite_all_diff<-full_join(composites1, composites2)%>%
-  mutate(diff_Attention = Z_Attention_Composite_V2 - Z_Attention_Composite_v1,
-         diff_Memory = Z_Memory_Composite_V2 - Z_Memory_Composite_v1,
-         diff_Executive = Z_Executive_Composite_V2 - Z_Executive_Composite_v1,
-         diff_Language = Z_Language_Composite_V2 - Z_Language_Composite_v1,
-         diff_Visual = Z_Visual_Composite_V2 - Z_Visual_Composite_v1,
-         subject = as.numeric(subject))%>%
-  dplyr:: select(subject, diff_Attention, diff_Memory, diff_Executive, diff_Language, diff_Visual)
-
-data_cog_diff<-left_join(data, composite_all_diff)%>%
-  left_join(., PACC_diff)%>%
-  mutate(A=factor(A),
-         APOE_binary=factor(APOE_binary),
-         AT=factor(AT))
-
-mod_pacc<-lm(PACC_diff ~ kids_total*A*sex + age_v1 + education + APOE_binary + time_diff, data = data_cog_diff)
-summary(mod_pacc)
-
-mod_pacc_w<-lm(PACC_diff ~ kids_total*A + A+age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
-summary(mod_pacc_w)
-
-tidy_mod1_es<-tidy(mod_pacc_w)$estimate
-tidy_mod1_p<-tidy(mod_pacc_w)$p.value
-
-
-hist(data_cog_diff$PACC_diff)
-
-plot_model(mod_pacc_w, type = "int")
-
-#trying with poly
-mod_pacc_w_poly<-lm(PACC_diff ~ poly(kids_total, 2, raw = TRUE)*A+ age_menopause_pmm +age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
-summary(mod_pacc_w_poly)
-```
- Do not use anymore! obsolete
 
 # hippo vol change
 ```{r}
@@ -315,7 +270,7 @@ fdr_adjusted_p_values
 hippo_data_long%>%
   filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total*A", "age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+run_volume_lmer_regressions( .,c( "kids_total*A" ,"age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
 
 p_values <- c(0.6607 ,   0.14130   , 0.0158, 0.0326, 0.718  ,  0.0965, 0.8346  ,0.582  ,  0.00403, 0.0139 ,0.0253  )
 
@@ -329,7 +284,74 @@ mod_test<-lmer(vol_parasubiculum ~ kids_total*A + age_mri+ APOE_binary+ scale(TI
 summary(mod_test)
 plot_model(mod_test, type="int")
 r.squaredGLMM(mod_test)
+```
 
+
+```{r}
+#testing interaction with visit
+x_age<-as.vector(hippo_data_long$age_mri)
+x_visit<-hippo_data_long%>%
+  mutate(Visit = as.numeric(ifelse(Visit == "V1", 1, 2)))%>%
+  pull(Visit)
+cor.test(x_visit, x_age)
+
+outcome_vars <- c(
+  "vol_CA1", "vol_CA3", "vol_CA4", "vol_GC_ML_DG", "vol_HATA", 
+  "vol_Hippocampal_tail", "vol_fimbria", "vol_molecular_layer_HP", 
+  "vol_parasubiculum", "vol_presubiculum", "vol_subiculum"
+)
+
+
+model_names <- c(
+  "CA1", "CA3", "CA4", "GC-ML-DG", "HATA", 
+  "Tail", "Fimbria", "Molecular layer", 
+  "Parasubiculum", "Presubiculum", "Subiculum"
+)
+
+models_hip_visit_int <- setNames(
+  lapply(outcome_vars, function(outcome) {
+    formula <- as.formula(
+      paste(outcome, "~ kids_total*Visit +A + scale(TIV) + age_v1 + APOE_binary + (1 | subject)")
+    )
+    lmer(formula, data = hippo_data_long[hippo_data_long$sex==2,])
+  }),
+  model_names
+)
+
+tidy_models_hip_visit_int <- map_dfr(models_hip_visit_int, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "kids_total:VisitV2"))   # Add consistent term column
+}, .id = "region")
+
+fdr_visit_int<-tidy_models_hip_visit_int%>%
+  filter(term == "kids_total:Visit2")%>%
+  pull(p.value)%>%
+  p.adjust(method = "fdr")%>%
+  format(., scientific = FALSE)%>%
+  as.numeric()
+
+# 3way
+
+models_hip_visit_int3 <- setNames(
+  lapply(outcome_vars, function(outcome) {
+    formula <- as.formula(
+      paste(outcome, "~ kids_total*Visit*A + scale(TIV) + age_v1 + APOE_binary + (1 | subject)")
+    )
+    lmer(formula, data = hippo_data_long[hippo_data_long$sex==2,])
+  }),
+  model_names
+)
+
+tidy_models_hip_visit_int3 <- map_dfr(models_hip_visit_int3, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "kids_total:VisitV2*A"))   # Add consistent term column
+}, .id = "region")%>%
+  filter(term =="kids_total:VisitV2:A")
+
+fdr_visit_int<-tidy_models_hip_visit_int%>%
+  filter(term == "kids_total:Visit2")%>%
+  pull(p.value)%>%
+  p.adjust(method = "fdr")%>%
+  format(., scientific = FALSE)%>%
+  as.numeric()
 ```
 
 #Mediation test
@@ -827,4 +849,57 @@ ggplot(aes(x=kids_total, y=vol_parasubiculum_diff_annual, group=A, colour=A))+
   geom_smooth(method = "lm")+
   call_aesthethics(15)+
   labs(x = "Number of childbirths", y = "Volume change")
+```
+
+##Cognitive results - LM of change
+test
+test again
+```{r}
+composites1<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 1 - Cognition Z Scores.xlsx")%>%
+  dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -Z_PACC_Composite_1.2._v1 )%>%
+  rename(subject = IdParticipante)
+
+composites2<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 2 - Cognition Z Scores.xlsx")%>%
+  dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -V2S1_dt, -Z_PACC_Composite_1.2._V2 )%>%
+  rename(subject = IdParticipante)
+
+PACC_diff<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+  dplyr::select(IdParticipante, Visit, Z_PACC, FechaResultado)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = as.numeric(subject))%>%
+  filter(Visit != 3)%>%
+  pivot_wider(names_from = Visit, values_from = c(Z_PACC, FechaResultado))%>%
+  mutate(PACC_diff = Z_PACC_2 - Z_PACC_1,
+         time_diff = as.numeric(difftime(FechaResultado_2, FechaResultado_1, units= c("days"))))%>%
+  dplyr::select(subject, PACC_diff, time_diff)
+
+composite_all_diff<-full_join(composites1, composites2)%>%
+  mutate(diff_Attention = Z_Attention_Composite_V2 - Z_Attention_Composite_v1,
+         diff_Memory = Z_Memory_Composite_V2 - Z_Memory_Composite_v1,
+         diff_Executive = Z_Executive_Composite_V2 - Z_Executive_Composite_v1,
+         diff_Language = Z_Language_Composite_V2 - Z_Language_Composite_v1,
+         diff_Visual = Z_Visual_Composite_V2 - Z_Visual_Composite_v1,
+         subject = as.numeric(subject))%>%
+  dplyr:: select(subject, diff_Attention, diff_Memory, diff_Executive, diff_Language, diff_Visual)
+
+data_cog_diff<-left_join(data, composite_all_diff)%>%
+  left_join(., PACC_diff)%>%
+  mutate(A=factor(A),
+         APOE_binary=factor(APOE_binary),
+         AT=factor(AT))
+
+mod_pacc_w<-lm(PACC_diff ~ kids_total*A +age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
+summary(mod_pacc_w)
+
+tidy_mod1_es<-tidy(mod_pacc_w)$estimate
+tidy_mod1_p<-tidy(mod_pacc_w)$p.value
+
+
+hist(data_cog_diff$PACC_diff)
+
+plot_model(mod_pacc_w, type = "int")
+
+#trying with poly
+mod_pacc_w_poly<-lm(PACC_diff ~ poly(kids_total, 2, raw = TRUE)*A+ age_menopause_pmm +age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
+summary(mod_pacc_w_poly)
 ```
