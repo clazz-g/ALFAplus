@@ -181,6 +181,7 @@ plot_model(fit_cog_domain, type= "int")
 
 
 # hippo vol change
+results null after introducing 3 way interaction. I am gonna kill someone
 ```{r}
 hippo<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V1_20231120_20250208_111212.xlsx")%>%
   group_by(subject, region) %>%
@@ -228,7 +229,8 @@ hippo_data_long<-bind_rows(hippo_data, hippo_data2)%>%
     Visit == "V2" ~ age_v2_mri
   ))%>%
   dplyr::select(-age_v1_mri, -age_v2_mri)%>%
-  drop_na(scandate_v2)
+  drop_na(scandate_v2)%>%
+  mutate(diff_mri = ifelse(Visit == "V1", 0, diff_mri))
 
 #fucntion to run 
 run_volume_lmer_regressions <- function(data, predictors) {
@@ -276,6 +278,35 @@ p_values <- c(0.6607 ,   0.14130   , 0.0158, 0.0326, 0.718  ,  0.0965, 0.8346  ,
 
 fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
 fdr_adjusted_p_values
+```
+
+##longitudinal analysis
+```{r}
+##no interaction
+
+hippo_data_long%>%
+  filter(sex == 2 )%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_lmer_regressions( .,c( "kids_total*diff_mri", "age_v1", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+
+p_values <- c(0.0915 ,0.551245  ,  0.5645  ,  0.4297   , 0.0825, 0.83811 ,   0.0025, 0.1691  ,  0.934 ,   0.548,    0.455    )
+
+fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
+fdr_adjusted_p_values
+
+#fimbria significant, fimbria survives
+
+##interaction
+
+hippo_data_long%>%
+  filter(sex == 2 )%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_lmer_regressions( .,c( "kids_total*A*diff_mri" ,"age_v1", "APOE_binary", "scale(TIV)", "repro_span", "(1 | subject)"))
+
+p_values <- c(0.6607 ,   0.14130   , 0.0158, 0.0326, 0.718  ,  0.0965, 0.8346  ,0.582  ,  0.00403, 0.0139 ,0.0253  )
+
+fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
+fdr_adjusted_p_values
 
 #CA4 0.0158 , GC 0.0326, parasubiculum 0.00403, presubiculum 0.0139, subiculum 0.0253 sig
 #parasubiculum survives, trend for the others
@@ -286,73 +317,70 @@ plot_model(mod_test, type="int")
 r.squaredGLMM(mod_test)
 ```
 
-
+# Jack
 ```{r}
-#testing interaction with visit
-x_age<-as.vector(hippo_data_long$age_mri)
-x_visit<-hippo_data_long%>%
-  mutate(Visit = as.numeric(ifelse(Visit == "V1", 1, 2)))%>%
-  pull(Visit)
-cor.test(x_visit, x_age)
+jack<-read_excel("G:/My Drive/Data/ALFA+/Jack signature ALFA+/bx_signature_jack_ALFA_PLUS_V1_20231120_20250527_142751.xlsx")%>%
+  filter(weighted == "TRUE")%>%
+  dplyr::select(-ID, -signature, -weighted)%>%
+  pivot_wider(names_from = measurement, values_from = value, names_prefix = "jack_")%>%
+  mutate(subject = as.numeric(subject),
+         Visit = "V1")
 
-outcome_vars <- c(
-  "vol_CA1", "vol_CA3", "vol_CA4", "vol_GC_ML_DG", "vol_HATA", 
-  "vol_Hippocampal_tail", "vol_fimbria", "vol_molecular_layer_HP", 
-  "vol_parasubiculum", "vol_presubiculum", "vol_subiculum"
-)
+jack2<-read_excel("G:/My Drive/Data/ALFA+/Jack signature ALFA+/bx_signature_jack_ALFA_PLUS_V2_20230518_20250210_114442.xlsx")%>%
+  filter(weighted == "TRUE")%>%
+  dplyr::select(-ID, -signature, -weighted)%>%
+  pivot_wider(names_from = measurement, values_from = value, names_prefix = "jack_")%>%
+  mutate(subject = as.numeric(subject),
+         Visit = "V2")
 
+jack_data<-bind_rows(jack, jack2)
+diff_mri_df<-hippo_data_long%>%
+  dplyr::select(subject, diff_mri, Visit)
 
-model_names <- c(
-  "CA1", "CA3", "CA4", "GC-ML-DG", "HATA", 
-  "Tail", "Fimbria", "Molecular layer", 
-  "Parasubiculum", "Presubiculum", "Subiculum"
-)
+jack_data_long<-left_join(hippo_data_long, jack_data)%>%
+  left_join(., diff_mri_df)
+  
 
-models_hip_visit_int <- setNames(
-  lapply(outcome_vars, function(outcome) {
-    formula <- as.formula(
-      paste(outcome, "~ kids_total*Visit +A + scale(TIV) + age_v1 + APOE_binary + (1 | subject)")
-    )
-    lmer(formula, data = hippo_data_long[hippo_data_long$sex==2,])
-  }),
-  model_names
-)
+#women
+fit_jack_cort_w <- lmer(jack_ThickAvg ~ kids_total*A*diff_mri  +age_v1 + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
+summary(fit_jack_cort_w)
 
-tidy_models_hip_visit_int <- map_dfr(models_hip_visit_int, ~ {
-  broom.mixed::tidy(.x, terms = c("kids_total", "kids_total:VisitV2"))   # Add consistent term column
-}, .id = "region")
+fit_jack_grey_w <- lmer(jack_GrayVol ~ kids_total*A+diff_mri +age_v1 + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
+summary(fit_jack_grey_w)
 
-fdr_visit_int<-tidy_models_hip_visit_int%>%
-  filter(term == "kids_total:Visit2")%>%
-  pull(p.value)%>%
-  p.adjust(method = "fdr")%>%
-  format(., scientific = FALSE)%>%
-  as.numeric()
-
-# 3way
-
-models_hip_visit_int3 <- setNames(
-  lapply(outcome_vars, function(outcome) {
-    formula <- as.formula(
-      paste(outcome, "~ kids_total*Visit*A + scale(TIV) + age_v1 + APOE_binary + (1 | subject)")
-    )
-    lmer(formula, data = hippo_data_long[hippo_data_long$sex==2,])
-  }),
-  model_names
-)
-
-tidy_models_hip_visit_int3 <- map_dfr(models_hip_visit_int3, ~ {
-  broom.mixed::tidy(.x, terms = c("kids_total", "kids_total:VisitV2*A"))   # Add consistent term column
-}, .id = "region")%>%
-  filter(term =="kids_total:VisitV2:A")
-
-fdr_visit_int<-tidy_models_hip_visit_int%>%
-  filter(term == "kids_total:Visit2")%>%
-  pull(p.value)%>%
-  p.adjust(method = "fdr")%>%
-  format(., scientific = FALSE)%>%
-  as.numeric()
+plot_model(fit_jack_grey_w, type= "int")
 ```
+
+#NFL
+```{r}
+
+biomarkers_long<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(subject=as.numeric(subject))
+data_naked<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(sex=factor(sex))
+
+diff_biomarkers<-biomarkers_long%>%
+  dplyr::select(subject, Visit, collection_dt)%>%
+  pivot_wider(names_from = Visit, values_from = collection_dt)%>%
+  mutate(V1 = as.Date (V1, format= "%d/%m/%Y"),
+         V2 = as.Date (V2, format= "%d/%m/%Y"),
+         diff_biomarkers = as.numeric(difftime(V2, V1, units= c("days"))))%>%
+  dplyr::select(diff_biomarkers, subject)
+
+data_biomarkers_long<-left_join(data_naked, biomarkers_long)%>%
+  left_join(., diff_biomarkers)%>%
+  mutate(diff_biomarkers = ifelse(Visit == "V1", 0, diff_biomarkers))
+
+fit_nfl <- lmer(CSF_NFL ~ kids_total*diff_biomarkers  +age_v1 + APOE_binary + (1 | subject) , data_biomarkers_long[data_biomarkers_long$sex==2,]) 
+summary(fit_nfl)
+
+
+```
+
+
+
 
 #Mediation test
 does not yield much
