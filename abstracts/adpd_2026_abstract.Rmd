@@ -103,7 +103,8 @@ data<-left_join(data, biomarkers)
 ```
 
 # Cognitive results - LMM
-
+without time interaction executive scores are significant
+with time interaction the pacc scores are
 ```{r, echo=FALSE}
 
 #frist getting the time difference beteen cog tests
@@ -131,6 +132,13 @@ data_cog_long<- left_join(data, cognition)%>%
   left_join(., time_diff)%>%
   mutate(time_diff = ifelse(Visit == 1, 0, time_diff))
 
+#cross-sectional
+
+fit_cog<-lmer(Z_PACC ~ kids_total*A +age_cog + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
+summary(fit_cog)
+r.squaredGLMM(fit_cog)
+
+#Longitudinal
 
 fit_cog<-lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
 summary(fit_cog)
@@ -165,23 +173,57 @@ composite_all<-full_join(composites1, composites2)%>%
   ungroup()%>%
   mutate(subject = as.numeric(subject))
 
-data_cog_long_composites<-left_join(data_cog_long, composite_all)
+data_cog_long_composites<-left_join(data_cog_long, composite_all)%>%
+  mutate(A= factor(A),
+         APOE_binary = factor(APOE_binary))
 
-fit_cog_domain<-lmer(Z_Executive_Composite ~ kids_total*A*time_diff +age_v1 + APOE_binary + education + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
+#Cross sectional
+
+fit_cog_domain<-lmer(Z_Visual_Composite ~ kids_total*A +age_cog + APOE_binary + education + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
 summary(fit_cog_domain)
-r.squaredGLMM(fit_cog_domain)
 
-p_values <- c(0.0256, 0.4011  ,  0.962  ,  0.4655  ,  0.1276    )
+
+p_values <- c(0.33549      , 0.7260  ,   0.02337 , 0.36791     ,0.1997    )
 
 fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
 fdr_adjusted_p_values
 
 plot_model(fit_cog_domain, type= "int")
+
+# Longitudinal
+
+fit_cog_domain_long<-lmer(Z_Attention_Composite ~ kids_total*A*time_diff +age_v1 + APOE_binary + education + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
+summary(fit_cog_domain)
+
+#not significant
+
+
+```
+multivariate MEM test
+interesting time interaction with ptau217
+```{r}
+
+test_longer<- data_cog_long_composites%>%
+  dplyr::select(-Z_aWMS_DR_RS, -Z_FCSRTI_RT, -Z_FS_totalcnswr, -Z_Wclave_totalscr)%>%
+  pivot_longer(cols = starts_with("Z_"), names_to = "cog_domain", values_to = "cog_score")%>%
+  mutate(cog_domain = factor(cog_domain))
+
+fit_cog_domain_test<-lmer(cog_score ~ kids_total*A +age_cog + cog_domain + APOE_binary + education + (1 | subject), test_longer[test_longer$sex == 2,])
+summary(fit_cog_domain_test)
+
+fit_cog_domain_test<-lmer(cog_score ~ kids_total*CSF_pTau217*time_diff +age_v1 + cog_domain + APOE_binary + education + (1 | subject), test_longer[test_longer$sex == 2,])
+summary(fit_cog_domain_test)
+
+
+plot_model(fit_cog_domain_test, type= "int")
+
+
 ```
 
 
+
 # hippo vol change
-results null after introducing 3 way interaction. I am gonna kill someone
+
 ```{r}
 hippo<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V1_20231120_20250208_111212.xlsx")%>%
   group_by(subject, region) %>%
@@ -281,6 +323,7 @@ fdr_adjusted_p_values
 ```
 
 ##longitudinal analysis
+results null after introducing 3 way interaction. 
 ```{r}
 ##no interaction
 
@@ -289,13 +332,6 @@ hippo_data_long%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
 run_volume_lmer_regressions( .,c( "kids_total*diff_mri", "age_v1", "APOE_binary", "scale(TIV)", "(1 | subject)"))
 
-p_values <- c(0.0915 ,0.551245  ,  0.5645  ,  0.4297   , 0.0825, 0.83811 ,   0.0025, 0.1691  ,  0.934 ,   0.548,    0.455    )
-
-fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
-fdr_adjusted_p_values
-
-#fimbria significant, fimbria survives
-
 ##interaction
 
 hippo_data_long%>%
@@ -303,18 +339,6 @@ hippo_data_long%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
 run_volume_lmer_regressions( .,c( "kids_total*A*diff_mri" ,"age_v1", "APOE_binary", "scale(TIV)", "repro_span", "(1 | subject)"))
 
-p_values <- c(0.6607 ,   0.14130   , 0.0158, 0.0326, 0.718  ,  0.0965, 0.8346  ,0.582  ,  0.00403, 0.0139 ,0.0253  )
-
-fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
-fdr_adjusted_p_values
-
-#CA4 0.0158 , GC 0.0326, parasubiculum 0.00403, presubiculum 0.0139, subiculum 0.0253 sig
-#parasubiculum survives, trend for the others
-
-mod_test<-lmer(vol_parasubiculum ~ kids_total*A + age_mri+ APOE_binary+ scale(TIV)+ (1 | subject), data = hippo_data_long[hippo_data_long$sex==2,])
-summary(mod_test)
-plot_model(mod_test, type="int")
-r.squaredGLMM(mod_test)
 ```
 
 # Jack
@@ -382,8 +406,10 @@ summary(fit_nfl)
 
 
 
+
 #Mediation test
 does not yield much
+should I test mediation with biomarker?
 ```{r}
 
 cols<-data_cog_long_composites%>%
@@ -454,6 +480,7 @@ mediation_test <- medci(mu.x = a_coef, mu.y = b_coef,
                         alpha = 0.05, type = "prodclin")
 
 print(mediation_test)
+
 ```
 
 
@@ -490,44 +517,7 @@ th <- call_aesthethics(15)
 
 ```
 
-## PACC ~ childbirth*AB - not in use anymore because using mixed effect model
 
-```{r}
-
-mod_pacc_w<-lm(PACC_diff ~ kids_total*A + A+age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
-pred_pacc<-ggpredict(mod_pacc_w, terms=c("kids_total", "A"))
-
-
-data_cog_diff%>%
-  filter(sex == 2)%>%
-  drop_na(A)%>%
-  ggplot(aes(x=kids_total, y=PACC_diff, group=A, colour=A))+
-  geom_jitter(width = 0.1)+
-  geom_line(data=pred_pacc, 
-            aes( x=x,
-                 y=predicted,
-                 group=group,
-                 colour=group), 
-            inherit.aes = F, 
-            size=1)+
-  geom_ribbon(data = pred_pacc, 
-              aes(x=x, 
-                  ymin= conf.low, 
-                  ymax = conf.high, 
-                  group=group), 
-              inherit.aes = F, 
-              alpha=.2)+
-  th+
-  labs(x = "Number of childbirths", y = "PACC change (Z-score)", group="Aβ+", colour="Aβ+")+
-  geom_hline(yintercept = 0, linetype = "dotted", colour = "grey0")+
-  scale_color_manual(values = c("0" = "steelblue2", "1" = "tomato"),
-                     labels = c("0" = "Negative", "1" = "Positive"))+
-  scale_fill_manual(values = c("0" = "steelblue2", "1" = "tomato"),
-                    labels = c("0" = "Negative", "1" = "Positive"))
-
-
-ggsave("G:/My Drive/ADPD 2026/plot_PACC_interaction.png", width = 8, height = 5)
-```
 
 ## Executive ~ parity * A
 
@@ -877,6 +867,45 @@ ggplot(aes(x=kids_total, y=vol_parasubiculum_diff_annual, group=A, colour=A))+
   geom_smooth(method = "lm")+
   call_aesthethics(15)+
   labs(x = "Number of childbirths", y = "Volume change")
+```
+
+## PACC ~ childbirth*AB - not in use anymore because using mixed effect model
+
+```{r}
+
+mod_pacc_w<-lm(PACC_diff ~ kids_total*A + A+age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
+pred_pacc<-ggpredict(mod_pacc_w, terms=c("kids_total", "A"))
+
+
+data_cog_diff%>%
+  filter(sex == 2)%>%
+  drop_na(A)%>%
+  ggplot(aes(x=kids_total, y=PACC_diff, group=A, colour=A))+
+  geom_jitter(width = 0.1)+
+  geom_line(data=pred_pacc, 
+            aes( x=x,
+                 y=predicted,
+                 group=group,
+                 colour=group), 
+            inherit.aes = F, 
+            size=1)+
+  geom_ribbon(data = pred_pacc, 
+              aes(x=x, 
+                  ymin= conf.low, 
+                  ymax = conf.high, 
+                  group=group), 
+              inherit.aes = F, 
+              alpha=.2)+
+  th+
+  labs(x = "Number of childbirths", y = "PACC change (Z-score)", group="Aβ+", colour="Aβ+")+
+  geom_hline(yintercept = 0, linetype = "dotted", colour = "grey0")+
+  scale_color_manual(values = c("0" = "steelblue2", "1" = "tomato"),
+                     labels = c("0" = "Negative", "1" = "Positive"))+
+  scale_fill_manual(values = c("0" = "steelblue2", "1" = "tomato"),
+                    labels = c("0" = "Negative", "1" = "Positive"))
+
+
+ggsave("G:/My Drive/ADPD 2026/plot_PACC_interaction.png", width = 8, height = 5)
 ```
 
 ##Cognitive results - LM of change
