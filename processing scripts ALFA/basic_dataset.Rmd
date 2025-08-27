@@ -22,8 +22,6 @@ library(broom)
 library(ggeffects)
 #install.packages("MASS")
 library(MASS)
-#install.packages("PResiduals")
-library(PResiduals)
 #install.packages("mice")
 library(mice)
 #install.packages("VIM")
@@ -200,7 +198,8 @@ master_nd<-left_join(master_nd, cause_menopause)
 hrt<-read_delim("G:/My Drive/Data/ALFA+/reproductive_var/Alfa Plus Long 2025_1054_AF_20250304095809(in).csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE, skip = 1)%>%
   dplyr::select(IdParticipante, AF_horm_sust, Visita)%>%
-  mutate(AF_horm_sust = factor(AF_horm_sust))%>%
+  mutate(AF_horm_sust = factor(AF_horm_sust),
+         IdParticipante = factor(IdParticipante))%>%
   rename(HRT = AF_horm_sust,
          subject = IdParticipante)%>%
   dplyr::select(-Visita)%>%
@@ -209,7 +208,6 @@ hrt<-read_delim("G:/My Drive/Data/ALFA+/reproductive_var/Alfa Plus Long 2025_105
   group_by(subject)%>%
   filter(!(n() > 1 & HRT == 0)) %>%
   ungroup()
-
 
 master_nd<-left_join(master_nd, hrt)
 
