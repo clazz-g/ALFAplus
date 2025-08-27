@@ -135,7 +135,6 @@ data_cog_long<- left_join(data, cognition)%>%
   left_join(., time_diff)%>%
   mutate(time_diff = ifelse(Visit == 1, 0, time_diff))
 
-#cross-sectional
 
 fit_cog<-lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
 summary(fit_cog)
@@ -144,21 +143,20 @@ plot_model(fit_cog, type = "int")
 #using emmeans is better because of quite unequal group sizes
 
 
-emm_at_times <- emmeans(fit_cog, ~ kids_total * A * time_diff, 
-                       at = list(kids_total = c(0, 1, 2, 3, 4),
-                                 time_diff = c(0, 1000, 1500, 2000)))
+emm_int <- emmeans(fit_cog, ~ A | kids_total * time_diff,
+                   at = list(kids_total = c(0, 2, 4),
+                             time_diff = c(0, 100, 500, 1000, 2000, 2500)),
+                   data = data_cog_long[data_cog_long$sex == 2,])
+pairs(emm_int)
 
-emm_at_times
-pairs(emm_3way, simple = "kids_total", combine = TRUE)
+emm_slopes <- emtrends(fit_cog, ~ A, var = "kids_total",
+                   data = data_cog_long[data_cog_long$sex == 2,])
+pairs(emm_slopes)
 
-slopes <- emtrends(fit_cog, ~ kids_total * A, var = "time_diff",
-                  at = list(kids_total = c(0, 1, 2, 3, 4)))
-pairs(slopes, simple = "kids_total")
 
-emmip(fit_cog, A ~ time_diff | kids_total, 
-      at = list(kids_total = c(0, 1, 2, 3, 4),
-               time_diff = seq(0, 1000, 1500)),  # Adjust range
-      CIs = TRUE)
+emm_slopes2 <- emtrends(fit_cog, ~ A, var = "time_diff",
+                   data = data_cog_long[data_cog_long$sex == 2,])
+pairs(emm_slopes2)
 
 data_cog_long%>%
   filter(sex==2)%>%
@@ -318,8 +316,23 @@ fdr_adjusted_p_values
 #CA4, GC-ML-DG, subiculum and presubiculum near significant interaction between kids and A; sig for parasubiculum. no 3 way interaction with time, or effect of time.
 
 #need to check the effect per A group; then can adjust 
-emmeans(mod_1, ~ kids_total*A*diff_mri, data=hippo_data_long[hippo_data_long$sex ==2,], at=list(kids_total=c(0:4)))%>%
-test()
+
+mod_hip<-lmer(vol_parasubiculum ~ kids_total*A*diff_mri +age_v1+ APOE_binary+ scale(TIV)+ (1 | subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+emm_A <- emmeans(mod_hip, ~ A,
+                 data = hippo_data_long[hippo_data_long$sex==2,])
+pairs(emm_A)
+
+emm_int <- emmeans(mod_hip, ~ A | kids_total,
+                   at = list(kids_total = c(0, 1, 2, 3, 4)),
+                   data = hippo_data_long[hippo_data_long$sex==2,])
+pairs(emm_int)
+
+emm_int <- emmeans(mod_hip, ~ kids_total | A,
+                   at = list(kids_total = c(0, 1, 2, 3, 4)),
+                   data = hippo_data_long[hippo_data_long$sex==2,])
+pairs(emm_int)
+
 
 #sensitivity analysis female var
 
