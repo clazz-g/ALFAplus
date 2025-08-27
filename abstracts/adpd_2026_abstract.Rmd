@@ -137,22 +137,8 @@ data_cog_long<- left_join(data, cognition)%>%
 
 #cross-sectional
 
-fit_cog<-lmer(Z_PACC ~ kids_total*CSF_Abeta_ratio +age_cog + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
-summary(fit_cog)
-
-#both sexes
-fit_cog_sex<-lmer(Z_PACC ~ kids_total*A*sex +age_cog + APOE_binary + education +(1 | subject), data_cog_long)
-summary(fit_cog_sex)
-```
-
-
-```{r, echo=FALSE}
-#Longitudinal
-
 fit_cog<-lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
 summary(fit_cog)
-r.squaredGLMM(fit_cog)
-
 plot_model(fit_cog, type = "int")
 ```
 
@@ -190,31 +176,9 @@ data_cog_long_composites<-left_join(data_cog_long, composite_all)%>%
 
 #Cross sectional
 
-fit_cog_domain<-lmer(Z_Executive_Composite ~ kids_total*CSF_pTau217 +age_cog + APOE_binary + education + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
+fit_cog_domain<-lmer(Z_Visual_Composite ~ kids_total*A*time_diff +age_v1 + APOE_binary + education + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
 summary(fit_cog_domain)
 
-
-p_values <- c(0.33549      , 0.7260  ,   0.02337 , 0.36791     ,0.1997    )
-
-fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
-fdr_adjusted_p_values
-
-plot_model(fit_cog_domain, type= "int")
-
-#both sexes
-
-fit_cog_domain_sex<-lmer(Z_Visual_Composite ~ kids_total*A*sex +age_cog + APOE_binary + education + (1 | subject), data_cog_long_composites)
-summary(fit_cog_domain)
-```
-
-
-```{r, echo=FALSE}
-# Longitudinal
-
-fit_cog_domain_long<-lmer(Z_Attention_Composite ~ kids_total*CSF_pTau217*time_diff +age_v1 + APOE_binary + education + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
-summary(fit_cog_domain_long)
-
-#not significant with A status or ratio, significant with pTau217
 
 ```
 
@@ -353,25 +317,6 @@ run_volume_lmer_regressions( .,c( "kids_total*A*diff_mri" ,"age_mri", "APOE_bina
 
 ```
 
-##longitudinal analysis
-results null after introducing 3 way interaction. 
-```{r}
-##no interaction
-
-hippo_data_long%>%
-  filter(sex == 2 )%>%
-  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total*diff_mri", "age_v1", "APOE_binary", "scale(TIV)", "(1 | subject)"))
-
-##interaction
-
-hippo_data_long%>%
-  filter(sex == 2 )%>%
-  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total*CSF_pTau217*diff_mri" ,"age_v1", "APOE_binary", "scale(TIV)", "repro_span", "(1 | subject)"))
-
-```
-
 # Jack
 ```{r}
 jack<-read_excel("G:/My Drive/Data/ALFA+/Jack signature ALFA+/bx_signature_jack_ALFA_PLUS_V1_20231120_20250527_142751.xlsx")%>%
@@ -396,18 +341,18 @@ jack_data_long<-left_join(hippo_data_long, jack_data)%>%
   left_join(., diff_mri_df)
   
 
-#women
-fit_jack_cort_w <- lmer(jack_ThickAvg ~ kids_total*CSF_pTau217*diff_mri  +age_v1 + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
+
+fit_jack_cort_w <- lmer(jack_ThickAvg ~ kids_total*A*diff_mri  +age_v1 + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
 summary(fit_jack_cort_w)
 
-fit_jack_grey_w <- lmer(jack_GrayVol ~ kids_total*CSF_pTau217  +age_mri + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
+fit_jack_grey_w <- lmer(jack_GrayVol ~ kids_total*A*diff_mri  +age_v1 + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
 summary(fit_jack_grey_w)
 
 plot_model(fit_jack_grey_w, type= "int")
 ```
 
 
-#Mediation test
+#Mediation test?
 does not yield much
 should I test mediation with biomarker? Depends if enough proof that parity might influence AD biomarkers directly, which I doubt
 ```{r}
@@ -711,7 +656,7 @@ desc_table%>%
 
 #Abstract
 
-Objectives: Little is known about the impact of pregnancy on Alzheimer's Disease (AD) trajectory. We examined the impact of childbirths and AD pathology on cognitive decline, and related it to hippocampal volume change in cognitively unimpaired (CU) post-menopausal women at risk of AD.
+Objectives: Little is known about the impact of pregnancy on Alzheimer’s Disease (AD) trajectory. We examined the impact of parity and AD pathology on hippocampal volume trajectory and cognitive performance in cognitively unimpaired (CU) post-menopausal women at risk of AD.
 
 ```{r, echo=F}
 
@@ -728,13 +673,15 @@ pt_number_women<-data%>%
   nrow()%>%
   as.numeric()
 
+
+
 ```
 
-Methods: Our sample includes `r pt_number_women` CU post-menopausal women from the ALFA+ study. Hippocampus subfield segmentation was obtained using Freesurfer7. Amyloid (Aβ) positivity was defined as CSF Aβ42/40 ratio\<0.071. Cognition was measured at visit 1 and 2 using PACC scores. We first examined the impact of childbirths on cognitive change, and moderation by Aβ positivity. We then assessed the effect of childbirth on hippocampal subfield volume change, and moderation by Aβ positivity. All linear models included APOE-ε4 carriership, age, time difference between visits and total intracranial volume as covariates (Table 1). FDR correction was used in models 3 and 4.
+Methods: We included `r pt_number_women` CU postmenopausal women from the ALFA+ study (Table 1) who completed two longitudinal visits. Hippocampus subfield segmentation was obtained using Freesurfer7. Amyloid (Aβ) positivity was defined as CSF Aβ42/40 ratio<0.071. Cognition was evaluated using PACC and the following composites: attention, memory, executive, language, and visual processing. Parity was defined as number of childbirths. We examined the impact of parity on cognition and then included interaction with Aβ status, via linear mixed longitudinal models. We then assessed parity’s effect on hippocampal subfield volume, also including Aβ status interaction. All models include time interaction. APOE-ε4 carriership and age at each visit were used as covariates, with total intracranial volume when appropriate. FDR correction was applied. 
 
-Results: A trending interaction between number of childbirths and amyloid positivity on cognitive change was found (F=`r tidy_mod1_es[8]`, p=`r tidy_mod1_p[8]`), where Aβ+ women showed worse decline with higher parity. Childbirths had a significant positive main effect on volume change in the fimbria (F=5.240, adj.p.=0.020). A significant interaction of childbirths and Aβ+ was found in the parasubiculum (F=6.8155, adj.p.=0.0443), such that Aβ+ women showed worse volume reduction with higher parity. This interaction was trending in the CA4, dentate gyrus, presubiculum and subiculum.
+Results: Parity did not show a significant positive main effect on volume in the fimbria. A significant parity * Aβ status interaction was found in the parasubiculum (adj.p.=0.020), where Aβ+ women with higher parity showed smaller volumes (Figure 1 and 2). This interaction was trending in the CA4 (adj.p=0.055), dentate gyrus (adj.p=0.062), presubiculum (adj.p=0.051) and subiculum (adj.p=0.058). A significant parity * Aβ status * time was found in PACC score (p=0.033), where Aβ+ women with higher parity showed worsening score over time. 
 
-Conclusion: In CU post-menopausal women at risk of AD, parity might moderate the impact of AD pathology on cognitive change at 3 years. Additionally, parity independently influences volume change in the fimbria, and interacts with AD pathology on parasubiculum volume. Results highlight the effect of parity on AD-related neuropathology via hippocampal volume change. 
+Conclusion: In CU post-menopausal women at risk of AD, parity interacts with AD pathology to influence hippocampus subfield volumes across visits, in particular the parasubiculum. Parity and AD pathology also impact cognition longitudinally. These findings suggest that reproductive history may interact with AD neuro and cognitive pathology. 
 
 ```{r}
 stop("Script stopped here intentionally")
