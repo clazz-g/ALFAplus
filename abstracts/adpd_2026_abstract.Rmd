@@ -99,7 +99,8 @@ biomarkers<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_process
 
 data<-left_join(data, biomarkers)%>%
   mutate(A=factor(A),
-         APOE_binary=factor(APOE_binary))
+         APOE_binary=factor(APOE_binary),
+         HRT = factor(HRT))
 
 
 ```
@@ -293,41 +294,62 @@ run_volume_lmer_regressions <- function(data, predictors) {
 }
 
 ##no interaction
+#introduced A as a covariate to test if number of kids is truly independent
+
+mod_simple<-lmer(vol_Whole_hippocampal_body ~ kids_total*diff_mri + age_v1 + APOE_binary + A + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+summary(mod_simple)
 
 hippo_data_long%>%
   filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total", "age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+run_volume_lmer_regressions( .,c( "kids_total*diff_mri", "age_v1"  ,"APOE_binary","A", "scale(TIV)", "(1 | subject)"))
 
-p_values <- c(0.0915 ,0.551245  ,  0.5645  ,  0.4297   , 0.0825, 0.83811 ,   0.0025, 0.1691  ,  0.934 ,   0.548,    0.455    )
+p_values <- c(0.2839  ,   0.67670   , 0.604591    ,0.4934 ,   0.086665 ,0.697483   , 0.022171 ,0.7787   , 0.87069 ,   0.408 ,   0.507719     )
 
 fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
 fdr_adjusted_p_values
 
-#fimbria significant, fimbria survives
+#fimbria significant but does not survive
 
 ##interaction
 
 hippo_data_long%>%
   filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total*CSF_NFL" ,"age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+run_volume_lmer_regressions( .,c( "kids_total*A*diff_mri" ,"age_v1", "APOE_binary", "scale(TIV)", "(1 | subject)"))
 
-p_values <- c(0.6607 ,   0.14130   , 0.0158, 0.0326, 0.718  ,  0.0965, 0.8346  ,0.582  ,  0.00403, 0.0139 ,0.0253  )
+p_values <- c(0.65234  ,  0.084370, 0.015109, 0.0284 ,0.413253  ,  0.105757   , 0.927819    ,0.6756  ,  0.00188, 0.00926 ,0.021231 )
 
 fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
 fdr_adjusted_p_values
 
-#test including men and sex effect
+#CA4, GC-ML-DG, subiculum and presubiculum near significant interaction between kids and A; sig for parasubiculum. no 3 way interaction with time, or effect of time.
+
+#need to check the effect per A group; then can adjust 
+emmeans(mod_1, ~ kids_total*A*diff_mri, data=hippo_data_long[hippo_data_long$sex ==2,], at=list(kids_total=c(0:4)))%>%
+test()
+
+#sensitivity analysis female var
 
 hippo_data_long%>%
+  filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total*sex*A", "age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+run_volume_lmer_regressions( .,c( "kids_total*A*diff_mri" ,"age_mri", "APOE_binary", "age_menopause_pmm","scale(TIV)", "(1 | subject)"))
 
-p_values <- c(0.0915 ,0.551245  ,  0.5645  ,  0.4297   , 0.0825, 0.83811 ,   0.0025, 0.1691  ,  0.934 ,   0.548,    0.455    )
+hippo_data_long%>%
+  filter(sex == 2 )%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_lmer_regressions( .,c( "kids_total*A*diff_mri" ,"age_mri", "APOE_binary", "repro_span","scale(TIV)", "(1 | subject)"))
+
+p_values <- c(0.9118  ,  0.2414  ,  0.0267 ,0.0533, 0.703, 0.2047  ,  0.8419  ,  0.759 ,   0.00234, 0.0117 ,0.0224 )
 
 fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
 fdr_adjusted_p_values
+
+hippo_data_long%>%
+  filter(sex == 2 )%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_lmer_regressions( .,c( "kids_total*A*diff_mri" ,"age_mri", "APOE_binary", "repro_span","HRT","scale(TIV)", "(1 | subject)"))
 
 ```
 
