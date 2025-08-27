@@ -97,7 +97,9 @@ biomarkers<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_process
   filter(Visit == "V1")%>%
   dplyr::select(-Visit)
 
-data<-left_join(data, biomarkers)
+data<-left_join(data, biomarkers)%>%
+  mutate(A=factor(A),
+         APOE_binary=factor(APOE_binary))
 
 
 ```
@@ -105,8 +107,8 @@ data<-left_join(data, biomarkers)
 # Cognitive results - LMM
 without time interaction executive scores are significant
 with time interaction the pacc scores are
+## PACC
 ```{r, echo=FALSE}
-
 #frist getting the time difference beteen cog tests
 time_diff<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
   dplyr::select(IdParticipante, Visit,FechaResultado)%>%
@@ -134,10 +136,16 @@ data_cog_long<- left_join(data, cognition)%>%
 
 #cross-sectional
 
-fit_cog<-lmer(Z_PACC ~ kids_total*A +age_cog + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
+fit_cog<-lmer(Z_PACC ~ kids_total*CSF_Abeta_ratio +age_cog + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
 summary(fit_cog)
-r.squaredGLMM(fit_cog)
 
+#both sexes
+fit_cog_sex<-lmer(Z_PACC ~ kids_total*A*sex +age_cog + APOE_binary + education +(1 | subject), data_cog_long)
+summary(fit_cog_sex)
+```
+
+
+```{r, echo=FALSE}
 #Longitudinal
 
 fit_cog<-lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
@@ -145,8 +153,10 @@ summary(fit_cog)
 r.squaredGLMM(fit_cog)
 
 plot_model(fit_cog, type = "int")
+```
 
-###Composites
+## Composites
+```{r, echo=FALSE}
 
 composites1<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 1 - Cognition Z Scores.xlsx")%>%
   dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -Z_PACC_Composite_1.2._v1 )%>%
@@ -179,7 +189,7 @@ data_cog_long_composites<-left_join(data_cog_long, composite_all)%>%
 
 #Cross sectional
 
-fit_cog_domain<-lmer(Z_Visual_Composite ~ kids_total*A +age_cog + APOE_binary + education + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
+fit_cog_domain<-lmer(Z_Executive_Composite ~ kids_total*CSF_pTau217 +age_cog + APOE_binary + education + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
 summary(fit_cog_domain)
 
 
@@ -190,33 +200,20 @@ fdr_adjusted_p_values
 
 plot_model(fit_cog_domain, type= "int")
 
+#both sexes
+
+fit_cog_domain_sex<-lmer(Z_Visual_Composite ~ kids_total*A*sex +age_cog + APOE_binary + education + (1 | subject), data_cog_long_composites)
+summary(fit_cog_domain)
+```
+
+
+```{r, echo=FALSE}
 # Longitudinal
 
-fit_cog_domain_long<-lmer(Z_Attention_Composite ~ kids_total*A*time_diff +age_v1 + APOE_binary + education + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
-summary(fit_cog_domain)
+fit_cog_domain_long<-lmer(Z_Attention_Composite ~ kids_total*CSF_pTau217*time_diff +age_v1 + APOE_binary + education + (1 | subject), data_cog_long_composites[data_cog_long_composites$sex == 2,])
+summary(fit_cog_domain_long)
 
-#not significant
-
-
-```
-multivariate MEM test
-interesting time interaction with ptau217
-```{r}
-
-test_longer<- data_cog_long_composites%>%
-  dplyr::select(-Z_aWMS_DR_RS, -Z_FCSRTI_RT, -Z_FS_totalcnswr, -Z_Wclave_totalscr)%>%
-  pivot_longer(cols = starts_with("Z_"), names_to = "cog_domain", values_to = "cog_score")%>%
-  mutate(cog_domain = factor(cog_domain))
-
-fit_cog_domain_test<-lmer(cog_score ~ kids_total*A +age_cog + cog_domain + APOE_binary + education + (1 | subject), test_longer[test_longer$sex == 2,])
-summary(fit_cog_domain_test)
-
-fit_cog_domain_test<-lmer(cog_score ~ kids_total*CSF_pTau217*time_diff +age_v1 + cog_domain + APOE_binary + education + (1 | subject), test_longer[test_longer$sex == 2,])
-summary(fit_cog_domain_test)
-
-
-plot_model(fit_cog_domain_test, type= "int")
-
+#not significant with A status or ratio, significant with pTau217
 
 ```
 
@@ -314,12 +311,24 @@ fdr_adjusted_p_values
 hippo_data_long%>%
   filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total*A" ,"age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+run_volume_lmer_regressions( .,c( "kids_total*CSF_NFL" ,"age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
 
 p_values <- c(0.6607 ,   0.14130   , 0.0158, 0.0326, 0.718  ,  0.0965, 0.8346  ,0.582  ,  0.00403, 0.0139 ,0.0253  )
 
 fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
 fdr_adjusted_p_values
+
+#test including men and sex effect
+
+hippo_data_long%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_lmer_regressions( .,c( "kids_total*sex*A", "age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+
+p_values <- c(0.0915 ,0.551245  ,  0.5645  ,  0.4297   , 0.0825, 0.83811 ,   0.0025, 0.1691  ,  0.934 ,   0.548,    0.455    )
+
+fdr_adjusted_p_values <- p.adjust(p_values, method = "fdr")
+fdr_adjusted_p_values
+
 ```
 
 ##longitudinal analysis
@@ -337,7 +346,7 @@ run_volume_lmer_regressions( .,c( "kids_total*diff_mri", "age_v1", "APOE_binary"
 hippo_data_long%>%
   filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total*A*diff_mri" ,"age_v1", "APOE_binary", "scale(TIV)", "repro_span", "(1 | subject)"))
+run_volume_lmer_regressions( .,c( "kids_total*CSF_pTau217*diff_mri" ,"age_v1", "APOE_binary", "scale(TIV)", "repro_span", "(1 | subject)"))
 
 ```
 
@@ -366,50 +375,19 @@ jack_data_long<-left_join(hippo_data_long, jack_data)%>%
   
 
 #women
-fit_jack_cort_w <- lmer(jack_ThickAvg ~ kids_total*A*diff_mri  +age_v1 + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
+fit_jack_cort_w <- lmer(jack_ThickAvg ~ kids_total*CSF_pTau217*diff_mri  +age_v1 + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
 summary(fit_jack_cort_w)
 
-fit_jack_grey_w <- lmer(jack_GrayVol ~ kids_total*A+diff_mri +age_v1 + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
+fit_jack_grey_w <- lmer(jack_GrayVol ~ kids_total*CSF_pTau217  +age_mri + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
 summary(fit_jack_grey_w)
 
 plot_model(fit_jack_grey_w, type= "int")
 ```
 
-#NFL
-```{r}
-
-biomarkers_long<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
-    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
-  mutate(subject=as.numeric(subject))
-data_naked<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
-    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
-  mutate(sex=factor(sex))
-
-diff_biomarkers<-biomarkers_long%>%
-  dplyr::select(subject, Visit, collection_dt)%>%
-  pivot_wider(names_from = Visit, values_from = collection_dt)%>%
-  mutate(V1 = as.Date (V1, format= "%d/%m/%Y"),
-         V2 = as.Date (V2, format= "%d/%m/%Y"),
-         diff_biomarkers = as.numeric(difftime(V2, V1, units= c("days"))))%>%
-  dplyr::select(diff_biomarkers, subject)
-
-data_biomarkers_long<-left_join(data_naked, biomarkers_long)%>%
-  left_join(., diff_biomarkers)%>%
-  mutate(diff_biomarkers = ifelse(Visit == "V1", 0, diff_biomarkers))
-
-fit_nfl <- lmer(CSF_NFL ~ kids_total*diff_biomarkers  +age_v1 + APOE_binary + (1 | subject) , data_biomarkers_long[data_biomarkers_long$sex==2,]) 
-summary(fit_nfl)
-
-
-```
-
-
-
-
 
 #Mediation test
 does not yield much
-should I test mediation with biomarker?
+should I test mediation with biomarker? Depends if enough proof that parity might influence AD biomarkers directly, which I doubt
 ```{r}
 
 cols<-data_cog_long_composites%>%
@@ -959,4 +937,27 @@ plot_model(mod_pacc_w, type = "int")
 #trying with poly
 mod_pacc_w_poly<-lm(PACC_diff ~ poly(kids_total, 2, raw = TRUE)*A+ age_menopause_pmm +age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
 summary(mod_pacc_w_poly)
+```
+
+
+## test multivariate MEM
+multivariate MEM test
+interesting time interaction with ptau217
+```{r}
+
+test_longer<- data_cog_long_composites%>%
+  dplyr::select(-Z_aWMS_DR_RS, -Z_FCSRTI_RT, -Z_FS_totalcnswr, -Z_Wclave_totalscr)%>%
+  pivot_longer(cols = starts_with("Z_"), names_to = "cog_domain", values_to = "cog_score")%>%
+  mutate(cog_domain = factor(cog_domain))
+
+fit_cog_domain_test<-lmer(cog_score ~ kids_total*A +age_cog + cog_domain + APOE_binary + education + (1 | subject), test_longer[test_longer$sex == 2,])
+summary(fit_cog_domain_test)
+
+fit_cog_domain_test<-lmer(cog_score ~ kids_total*CSF_pTau217*time_diff +age_v1 + cog_domain + APOE_binary + education + (1 | subject), test_longer[test_longer$sex == 2,])
+summary(fit_cog_domain_test)
+
+
+plot_model(fit_cog_domain_test, type= "int")
+
+
 ```
