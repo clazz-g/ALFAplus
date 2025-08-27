@@ -140,6 +140,34 @@ data_cog_long<- left_join(data, cognition)%>%
 fit_cog<-lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
 summary(fit_cog)
 plot_model(fit_cog, type = "int")
+
+#using emmeans is better because of quite unequal group sizes
+
+
+emm_at_times <- emmeans(fit_cog, ~ kids_total * A * time_diff, 
+                       at = list(kids_total = c(0, 1, 2, 3, 4),
+                                 time_diff = c(0, 1000, 1500, 2000)))
+
+emm_at_times
+pairs(emm_3way, simple = "kids_total", combine = TRUE)
+
+slopes <- emtrends(fit_cog, ~ kids_total * A, var = "time_diff",
+                  at = list(kids_total = c(0, 1, 2, 3, 4)))
+pairs(slopes, simple = "kids_total")
+
+emmip(fit_cog, A ~ time_diff | kids_total, 
+      at = list(kids_total = c(0, 1, 2, 3, 4),
+               time_diff = seq(0, 1000, 1500)),  # Adjust range
+      CIs = TRUE)
+
+data_cog_long%>%
+  filter(sex==2)%>%
+  filter(A==0)%>%
+  ggplot(aes(kids_total, Z_PACC ))+
+  geom_point()+
+  facet_wrap(~Visit)
+
+hist(data_cog_long_composites$time_diff)
 ```
 
 ## Composites
@@ -489,6 +517,37 @@ data_cog_long_composites%>%
 ggsave("G:/My Drive/ADPD 2026/plot_executive.png", width = 9, height = 5)
 ```
 
+## PACC ~ parity * A * time
+
+```{r}
+
+data_figure_diff<-data_cog_long_composites%>%
+  dplyr::select(subject, Visit, Z_PACC)%>%
+  pivot_wider(names_from = Visit, values_from = Z_PACC, names_prefix = "Z_PACC")%>%
+  mutate(diff_Z_PACC = Z_PACC2-Z_PACC1)%>%
+  dplyr::select(-Z_PACC1, -Z_PACC2)%>%
+  mutate(Visit = "2")
+
+data_figure_cog<-data_cog_long_composites%>%
+  dplyr::select(subject, Visit, Z_PACC, kids_total, A, time_diff, sex)%>%
+  left_join(., data_figure_diff, join_by(subject, Visit))%>%
+  mutate(diff_Z_PACC = ifelse(Visit== "1", 0, diff_Z_PACC))
+
+
+data_figure_cog%>%
+  filter(sex==2)%>%
+  drop_na(A)%>%
+  mutate(kids_total_factor=ifelse(kids_total>=3, "3+", kids_total))%>%
+  mutate(A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+")))%>%
+  ggplot(aes(x= time_diff, y = diff_Z_PACC, color= kids_total_factor, fill= kids_total_factor, group=subject))+
+  geom_line(alpha=.6)+
+  facet_wrap(~A)+
+  geom_smooth(aes(group = kids_total_factor), method="lm")
+
+
+ggsave("G:/My Drive/ADPD 2026/plot_executive.png", width = 9, height = 5)
+```
+
 
 
 ## hipp ~ childbirth*AB
@@ -542,23 +601,23 @@ plot_model(mod_plot,
 ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_estimation.png", width = 8, height = 5)
 ```
 
-### Plot all coefficients for all regressions
+### Forest plot
 ```{r}
 data_forest_plot<-hippo_data_long%>%
   filter(sex == 2 )
 
 models<-list(
-  CA1 = lmer(vol_CA1 ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
-  CA3 = lmer(vol_CA3 ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
-  `CA4` = lmer(vol_CA4 ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
-  `GC-ML-DG` = lmer(vol_GC_ML_DG ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
-  HATA = lmer(vol_HATA ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
-  Tail = lmer(vol_Hippocampal_tail ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
-  Fimbria = lmer(vol_fimbria ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
-  `Molecular layer` = lmer(vol_molecular_layer_HP ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
- `Parasubiculum` = lmer(vol_parasubiculum ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
-  `Presubiculum` = lmer(vol_presubiculum ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
-  `Subiculum` = lmer(vol_subiculum ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot)
+  CA1 = lmer(vol_CA1 ~ kids_total*A*diff_mri + scale(TIV) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  CA3 = lmer(vol_CA3 ~ kids_total*A*diff_mri + scale(TIV) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  `CA4` = lmer(vol_CA4 ~ kids_total*A*diff_mri + scale(TIV) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  `GC-ML-DG` = lmer(vol_GC_ML_DG ~ kids_total*A*diff_mri + scale(TIV) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  HATA = lmer(vol_HATA ~ kids_total*A*diff_mri + scale(TIV) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  Tail = lmer(vol_Hippocampal_tail ~ kids_total*A*diff_mri + scale(TIV) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  Fimbria = lmer(vol_fimbria ~ kids_total*A*diff_mri + scale(TIV) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  `Molecular layer` = lmer(vol_molecular_layer_HP ~ kids_total*A*diff_mri + scale(TIV) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+ `Parasubiculum` = lmer(vol_parasubiculum ~ kids_total*A*diff_mri + scale(TIV) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  `Presubiculum` = lmer(vol_presubiculum ~ kids_total*A*diff_mri + scale(TIV) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  `Subiculum` = lmer(vol_subiculum ~ kids_total*A*diff_mri + scale(TIV) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot)
 )
 
 # Extract coefficients and CIs
@@ -567,18 +626,18 @@ library(broom.mixed)
 library(purrr)
 
 pred_hippo_all <- map_dfr(models, ~ {
-  broom.mixed::tidy(.x, terms = c("kids_total", "A"))   # Add consistent term column
+  broom.mixed::tidy(.x, terms = c("kids_total", "A1"))   # Add consistent term column
 }, .id = "region")%>%
-  filter(term %in% c("kids_total", "A", "kids_total:A"))%>%
+  filter(term %in% c("kids_total", "A1", "kids_total:A1"))%>%
   dplyr::select(region, term, estimate, std.error)%>%
   pivot_wider(names_from = term, values_from = c(estimate, std.error))%>%
   mutate(plot_estimate_kids_A0 = estimate_kids_total,
-         plot_estimate_kids_A1 = estimate_kids_total + `estimate_kids_total:A`,
+         plot_estimate_kids_A1 = estimate_kids_total + `estimate_kids_total:A1`,
          plot_conf.low_kids_A0 = estimate_kids_total - 1.96 * std.error_kids_total,
          plot_conf.high_kids_A0 = estimate_kids_total + 1.96 * std.error_kids_total,
-         plot_conf.low_kids_A1 = (estimate_kids_total + `estimate_kids_total:A` - 1.96 * `std.error_kids_total:A`),
-         plot_conf.high_kids_A1 = (estimate_kids_total + `estimate_kids_total:A` + 1.96 * `std.error_kids_total:A`))%>%
-  dplyr::select(-estimate_kids_total, -estimate_A,-`estimate_kids_total:A` ,-`std.error_kids_total`, -std.error_A ,         -`std.error_kids_total:A`)%>%
+         plot_conf.low_kids_A1 = (estimate_kids_total + `estimate_kids_total:A1` - 1.96 * `std.error_kids_total:A1`),
+         plot_conf.high_kids_A1 = (estimate_kids_total + `estimate_kids_total:A1` + 1.96 * `std.error_kids_total:A1`))%>%
+  dplyr::select(-estimate_kids_total, -estimate_A1,-`estimate_kids_total:A1` ,-`std.error_kids_total`, -std.error_A1 ,         -`std.error_kids_total:A1`)%>%
   pivot_longer(
     cols = starts_with("plot_"),  # Keep 'term' as-is
     names_to = c(".value", "A"),  # .value creates columns like estimate, conf.low, etc.
