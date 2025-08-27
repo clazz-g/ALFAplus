@@ -201,9 +201,17 @@ hrt<-read_delim("G:/My Drive/Data/ALFA+/reproductive_var/Alfa Plus Long 2025_105
     delim = ";", escape_double = FALSE, trim_ws = TRUE, skip = 1)%>%
   dplyr::select(IdParticipante, AF_horm_sust, Visita)%>%
   mutate(AF_horm_sust = factor(AF_horm_sust))%>%
-  rename(HRT = AF_horm_sust)
+  rename(HRT = AF_horm_sust,
+         subject = IdParticipante)%>%
+  dplyr::select(-Visita)%>%
+  unique()%>%
+  na.omit(HRT)%>%
+  group_by(subject)%>%
+  filter(!(n() > 1 & HRT == 0)) %>%
+  ungroup()
 
-# not adding the HRT yet because more NAs than non NAs
+
+master_nd<-left_join(master_nd, hrt)
 
 #replacing the no answers values with NA
 master_nd<-master_nd%>%
