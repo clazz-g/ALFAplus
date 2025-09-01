@@ -284,13 +284,57 @@ run_volume_lmer_regressions <- function(data, predictors) {
 
   return(summaries)
 }
+```
 
+## Whole hippocampus
+```{r}
 ##no interaction
 #introduced A as a covariate to test if number of kids is truly independent
 
-mod_simple<-lmer(vol_Whole_hippocampus ~ kids_total*A*diff_mri + age_v1 + APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+mod_simple<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
 summary(mod_simple)
+plot_model(mod_simple, type= "int")
 
+mod_simpleA0<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A == 0,])
+summary(mod_simpleA0)
+
+mod_simpleA1<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A == 1,])
+summary(mod_simpleA1)
+
+emm_A <- emmeans(mod_simple, ~ A,
+                 data = hippo_data_long[hippo_data_long$sex==2,])
+pairs(emm_A)
+
+emm_int <- emmeans(mod_simple, ~ A | kids_total,
+                   at = list(kids_total = c(0, 1, 2, 3, 4)),
+                   data = hippo_data_long[hippo_data_long$sex==2,])
+pairs(emm_int)
+
+#the group contrast between A+ and A- is significant from 2+ kids 
+
+emm_int <- emmeans(mod_simple, ~ kids_total | A,
+                   at = list(kids_total = c(0, 1, 2, 3, 4)),
+                   data = hippo_data_long[hippo_data_long$sex==2,])
+pairs(emm_int)
+
+#sensitivity analysis female var
+
+mod_simple_fem1<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + repro_span + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+summary(mod_simple_fem1)
+
+mod_simple_fem2<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + age_menopause_pmm + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+summary(mod_simple_fem2)
+
+mod_simple_fem3<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + HRT + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+summary(mod_simple_fem3)
+
+anova(mod_simple, mod_simple_fem1, REML=F)
+
+
+```
+
+## subfields
+```{r}
 hippo_data_long%>%
   filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
@@ -319,8 +363,15 @@ fdr_adjusted_p_values
 
 #need to check the effect per A group; then can adjust 
 
-mod_hip<-lmer(vol_parasubiculum ~ kids_total*A*diff_mri +age_v1+ APOE_binary+ scale(TIV)+ (1 | subject), data = hippo_data_long[hippo_data_long$sex==2,])
+mod_hip<-lmer(vol_CA4 ~ kids_total*A*diff_mri +age_v1+ APOE_binary+ scale(TIV)+ (1 | subject), data = hippo_data_long[hippo_data_long$sex==2,])
 
+mod_hip_A0<-lmer(vol_CA4 ~ kids_total*diff_mri +age_v1+ APOE_binary+ scale(TIV)+ (1 | subject), data = hippo_data_long[hippo_data_long$sex==2 & hippo_data_long$A==0,])
+summary(mod_hip_A0)
+
+mod_hip_A1<-lmer(vol_CA4 ~ kids_total*diff_mri +age_v1+ APOE_binary+ scale(TIV)+ (1 | subject), data = hippo_data_long[hippo_data_long$sex==2 & hippo_data_long$A==1,])
+summary(mod_hip_A1)
+#presubiculum, subiculum, DG, CA4 mainly driven by A- women
+#parasubiculum driven by A+ women
 
 emm_A <- emmeans(mod_hip, ~ A,
                  data = hippo_data_long[hippo_data_long$sex==2,])
@@ -401,27 +452,25 @@ plot_model(fit_jack_grey_w, type= "int")
 
 
 #Mediation test?
-does not yield much
-should I test mediation with biomarker? Depends if enough proof that parity might influence AD biomarkers directly, which I doubt
+need to redo this, but might be complicated since I am now doing a 3 way interaction
 ```{r}
 
-cols<-data_cog_long_composites%>%
-  dplyr::select(subject, Visit, Z_Attention_Composite, Z_Executive_Composite, Z_Memory_Composite, Z_Language_Composite, Z_Visual_Composite, age_cog)
-
-mediation_data<-hippo_data_long%>%
-  mutate(Visit = ifelse(Visit == "V2", "2", "1"))%>%
-  left_join(., cols)%>%
-  drop_na(Z_Language_Composite)%>%
-  drop_na(vol_parasubiculum)
-
-#library(boot)
-
-# # Fit the models
-# med_model <- lmer(vol_parasubiculum ~ kids_total * A + age_mri + APOE_binary + TIV  +(1 | subject), 
-#                   data = mediation_data)
+# cols<-data_cog_long_composites%>%
+#   dplyr::select(subject, Visit, Z_Attention_Composite, Z_Executive_Composite, Z_Memory_Composite, Z_Language_Composite, Z_Visual_Composite, age_cog, time_diff)
 # 
-# out_model <- lmer(Z_Memory_Composite ~ vol_parasubiculum + kids_total * A + age_mri + APOE_binary + TIV  +(1 | subject), 
-#                   data = mediation_data)
+# mediation_data<-hippo_data_long%>%
+#   mutate(Visit = ifelse(Visit == "V2", "2", "1"))%>%
+#   left_join(., cols)%>%
+#   drop_na(Z_Language_Composite)%>%
+#   drop_na(vol_parasubiculum)
+# 
+# library(boot)
+# #Fit the models
+# med_model <- lmer(vol_parasubiculum ~ kids_total * A * time_diff+ age_v1 + APOE_binary + TIV  +(1 | subject), 
+#                    data = mediation_data)
+#  
+# out_model <- lmer(Z_PACC ~ vol_parasubiculum + kids_total * A *time_diff + age_v1 + APOE_binary + TIV  +(1 | subject), 
+#                    data = mediation_data)
 # 
 # # Extract coefficients for indirect effect
 # a_coef <- fixef(med_model)["kids_total:A"]  # interaction effect on mediator
@@ -458,21 +507,21 @@ mediation_data<-hippo_data_long%>%
 
 ## Test 
 #install.packages("RMediation")
-library(RMediation)
-
-# Extract coefficients and standard errors
-a_coef <- fixef(med_model)["kids_total:A"]
-a_se <- sqrt(vcov(med_model)["kids_total:A", "kids_total:A"])
-
-b_coef <- fixef(out_model)["vol_parasubiculum"] 
-b_se <- sqrt(vcov(out_model)["vol_parasubiculum", "vol_parasubiculum"])
-
-# Test mediation
-mediation_test <- medci(mu.x = a_coef, mu.y = b_coef, 
-                        se.x = a_se, se.y = b_se,
-                        alpha = 0.05, type = "prodclin")
-
-print(mediation_test)
+# library(RMediation)
+# 
+# # Extract coefficients and standard errors
+# a_coef <- fixef(med_model)["kids_total:A1"]
+# a_se <- sqrt(vcov(med_model)["kids_total:A1", "kids_total:A1"])
+# 
+# b_coef <- fixef(out_model)["vol_parasubiculum"] 
+# b_se <- sqrt(vcov(out_model)["vol_parasubiculum", "vol_parasubiculum"])
+# 
+# # Test mediation
+# mediation_test <- medci(mu.x = a_coef, mu.y = b_coef, 
+#                         se.x = a_se, se.y = b_se,
+#                         alpha = 0.05, type = "prodclin")
+# 
+# print(mediation_test)
 
 ```
 
