@@ -295,6 +295,7 @@ mod_simple<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + age_v1 +APOE_bi
 summary(mod_simple)
 plot_model(mod_simple, type= "int")
 
+
 mod_simpleA0<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A == 0,])
 summary(mod_simpleA0)
 
@@ -330,7 +331,13 @@ summary(mod_simple_fem3)
 
 anova(mod_simple, mod_simple_fem1, REML=F)
 
-
+hippo_data_long%>%
+  filter(sex==2)%>%
+  drop_na(A)%>%
+  ggplot(aes(x=kids_total, y=vol_subiculum, colour=A))+
+  geom_point()+
+  facet_wrap(~Visit)+
+  geom_smooth(aes(group=A), method="lm")
 ```
 
 ## subfields
@@ -453,6 +460,7 @@ plot_model(fit_jack_grey_w, type= "int")
 
 #Mediation test?
 need to redo this, but might be complicated since I am now doing a 3 way interaction
+I should do mediation with apoe? or SEM modelling?
 ```{r}
 
 # cols<-data_cog_long_composites%>%
