@@ -215,6 +215,7 @@ master_nd<-left_join(master_nd, hrt)
 master_nd<-master_nd%>%
   mutate(age_menopause = ifelse(age_menopause == -77, NA, age_menopause),
          age_menarche = ifelse(age_menarche == -77, NA, age_menarche))
+
 ```
 
 
@@ -592,6 +593,30 @@ age_menopause_pmm<-data_imp_multi_all%>%
 
 master_nd_pmm<-left_join(master_nd_pmm, age_menopause_pmm[,c(6, 7)])
 
+#age_menarche
+
+mice_dat<-master_nd%>%
+  filter(sex == 2)%>%
+  dplyr::select(age_menarche, subject, age_v1, sex, BP_SIST_2, bmi, education , APOE_binary)%>%
+  distinct()
+
+ini <- mice(mice_dat,maxit=0)
+pred1 <- ini$predictorMatrix
+pred1[,'subject'] <- 0
+imp_multi <- mice(mice_dat, pred = pred1, m = 5, method = "pmm")  # Impute missing values multiple times
+data_imp_multi_all <- complete(imp_multi,       # Store multiply imputed data
+                           "repeated",
+                           include = TRUE)
+
+age_menarche_pmm<-data_imp_multi_all%>%
+  dplyr::select(2:7)%>%
+  mutate(age_menarche_pmm = rowMeans(across(starts_with("age_menarche."))))%>%
+  rename(subject=subject.0)%>%
+  mutate(subject = factor(subject))
+
+
+master_nd_pmm<-left_join(master_nd_pmm, age_menarche_pmm[,c(6, 7)])
+
 
 master_nd_pmm%>%
   md.pattern(., rotate.names = T)
@@ -608,13 +633,12 @@ aggr_plot <- VIM::aggr(master_nd_pmm, numbers = T, sortVars= T)
 ```{r}
 #recompute reproductive_span variable
 master_nd_pmm<-master_nd_pmm%>%
-  mutate(repro_span = age_menopause_pmm - age_menarche,
+  mutate(repro_span = age_menopause_pmm - age_menarche_pmm,
          kids_dicho = factor(ifelse(kids_total == 0, 0, 1)),
          parous_group = case_when(
   kids_total >= 2 ~ "2+",
   kids_total == 1 ~ "1",
   TRUE ~ "0"))
-
 
 ```
 
