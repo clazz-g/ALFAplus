@@ -143,12 +143,19 @@ fit_cog<-lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education 
 summary(fit_cog)
 plot_model(fit_cog, type = "int")
 
+fit_cogA0<-lmer(Z_PACC ~ kids_total*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2 & data_cog_long$A==0,])
+summary(fit_cogA0)
+fit_cogA1<-lmer(Z_PACC ~ kids_total*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2 & data_cog_long$A==1,])
+summary(fit_cogA1)
+
 #using emmeans is better because of quite unequal group sizes
+
+hist(data_cog_long$time_diff)
 
 
 emm_int <- emmeans(fit_cog, ~ A | kids_total * time_diff,
-                   at = list(kids_total = c(0, 2, 4),
-                             time_diff = c(0, 100, 500, 1000, 2000, 2500)),
+                   at = list(kids_total = c(0, 1, 2, 3, 4),
+                             time_diff = c(0, 500, 1000, 1500, 2000)),
                    data = data_cog_long[data_cog_long$sex == 2,])
 pairs(emm_int)
 
@@ -569,31 +576,6 @@ th <- call_aesthethics(15)
 
 
 
-## Executive ~ parity * A
-
-```{r}
-data_cog_long_composites%>%
-  filter(sex==2)%>%
-  drop_na(A)%>%
-  mutate(kids_total_factor=ifelse(kids_total>=3, "3+", kids_total))%>%
-  mutate(A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+")))%>%
-  ggplot(aes(x= Visit, y = Z_Executive_Composite, group = interaction(Visit, kids_total_factor), color= kids_total_factor, fill= kids_total_factor))+
-  geom_point(alpha=.6, position = position_dodge(width = 1))+
-  geom_boxplot(position = position_dodge(width = 0.9), 
-               alpha=.5)+
-  facet_wrap(~A)+
-  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3+" = "#0A5940")) +
-  scale_fill_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3+" = "#0A5940"))+
-   th +
-  labs(x = "Visit", 
-       y = "Executive composite Z-score", 
-       color = "Number of childbirths", 
-       fill= "Number of childbirths")
-
-
-ggsave("G:/My Drive/ADPD 2026/plot_executive.png", width = 9, height = 5)
-```
-
 ## PACC ~ parity * A * time
 
 ```{r}
@@ -611,18 +593,90 @@ data_figure_cog<-data_cog_long_composites%>%
   mutate(diff_Z_PACC = ifelse(Visit== "1", 0, diff_Z_PACC))
 
 
-data_figure_cog%>%
-  filter(sex==2)%>%
-  drop_na(A)%>%
-  mutate(kids_total_factor=ifelse(kids_total>=3, "3+", kids_total))%>%
-  mutate(A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+")))%>%
-  ggplot(aes(x= time_diff, y = diff_Z_PACC, color= kids_total_factor, fill= kids_total_factor, group=subject))+
-  geom_line(alpha=.6)+
-  facet_wrap(~A)+
-  geom_smooth(aes(group = kids_total_factor), method="lm")
+#initial try with score differences to have 0 as departure
+
+data_figure_cog %>%
+  filter(sex == 2, !is.na(A)) %>%
+  mutate(kids_total_factor = ifelse(kids_total >= 3, "3+", as.character(kids_total)),
+         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = time_diff, y = diff_Z_PACC, color = kids_total_factor)) +
+  geom_line(aes(group = subject), alpha = 0.3) +
+  geom_smooth(aes(group = kids_total_factor), method = "lm", se = TRUE) +
+  facet_wrap(~A) +
+  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3+" = "#0A5940")) +
+  th +
+  labs(x = "Time difference (days)", 
+       y = "PACC change from baseline", 
+       color = "Number of childbirths")
 
 
-ggsave("G:/My Drive/ADPD 2026/plot_executive.png", width = 9, height = 5)
+mod_cog_plot<- lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
+preds <- ggpredict(mod_cog_plot, terms = c("time_diff", "kids_total", "A"))
+
+preds_A0<-as.data.frame(preds)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==0)%>%
+  filter(kids_total_factor!=3)%>%
+  mutate(A = ifelse(A==0, "Aβ-", "Aβ-"),
+         kids_total_factor = ifelse(kids_total_factor== 4, "3+", as.character(kids_total_factor)))
+
+
+preds_A1<-as.data.frame(preds)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==1)%>%
+  filter(kids_total_factor!=3)%>%
+  mutate(A = ifelse(A==1, "Aβ+", "Aβ+"),
+         kids_total_factor = ifelse(kids_total_factor== 4, "3+", as.character(kids_total_factor)))
+
+#by time diff with predicted values - preferred?
+data_cog_long_composites %>%
+  filter(sex == 2, !is.na(A)) %>%
+  mutate(kids_total_factor = ifelse(kids_total >= 3, "3+", as.character(kids_total)),
+         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = time_diff, y = Z_PACC, color = kids_total_factor)) +
+  geom_point(alpha = 0.3, size=2) +
+  geom_line(data =preds_A0, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_line(data =preds_A1, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_ribbon(data =preds_A0, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  geom_ribbon(data =preds_A1, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  facet_wrap(~A) +
+  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3+" = "#0A5940")) +
+  th +
+  labs(x = "Time difference (days)", 
+       y = "PACC Z-score", 
+       color = "Number of childbirths")
+
+
+
+#by visit instead of time
+
+data_cog_long_composites %>%
+  filter(sex == 2, !is.na(A)) %>%
+  mutate(kids_total_factor = ifelse(kids_total >= 3, "3+", as.character(kids_total)),
+         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = kids_total_factor, y = Z_PACC, fill = Visit)) +
+  geom_boxplot(position = position_dodge(width = 0.8), alpha = 0.7) +
+  facet_wrap(~A) +
+  scale_fill_manual(values = c("1" = "#E8F4F8", "2" = "#4A90A4")) +
+  th +
+  labs(x = "Number of childbirths", 
+       y = "PACC Z-score", 
+       fill = "Visit") +
+  scale_x_discrete(limits = c("0", "1", "2", "3+"))
+
+
 ```
 
 
@@ -662,21 +716,32 @@ hippo_data_long %>%
 ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_interaction.png", width = 9, height = 5)
 ```
 
-### Individual model forest plot
+### Boxplot for whole hppocampus values per A, parity and visit 
 ```{r}
-plot_model(mod_plot, 
-           type = "est", 
-           title=" ", 
-           axis.labels = c("Childbirths*Aβ+", "TIV", "APOE-ε4 carrier", "Visit", "Aβ+", "Number of childbirths")) + 
-  th+
-  labs(y = "Parasubiculum volume change model estimate")+
-  geom_pointrange(aes(y = estimate, 
-                      ymin = conf.low, 
-                      ymax = conf.high),
-                  size = 0.8)
- 
-ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_estimation.png", width = 8, height = 5)
+#need to add signif stars
+hippo_data_long %>%
+  filter(sex == 2) %>%
+  drop_na(A) %>%
+  mutate(kids_total_factor=as.character(kids_total))%>%
+  mutate(A = factor(A, labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = kids_total_factor, y = vol_Whole_hippocampus, color = A, fill=A)) +
+  geom_point(alpha = 0.6, 
+             position = position_dodge(width = 1)) +
+  geom_boxplot(position = position_dodge(width = 0.9), 
+               alpha=.5)+
+  facet_wrap(~Visit) +
+  th +
+  labs(x = "Visit", 
+       y = "Hippocampus volume", 
+       color = "Number of childbirths", 
+       fill= "Number of childbirths")+
+  scale_x_discrete(expand = expansion(mult = c(0.3, 0.3)))
+
+
+ggsave("G:/My Drive/ADPD 2026/plot_whole_hippocampus_interaction.png", width = 9, height = 5)
 ```
+
+
 
 ### Forest plot
 ```{r}
@@ -815,9 +880,9 @@ pt_number_women<-data%>%
 
 Methods: We included `r pt_number_women` CU postmenopausal women from the ALFA+ study (Table 1) who completed two longitudinal visits. Hippocampus subfield segmentation was obtained using Freesurfer7. Amyloid (Aβ) positivity was defined as CSF Aβ42/40 ratio<0.071. Cognition was evaluated using PACC and the following composites: attention, memory, executive, language, and visual processing. Parity was defined as number of childbirths. We examined the impact of parity on cognition and then included interaction with Aβ status, via linear mixed longitudinal models. We then assessed parity’s effect on hippocampal subfield volume, also including Aβ status interaction. All models include time interaction. APOE-ε4 carriership and age at each visit were used as covariates, with total intracranial volume when appropriate. FDR correction was applied. 
 
-Results: Parity did not show a significant positive main effect on volume in the fimbria. A significant parity * Aβ status interaction was found in the parasubiculum (adj.p.=0.020), where Aβ+ women with higher parity showed smaller volumes (Figure 1 and 2). This interaction was trending in the CA4 (adj.p=0.055), dentate gyrus (adj.p=0.062), presubiculum (adj.p=0.051) and subiculum (adj.p=0.058). A significant parity * Aβ status * time was found in PACC score (p=0.033), where Aβ+ women with higher parity showed worsening score over time. 
+Results: Parity did not show a significant positive main effect on whole hippocampal volume. A significant parity * Aβ status interaction was found where Aβ+ women with higher parity showed smaller volumes (Figure 1). This interaction was significant in the parasubiculum (adj.p.=0.020), and trending in the CA4 (adj.p=0.055), dentate gyrus (adj.p=0.062), presubiculum (adj.p=0.051) and subiculum (adj.p=0.058) (Figure 2). A significant parity * Aβ status * time was found in PACC score (p=0.033), where Aβ- women with higher parity showed stronger practice effect over time (Figure ?). 
 
-Conclusion: In CU post-menopausal women at risk of AD, parity interacts with AD pathology to influence hippocampus subfield volumes across visits, in particular the parasubiculum. Parity and AD pathology also impact cognition longitudinally. These findings suggest that reproductive history may interact with AD neuro and cognitive pathology. 
+Conclusion: In CU post-menopausal women at risk of AD, parity interacts with AD pathology to influence hippocampus volume durably. Parity and AD pathology interact to impact cognition longitudinally. These findings suggest that reproductive history may interact with AD neuro and cognitive pathology. 
 
 ```{r}
 stop("Script stopped here intentionally")
@@ -1149,4 +1214,45 @@ summary(fit_cog_domain_test)
 plot_model(fit_cog_domain_test, type= "int")
 
 
+```
+
+## Executive ~ parity * A
+
+```{r}
+data_cog_long_composites%>%
+  filter(sex==2)%>%
+  drop_na(A)%>%
+  mutate(kids_total_factor=ifelse(kids_total>=3, "3+", kids_total))%>%
+  mutate(A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+")))%>%
+  ggplot(aes(x= Visit, y = Z_Executive_Composite, group = interaction(Visit, kids_total_factor), color= kids_total_factor, fill= kids_total_factor))+
+  geom_point(alpha=.6, position = position_dodge(width = 1))+
+  geom_boxplot(position = position_dodge(width = 0.9), 
+               alpha=.5)+
+  facet_wrap(~A)+
+  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3+" = "#0A5940")) +
+  scale_fill_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3+" = "#0A5940"))+
+   th +
+  labs(x = "Visit", 
+       y = "Executive composite Z-score", 
+       color = "Number of childbirths", 
+       fill= "Number of childbirths")
+
+
+ggsave("G:/My Drive/ADPD 2026/plot_executive.png", width = 9, height = 5)
+```
+
+### Individual model forest plot
+```{r}
+plot_model(mod_plot, 
+           type = "est", 
+           title=" ", 
+           axis.labels = c("Childbirths*Aβ+", "TIV", "APOE-ε4 carrier", "Visit", "Aβ+", "Number of childbirths")) + 
+  th+
+  labs(y = "Parasubiculum volume change model estimate")+
+  geom_pointrange(aes(y = estimate, 
+                      ymin = conf.low, 
+                      ymax = conf.high),
+                  size = 0.8)
+ 
+ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_estimation.png", width = 8, height = 5)
 ```
