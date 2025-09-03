@@ -98,7 +98,8 @@ All research papers (including systematic reviews/meta-analyses) submitted to an
 
 data<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
     delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
-  mutate(sex=factor(sex))
+  mutate(sex=factor(sex),
+         APOE_binary = factor(APOE_binary))
 
 
 #adding scan dates for descriptives, horizontal 
@@ -130,7 +131,8 @@ data_biomarkers<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_pr
   filter(Visit == "V1")%>%
   dplyr::select(-Visit)
 
-data<-left_join(data, data_biomarkers)
+data<-left_join(data, data_biomarkers)%>%
+  mutate(A = factor(A))
 
 data_cognition_desc<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
   dplyr::select(IdParticipante, Visit, Z_PACC)%>%
@@ -149,6 +151,34 @@ pt_number <- data_desc%>%
 pt_number_w<-data_desc%>%
   filter(sex==2)%>%
   nrow
+
+## Plot aesthetics
+
+
+call_aesthethics <- function(text_size){
+  th <- theme(   panel.grid.major = element_blank(),
+                 panel.grid.minor = element_blank(),
+                 panel.border = element_blank(),
+                 panel.background = element_blank(),
+                 axis.line = element_line(linewidth = 0.5),
+                 legend.position = 'right',
+                 legend.text = element_text(size= text_size, family="Helvetica"),
+                 text = element_text(size= text_size, family="Helvetica"),
+                 strip.text.x = element_text(size = rel(0.90)),
+                 strip.text.y = element_text(size = rel(0.90)),
+                 axis.title.x = element_text(vjust=-0.3),
+                 plot.title = element_text(hjust = 0.5, vjust = 0),
+                 axis.ticks = element_line(linewidth = 0.4),
+                 axis.text.x.bottom  = element_text(size = rel(0.90), margin = unit(c(t = 2.5, r = 0, b = 0, l = 0), "mm")),
+                 axis.title.y = element_text(vjust = 1),
+                 axis.text.y = element_text(size = rel(0.90), margin = unit(c(t = 0, r = 2.5, b = 0, l = 0), "mm")),
+                 axis.ticks.length = unit(-1.2, "mm"),
+                 axis.text.x.top = element_text(size = rel(0.90), margin = unit(c(t = 0, r = 0, b = 2.5, l = 0), "mm")))
+  return(th)
+}
+
+
+th <- call_aesthethics(15)
 
 ```
 
@@ -185,15 +215,16 @@ Statistical analyses were carried using R v4.5.1. All linear regressions were ad
 data_table<-data_desc%>%
   dplyr::select(age_v1, sex, kids_total, A, APOE_binary)%>%
   mutate(A=factor(A),
-         APOE_binary=factor(APOE_binary))%>%
-  rename( `Number of childbirths` = kids_total,
-         `Aβ+` = A,
-         `APOE-ε4 carrier` = APOE_binary,
-         `Age at first visit` = age_v1)
+         APOE_binary=factor(APOE_binary))
+ 
 
 desc_table<-tbl_summary(data_table,
-            by = `Number of childbirths`, 
-            missing = "no")%>%
+            by = kids_total, 
+            missing = "no",
+            label= list(kids_total = "Number of childbirths",
+                     A= "Aβ+",
+                     APOE_binary = "APOE-E4 carrier",
+                     age_v1 = "Age at first visit"))%>%
   add_n()%>%
   add_p%>%
   modify_header(label = "**Variable**") %>% # update the column header
@@ -204,7 +235,7 @@ desc_table
 
 Table 1 shows demographics and characteristics of the ALFA+ cohort, for all participants who have completed Visit 1 and 2, goruped by parity. Participants with higher parity were significantly more likely to be older. No difference was seen between groups regarding Aβ status and APOE-ε4 carriership.
 
-## Longitudinal trajecotry of hippocampal subfield volumes
+## Hippocampal volume
 
 ```{r, include = F}
 # summing some groups together: "subject"\   
@@ -222,25 +253,24 @@ Table 1 shows demographics and characteristics of the ALFA+ cohort, for all part
   # "vol_presubiculum-head" presubiculum "vol_subiculum-body" subiculum   
   # "vol_subiculum-head" subiculum   
 
-  hippo<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V1_20231120_20250208_111212.xlsx")%>%   
-    group_by(subject, region) %>%   
-    summarize(bilateral_volume = sum(value), .groups = "drop")%>%   
-   mutate(region = case_when(region == "CA1-body"| region == "CA1-head" ~ "CA1",   
-              region == "CA3-body"| region == "CA3-head" ~ "CA3",   
-              region == "CA4-body"| region == "CA4-head" ~ "CA4",   
-              region == "GC-ML-DG-body" | region == "GC-ML-DG-head" ~ "GC_ML_DG",   
-              region == "molecular_layer_HP-body" | region == "molecular_layer_HP-head"~ "molecular_layer_HP",   
-              region == "presubiculum-body" | region == "presubiculum-head" ~ "presubiculum",   
-              region == "subiculum-body" | region == "subiculum-head" ~ "subiculum",   
-              .default = region))%>%   
-    group_by(region, subject)%>%   
-    summarize( bilateral_volume = sum(bilateral_volume), .groups = "drop")%>%   
-    pivot_wider(names_from = region, values_from = bilateral_volume, names_prefix = "vol_")%>%   
-    mutate(subject = as.numeric(subject),   
-           Visit = "V1")   
+ hippo<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V1_20231120_20250208_111212.xlsx")%>%
+  group_by(subject, region) %>%
+  summarize(bilateral_volume = sum(value), .groups = "drop")%>%
+ mutate(region = case_when(region == "CA1-body"| region == "CA1-head" ~ "CA1",
+            region == "CA3-body"| region == "CA3-head" ~ "CA3",
+            region == "CA4-body"| region == "CA4-head" ~ "CA4",
+            region == "GC-ML-DG-body" | region == "GC-ML-DG-head" ~ "GC_ML_DG",
+            region == "molecular_layer_HP-body" | region == "molecular_layer_HP-head"~ "molecular_layer_HP",
+            region == "presubiculum-body" | region == "presubiculum-head" ~ "presubiculum",
+            region == "subiculum-body" | region == "subiculum-head" ~ "subiculum",
+            .default = region))%>%
+  group_by(region, subject)%>%
+  summarize( bilateral_volume = sum(bilateral_volume), .groups = "drop")%>%
+  pivot_wider(names_from = region, values_from = bilateral_volume, names_prefix = "vol_")%>%
+  mutate(subject = as.numeric(subject),
+         Visit = "V1")
 
-  hippo_data<-left_join(data, hippo)   
-
+hippo_data<-left_join(data, hippo)
 
 hippo2<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V2_20230518_20250208_112459.xlsx")%>%
   group_by(subject, region) %>%
@@ -269,7 +299,8 @@ hippo_data_long<-bind_rows(hippo_data, hippo_data2)%>%
     Visit == "V2" ~ age_v2_mri
   ))%>%
   dplyr::select(-age_v1_mri, -age_v2_mri)%>%
-  drop_na(scandate_v2)
+  drop_na(scandate_v2)%>%
+  mutate(diff_mri = ifelse(Visit == "V1", 0, diff_mri))
 
 #fucntion to run 
 run_volume_lmer_regressions <- function(data, predictors) {
@@ -291,8 +322,77 @@ run_volume_lmer_regressions <- function(data, predictors) {
 
   return(summaries)
 }
+```
 
-  ##no interaction
+
+```{r, include = F}
+##whole hippocampus, simple
+
+mod_whole_simple<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + A + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+summary(mod_whole_simple)
+
+mod_whole_int<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+summary(mod_whole_int)
+
+plot_model(mod_whole_int, type= "int")
+
+
+```
+The two-way interaction between parity and time did not reveal any significant main effect of parity. However, when introducing a 3-way interaction with AB status, a significant parity and AB status interaction was found (p = `r tidy(mod_whole_int)$p.value[9]`), such that Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X).
+
+```{r, include=FALSE}
+
+preds_hip_int <- ggpredict(mod_whole_int, terms = c("diff_mri", "kids_total", "A"))
+
+preds_hip_int_A0<-as.data.frame(preds_hip_int)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==0)%>%
+  mutate(A = ifelse(A==0, "Aβ-", "Aβ-"),
+         kids_total_factor = ifelse(kids_total_factor == 4, "4+", as.character(kids_total_factor)))
+
+
+preds_hip_int_A1<-as.data.frame(preds_hip_int)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==1)%>%
+  mutate(A = ifelse(A==1, "Aβ+", "Aβ+"),
+         kids_total_factor = ifelse(kids_total_factor == 4, "4+", as.character(kids_total_factor)))
+
+
+hippo_data_long %>%
+  filter(sex == 2, !is.na(A)) %>%
+  mutate(kids_total_factor = ifelse(kids_total == 4, "4+", as.character(kids_total)),
+         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = diff_mri, y = vol_Whole_hippocampus, color = kids_total_factor)) +
+  geom_point(alpha = 0.4, size=2) +
+  geom_line(data =preds_hip_int_A0, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_line(data =preds_hip_int_A1, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_ribbon(data =preds_hip_int_A0, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  geom_ribbon(data =preds_hip_int_A1, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  facet_wrap(~A) +
+  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3" = "#0A5940", "4+" = "#0F3F2D")) +
+  th +
+  labs(x = "Time difference (years)", 
+       y = "Whole hippocampus", 
+       color = "Number of childbirths")
+
+
+```
+
+```{r, include = F}
+
+#hipp subfields
 
 hippo_data_long%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
