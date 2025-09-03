@@ -103,6 +103,7 @@ data<-left_join(data, biomarkers)%>%
          HRT = factor(HRT))
 
 
+
 ```
 
 # Cognitive results - LMM
@@ -835,7 +836,7 @@ preds_A1<-as.data.frame(preds)%>%
   mutate(A = ifelse(A==1, "Aβ+", "Aβ+"),
          kids_total_factor = ifelse(kids_total_factor == 4, "4+", as.character(kids_total_factor)))
 
-#by time diff with predicted values - preferred?
+
 hippo_data_long %>%
   filter(sex == 2, !is.na(A)) %>%
   mutate(kids_total_factor = ifelse(kids_total == 4, "4+", as.character(kids_total)),
