@@ -221,7 +221,7 @@ summary(fit_cog_domain)
 
 # hippo vol change
 
-```{r}
+```{r, echo=FALSE}
 hippo<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_freesurfer7_hippoSfVolumes_ALFA_PLUS_V1_20231120_20250208_111212.xlsx")%>%
   group_by(subject, region) %>%
   summarize(bilateral_volume = sum(value), .groups = "drop")%>%
@@ -294,7 +294,7 @@ run_volume_lmer_regressions <- function(data, predictors) {
 ```
 
 ## Whole hippocampus
-```{r}
+```{r, echo=FALSE}
 ##no interaction
 #introduced A as a covariate to test if number of kids is truly independent
 
@@ -348,7 +348,7 @@ hippo_data_long%>%
 ```
 
 ## subfields
-```{r}
+```{r, echo=FALSE}
 hippo_data_long%>%
   filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
@@ -431,7 +431,7 @@ run_volume_lmer_regressions( .,c( "kids_total*A*diff_mri" ,"age_mri", "APOE_bina
 ```
 
 # Jack
-```{r}
+```{r, echo=FALSE}
 jack<-read_excel("G:/My Drive/Data/ALFA+/Jack signature ALFA+/bx_signature_jack_ALFA_PLUS_V1_20231120_20250527_142751.xlsx")%>%
   filter(weighted == "TRUE")%>%
   dplyr::select(-ID, -signature, -weighted)%>%
@@ -468,7 +468,7 @@ plot_model(fit_jack_grey_w, type= "int")
 #Mediation test?
 need to redo this, but might be complicated since I am now doing a 3 way interaction
 I should do mediation with apoe? or SEM modelling?
-```{r}
+```{r, echo=FALSE}
 
 # cols<-data_cog_long_composites%>%
 #   dplyr::select(subject, Visit, Z_Attention_Composite, Z_Executive_Composite, Z_Memory_Composite, Z_Language_Composite, Z_Visual_Composite, age_cog, time_diff)
@@ -545,7 +545,7 @@ I should do mediation with apoe? or SEM modelling?
 
 ## Plot aesthetics
 this is needed to run the plot code (creates a function used in them)
-```{r}
+```{r, echo=FALSE}
 
 call_aesthethics <- function(text_size){
   th <- theme(   panel.grid.major = element_blank(),
@@ -578,7 +578,7 @@ th <- call_aesthethics(15)
 
 ## PACC ~ parity * A * time
 
-```{r}
+```{r, echo=FALSE}
 
 data_figure_diff<-data_cog_long_composites%>%
   dplyr::select(subject, Visit, Z_PACC)%>%
@@ -685,7 +685,7 @@ data_cog_long_composites %>%
 
 ### Boxplot for parasubiculum subfield values per A, parity and visit 
 
-```{r}
+```{r, echo=FALSE}
 mod_plot<-lmer(vol_parasubiculum ~ kids_total*A + Visit + as.factor(APOE_binary) + scale(TIV) +(1| subject), data=hippo_data_long[hippo_data_long$sex==2,] )
 summary(mod_plot)
 
@@ -717,7 +717,7 @@ ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_interaction.png", width = 9, he
 ```
 
 ### Boxplot for whole hppocampus values per A, parity and visit 
-```{r}
+```{r, echo=FALSE}
 #need to add signif stars
 hippo_data_long %>%
   filter(sex == 2) %>%
@@ -744,7 +744,7 @@ ggsave("G:/My Drive/ADPD 2026/plot_whole_hippocampus_interaction.png", width = 9
 
 
 ### Forest plot
-```{r}
+```{r, echo=FALSE}
 data_forest_plot<-hippo_data_long%>%
   filter(sex == 2 )
 
@@ -814,11 +814,62 @@ pred_hippo_all %>%
 
 ggsave("G:/My Drive/ADPD 2026/plot_all_regressions_estimates.png", width = 8, height = 6)
 ```
+### time difference plots for whole hipp and subfields?
+
+```{r}
+mod_hip_plot<- lmer(vol_Whole_hippocampus ~ kids_total*A*diff_mri +age_v1 + APOE_binary  +(1 | subject), hippo_data_long[hippo_data_long$sex == 2,])
+preds <- ggpredict(mod_hip_plot, terms = c("diff_mri", "kids_total", "A"))
+
+preds_A0<-as.data.frame(preds)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==0)%>%
+  mutate(A = ifelse(A==0, "Aβ-", "Aβ-"),
+         kids_total_factor = ifelse(kids_total_factor == 4, "4+", as.character(kids_total_factor)))
+
+
+preds_A1<-as.data.frame(preds)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==1)%>%
+  mutate(A = ifelse(A==1, "Aβ+", "Aβ+"),
+         kids_total_factor = ifelse(kids_total_factor == 4, "4+", as.character(kids_total_factor)))
+
+#by time diff with predicted values - preferred?
+hippo_data_long %>%
+  filter(sex == 2, !is.na(A)) %>%
+  mutate(kids_total_factor = ifelse(kids_total == 4, "4+", as.character(kids_total)),
+         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = diff_mri, y = vol_Whole_hippocampus, color = kids_total_factor)) +
+  geom_point(alpha = 0.4, size=2) +
+  geom_line(data =preds_A0, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_line(data =preds_A1, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_ribbon(data =preds_A0, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  geom_ribbon(data =preds_A1, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  facet_wrap(~A) +
+  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3" = "#0A5940", "4+" = "#0F3F2D")) +
+  th +
+  labs(x = "Time difference (years)", 
+       y = "Whole hippocampus", 
+       color = "Number of childbirths")
+
+ggsave("G:/My Drive/ADPD 2026/whole_hippocampus_time_diff.png", width = 8, height = 6)
+```
 
 
 #Table
 
-```{r}
+```{r, echo=FALSE}
 library(gtsummary)
 library(gt)
 
@@ -885,7 +936,7 @@ Results: Parity did not show a significant positive main effect on whole hippoca
 Conclusion: In CU post-menopausal women at risk of AD, parity interacts with AD pathology to influence hippocampus volume durably. Parity and AD pathology interact to impact cognition longitudinally. These findings suggest that reproductive history may interact with AD neuro and cognitive pathology. 
 
 ```{r}
-stop("Script stopped here intentionally")
+#stop("Script stopped here intentionally")
 ```
 
 
@@ -893,7 +944,7 @@ stop("Script stopped here intentionally")
 
 ## Pati code for PLS
 
-```{r}
+```{r, eval=FALSE}
 diff_mri_df_short<-diff_mri_df%>%
   filter(Visit=="V2")%>%
   dplyr::select(-Visit)
@@ -976,7 +1027,7 @@ heatmap(y_loadings,
 
 
 ## test for model estimates of cognition?
-```{r}
+```{r, eval=FALSE}
 data_forest_plot_cog<-mediation_data%>%
   filter(sex == 2 )
 
@@ -1038,7 +1089,7 @@ pred_cog_all %>%
 ### plotting both timepoints
 
 uglyyy
-```{r}
+```{r, eval=FALSE}
 hippo_data_long%>%
   filter(sex== 2)%>%
   drop_na(A)%>%
@@ -1052,7 +1103,7 @@ hippo_data_long%>%
 
 ### plotting differences
 uglyyyy
-```{r}
+```{r, eval=FALSE}
 #I'm aware how clunky this code is... I was fighting with pivots for a while and getting nowhere. So this is the best I could do for now sorry! 
 
 hippo_data_plot<-hippo
@@ -1103,7 +1154,7 @@ ggplot(aes(x=kids_total, y=vol_parasubiculum_diff_annual, group=A, colour=A))+
 
 ## PACC ~ childbirth*AB - not in use anymore because using mixed effect model
 
-```{r}
+```{r, eval=FALSE}
 
 mod_pacc_w<-lm(PACC_diff ~ kids_total*A + A+age_v1 + education + APOE_binary + time_diff, data = data_cog_diff[data_cog_diff$sex==2,])
 pred_pacc<-ggpredict(mod_pacc_w, terms=c("kids_total", "A"))
@@ -1143,7 +1194,7 @@ ggsave("G:/My Drive/ADPD 2026/plot_PACC_interaction.png", width = 8, height = 5)
 ##Cognitive results - LM of change
 test
 test again
-```{r}
+```{r, eval=FALSE}
 composites1<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 1 - Cognition Z Scores.xlsx")%>%
   dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -Z_PACC_Composite_1.2._v1 )%>%
   rename(subject = IdParticipante)
@@ -1197,7 +1248,7 @@ summary(mod_pacc_w_poly)
 ## test multivariate MEM
 multivariate MEM test
 interesting time interaction with ptau217
-```{r}
+```{r, eval=FALSE}
 
 test_longer<- data_cog_long_composites%>%
   dplyr::select(-Z_aWMS_DR_RS, -Z_FCSRTI_RT, -Z_FS_totalcnswr, -Z_Wclave_totalscr)%>%
@@ -1218,7 +1269,7 @@ plot_model(fit_cog_domain_test, type= "int")
 
 ## Executive ~ parity * A
 
-```{r}
+```{r, eval=FALSE}
 data_cog_long_composites%>%
   filter(sex==2)%>%
   drop_na(A)%>%
@@ -1242,7 +1293,7 @@ ggsave("G:/My Drive/ADPD 2026/plot_executive.png", width = 9, height = 5)
 ```
 
 ### Individual model forest plot
-```{r}
+```{r, eval=FALSE}
 plot_model(mod_plot, 
            type = "est", 
            title=" ", 
