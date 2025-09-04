@@ -190,7 +190,10 @@ MRI scans were acquired on a 3.0 T scanner (GE Discovery MR750 W 3 T) using the 
 
 ## Hippocampal segmentation
 
-Hippocampal subfield volumes were automatically calculated by FreeSurfer 7 using whole hippocampal segmentation provided by the standard ‘recon-all’ pipeline, which renders the most standard and widely-used volumetric estimation of hippocampal volumes. The subefileds were delimited as following: CA1, CA3, CA4, GC-ML-DG, molecular layer, fimbria, parasubiculum, subiculum, presubiculum, HATA and tail.
+Hippocampal subfield volumes were automatically calculated by FreeSurfer 7 using whole hippocampal segmentation provided by the standard ‘recon-all’ pipeline, which renders the most standard and widely-used volumetric estimation of hippocampal volumes. The subfields were delimited as following: CA1, CA3, CA4, GC-ML-DG, molecular layer, fimbria, parasubiculum, subiculum, presubiculum, HATA and tail.
+
+![Freesurfer 7 segmentation pipeline.](/papers/ad_signatures_files/hipp subfield segmentation.png)
+
 
 ## Lumbar puncture
 
@@ -233,9 +236,9 @@ desc_table<-tbl_summary(data_table,
 desc_table
 ```
 
-Table 1 shows demographics and characteristics of the ALFA+ cohort, for all participants who have completed Visit 1 and 2, goruped by parity. Participants with higher parity were significantly more likely to be older. No difference was seen between groups regarding Aβ status and APOE-ε4 carriership.
+Table 1 shows demographics and characteristics of the ALFA+ cohort, for all participants who have completed Visit 1 and 2, grouped by parity. Participants with higher parity were significantly more likely to be older. No difference was seen between groups regarding Aβ status and APOE-ε4 carriership.
 
-## Hippocampal volume
+## Hippocampal volume (Women only)
 
 ```{r, include = F}
 # summing some groups together: "subject"\   
@@ -338,9 +341,9 @@ plot_model(mod_whole_int, type= "int")
 
 
 ```
-The two-way interaction between parity and time did not reveal any significant main effect of parity. However, when introducing a 3-way interaction with AB status, a significant parity and AB status interaction was found (p = `r tidy(mod_whole_int)$p.value[9]`), such that Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X).
+The two-way interaction between parity and time did not reveal any significant main effect of parity. However, when introducing a 3-way interaction with AB status, a significant parity and AB status interaction was found (p = `r tidy(mod_whole_int)$p.value[9]`), such that Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X). Stratified analyses show 
 
-```{r, include=FALSE}
+```{r, echo=F, warning=F}
 
 preds_hip_int <- ggpredict(mod_whole_int, terms = c("diff_mri", "kids_total", "A"))
 
@@ -390,13 +393,10 @@ hippo_data_long %>%
 
 ```
 
+
+
 ```{r, include = F}
-
-#hipp subfields
-
-hippo_data_long%>%
-  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total" ,"A","sex", "age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+##no interaction, women only
 
 outcome_vars <- c(
   "vol_CA1", "vol_CA3", "vol_CA4", "vol_GC_ML_DG", "vol_HATA", 
@@ -411,50 +411,11 @@ model_names <- c(
   "Parasubiculum", "Presubiculum", "Subiculum"
 )
 
-models_hip <- setNames(
-  lapply(outcome_vars, function(outcome) {
-    formula <- as.formula(
-      paste(outcome, "~ kids_total + sex +A + scale(TIV) + age_mri + APOE_binary + (1 | subject)")
-    )
-    lmer(formula, data = hippo_data_long)
-  }),
-  model_names
-)
-
-tidy_models_hip <- map_dfr(models_hip, ~ {
-  broom.mixed::tidy(.x, terms = c("kids_total", "sex2"))   # Add consistent term column
-}, .id = "region")%>%
-  filter(term == "sex2"| term == "kids_total")
-
-fdr_hip_sex<-tidy_models_hip%>%
-  filter(term == "sex2")%>%
-  pull(p.value)%>%
-  p.adjust(method = "fdr")%>%
-  format(., scientific = FALSE)%>%
-  as.numeric()
-
-fdr_hip_parity<-tidy_models_hip%>%
-  filter(term == "kids_total")%>%
-  pull(p.value)%>%
-  p.adjust(method = "fdr")%>%
-  format(., scientific = FALSE)%>%
-  as.numeric()
-
-
-```
-
-Mixed effect longitudinal models applied to our entire sample showed a significant main effect of sex in the CA1 (adj.p= `r fdr_hip_sex[1]`), CA3 (adj.p= `r fdr_hip_sex[2]`), CA4 (adj.p= `r fdr_hip_sex[3]`), GC-ML-DG (adj.p= `r fdr_hip_sex[4]`), HATA (adj.p= `r fdr_hip_sex[5]`), molecular layer (adj.p= `r fdr_hip_sex[8]`) and parasubiculum (adj.p= `r fdr_hip_sex[9]`), where women appeared to show greater decline than men in these subfields. A significant main positive effect of parity was found in the fimbria (adj.p= `r fdr_hip_parity[7]`). 
-
-Include A interaction and maybe mention if 3 way works too?
-What kind of sensitivity analysis could be interesting?
-
-```{r, include = F}
-##no interaction, women only
 
 hippo_data_long%>%
   filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total", "A","age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+run_volume_lmer_regressions( .,c( "kids_total*diff_mri", "A","age_v1", "APOE_binary", "scale(TIV)", "(1 | subject)"))
 
 
 models_hip_w <- setNames(
@@ -487,7 +448,7 @@ fdr_hip_w<-tidy_models_hip_w%>%
 hippo_data_long%>%
   filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total*A", "age_mri", "APOE_binary", "scale(TIV)", "repro_span", "(1 | subject)"))
+run_volume_lmer_regressions( .,c( "kids_total*A*diff_mri", "age_v1", "APOE_binary", "scale(TIV)", "repro_span", "(1 | subject)"))
 
 models_hip_w_int <- setNames(
   lapply(outcome_vars, function(outcome) {
@@ -501,26 +462,91 @@ models_hip_w_int <- setNames(
 
 
 tidy_models_hip_w_int <- map_dfr(models_hip_w_int, ~ {
-  broom.mixed::tidy(.x, terms = c("kids_total", "kids_total:A", "A"))   # Add consistent term column
+  broom.mixed::tidy(.x, terms = c("kids_total", "kids_total:A1", "A1"))   # Add consistent term column
 }, .id = "region")%>%
-  filter(term == "A"| term == "kids_total" | term == "kids_total:A")
+  filter(term == "A1"| term == "kids_total" | term == "kids_total:A1")
 
 fdr_hip_w_int<-tidy_models_hip_w_int%>%
-  filter(term == "kids_total:A")%>%
+  filter(term == "kids_total:A1")%>%
   pull(p.value)%>%
   p.adjust(., method = "fdr")%>%
   format(., scientific = FALSE)%>%
   as.numeric()
 
-#CA4, GC_ML_DG   parasubiculum presubiculum and subiculum significant. parasubiculum survives mutiple comparison
+
 ```
 
-When stratifying by sex, a trending positive main effect of parity was found in the fimbria in women (adj.p= `r fdr_hip_w[7]`), suggesting those with higher parity may show greater fimbria volume. No effect of parity was found for men in any of the subfields. A significant parity*Aβ status interaction was found in the parasubiculum (adj.p= `r fdr_hip_w_int[9]`), where Aβ+ women with higher parity showed greater volume reduction. This effect was also trending in the CA4 (adj.p= `r fdr_hip_w_int[3]`), GC-ML-DG (adj.p= `r fdr_hip_w_int[4]`), subiculum (adj.p= `r fdr_hip_w_int[10]`) and presubiculum (adj.p= `r fdr_hip_w_int[11]`). This interaction did not significantly affect men.
+Applying the two-way time and parity interaction model to each individual hippocampal subfield revealed no significant main effect of parity after applying FDR correction. However, the three way interaction including Aβ status showed a significant effect of the interaction between parity and Aβ on the parasubiculum volume (adj.p = `r fdr_hip_w_int[9]`), and a near significant effect on the CA4 (adj.p = `r fdr_hip_w_int[3]`), dentate gyrus (adj.p = `r fdr_hip_w_int[4]`), presubiculum (adj.p = `r fdr_hip_w_int[10]`) and subiculum (adj.p = `r fdr_hip_w_int[11]`). The direction of the effect followed the same as for the whole hippocampus, where Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X)
 
-## NFL
+```{r, echo=F, warning=F}
+data_forest_plot<-hippo_data_long%>%
+  filter(sex == 2 )
+
+models<-list(
+  CA1 = lmer(vol_CA1 ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  CA3 = lmer(vol_CA3 ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  `CA4` = lmer(vol_CA4 ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  `GC-ML-DG` = lmer(vol_GC_ML_DG ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  HATA = lmer(vol_HATA ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  Tail = lmer(vol_Hippocampal_tail ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  Fimbria = lmer(vol_fimbria ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  `Molecular layer` = lmer(vol_molecular_layer_HP ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+ `Parasubiculum` = lmer(vol_parasubiculum ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  `Presubiculum` = lmer(vol_presubiculum ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot),
+  `Subiculum` = lmer(vol_subiculum ~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject),data = data_forest_plot)
+)
+
+# Extract coefficients and CIs
+#install.packages("broom.mixed")
+
+pred_hippo_all <- map_dfr(models, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "A1"))   # Add consistent term column
+}, .id = "region")%>%
+  filter(term %in% c("kids_total", "A1", "kids_total:A1"))%>%
+  dplyr::select(region, term, estimate, std.error)%>%
+  pivot_wider(names_from = term, values_from = c(estimate, std.error))%>%
+  mutate(plot_estimate_kids_A0 = estimate_kids_total,
+         plot_estimate_kids_A1 = estimate_kids_total + `estimate_kids_total:A1`,
+         plot_conf.low_kids_A0 = estimate_kids_total - 1.96 * std.error_kids_total,
+         plot_conf.high_kids_A0 = estimate_kids_total + 1.96 * std.error_kids_total,
+         plot_conf.low_kids_A1 = (estimate_kids_total + `estimate_kids_total:A1` - 1.96 * `std.error_kids_total:A1`),
+         plot_conf.high_kids_A1 = (estimate_kids_total + `estimate_kids_total:A1` + 1.96 * `std.error_kids_total:A1`))%>%
+  dplyr::select(-estimate_kids_total, -estimate_A1,-`estimate_kids_total:A1` ,-`std.error_kids_total`, -std.error_A1 ,         -`std.error_kids_total:A1`)%>%
+  pivot_longer(
+    cols = starts_with("plot_"),  # Keep 'term' as-is
+    names_to = c(".value", "A"),  # .value creates columns like estimate, conf.low, etc.
+    names_pattern = "plot_(.*)_kids_A(\\d+)"
+  )%>%
+  mutate(colour_group = case_when(region == "CA4" ~ "trend",
+                                  region == "GC-ML-DG" ~ "trend",
+                                  region == "Presubiculum" ~ "trend",
+                                  region == "Subiculum" ~ "trend",
+                                  region == "Parasubiculum" ~ "significant",
+                                  .default = "normal"))
+
+pred_hippo_all %>%
+  mutate(A = factor(A, levels = c("1", "0"), labels = c("Positive", "Negative"))) %>%
+  ggplot(aes(x = estimate, y = region, group = A, shape = A, color = colour_group)) +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high), 
+                  position = position_dodge(width = 0.8),
+                  size = 0.6) +
+  labs(x = "Estimated effect of parity", 
+       y = "Hippocampal subfield", 
+       shape = "Aβ status",
+       color = "Significance level (FDR corrected)") +
+  th +
+  geom_vline(xintercept = 0, linetype = "dotted", colour = "grey3") +
+  scale_shape_manual(values = c("Negative" = 15, "Positive" = 16))+
+  scale_color_manual(values = c("trend" = "grey3", "significant" = "red", "normal" = "grey48"))+
+  guides(colour = "none")
+  
+```
+
+
+## Other biomarkers
 ```{r, include = F}
 
-# mediation too?
+# need to do SEM with GFAP, sTREM, neurogranin
 
 biomarkers_long<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
     delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
@@ -531,60 +557,11 @@ data_naked<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv",
 
 data_biomarkers_long<-left_join(data_naked, biomarkers_long)
 
-mod_nfl<-lmer(CSF_NFL~ kids_total+A +sex+ Visit + APOE_binary + (1 | subject), data = data_biomarkers_long)
-summary(mod_nfl)
-
-mod_nfl_int<-lmer(CSF_NFL~ kids_total*A+sex+ Visit + APOE_binary + (1 | subject), data = data_biomarkers_long)
-summary(mod_nfl_int)
-
-mod_nfl_w<-lmer(CSF_NFL~ kids_total+A + Visit + APOE_binary  +(1 | subject), data = data_biomarkers_long[data_biomarkers_long$sex==2,])
-summary(mod_nfl_w)
-
-mod_nfl_w_int<-lmer(CSF_NFL~ kids_total*A + Visit + APOE_binary + (1 | subject), data = data_biomarkers_long[data_biomarkers_long$sex==2,])
-summary(mod_nfl_w_int)
-
-tidy_mod_nfl_w<-broom.mixed::tidy(mod_nfl_w)
 
 ```
-We used mixed effect models to investigate the effect of parity, Aβ status and their interaction on our cohort of men and women. No significant effect was found, but sex was highly significant. There was no significant interaction of parity and Aβ status. When stratifying by sex, a positive trending main effect of parity was observed in women (p= `r tidy_mod_nfl_w$p.value[2]`), but not in men. No interactions were significant in either sex group.
 
-## Jack's signature
 
-```{r, include = F}
-jack<-read_excel("G:/My Drive/Data/ALFA+/Jack signature ALFA+/bx_signature_jack_ALFA_PLUS_V1_20231120_20250527_142751.xlsx")%>%
-  filter(weighted == "TRUE")%>%
-  dplyr::select(-ID, -signature, -weighted)%>%
-  pivot_wider(names_from = measurement, values_from = value, names_prefix = "jack_")%>%
-  mutate(subject = as.numeric(subject),
-         Visit = "V1")
 
-jack2<-read_excel("G:/My Drive/Data/ALFA+/Jack signature ALFA+/bx_signature_jack_ALFA_PLUS_V2_20230518_20250210_114442.xlsx")%>%
-  filter(weighted == "TRUE")%>%
-  dplyr::select(-ID, -signature, -weighted)%>%
-  pivot_wider(names_from = measurement, values_from = value, names_prefix = "jack_")%>%
-  mutate(subject = as.numeric(subject),
-         Visit = "V2")
-
-jack_data<-bind_rows(jack, jack2)
-
-jack_data_long<-left_join(hippo_data_long, jack_data)
-  
-#all pts
-fit_jack_cort <- lmer(jack_ThickAvg ~ kids_total*A + sex +Visit +age_mri + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long) 
-summary(fit_jack_cort)
-
-fit_jack_grey <- lmer(jack_GrayVol ~ kids_total*A + sex +Visit +age_mri + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long) 
-summary(fit_jack_grey)
-
-#women
-fit_jack_cort_w <- lmer(jack_ThickAvg ~ kids_total*A  +Visit +age_mri + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
-summary(fit_jack_cort_w)
-
-fit_jack_grey_w <- lmer(jack_GrayVol ~ kids_total*A  +Visit +age_mri + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
-summary(fit_jack_grey_w)
-```
-
-We used mixed effect models to investigate the impact of parity and parity*Aβ status interaction on Jack's signature, for both cortical thickness and gray matter volume. No significant effect was found. 
 
 ## Cognitive trajectory
 
@@ -594,19 +571,86 @@ cognition<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete)
   rename(subject = IdParticipante)%>%
   mutate(subject = as.numeric(subject))
 
+time_diff<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+  dplyr::select(IdParticipante, Visit,FechaResultado)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = as.numeric(subject))%>%
+  filter(Visit != 3)%>%
+  pivot_wider(names_from = Visit, values_from = FechaResultado, names_prefix = c("Fecha_Resultado"))%>%
+  mutate(time_diff = as.numeric(difftime(Fecha_Resultado2, Fecha_Resultado1, units= c("days"))))%>%
+  dplyr::select(subject, time_diff)
+
 data_cog_long<- left_join(data, cognition)%>%
   mutate(age_cog = as.numeric(difftime(FechaResultado, DOB, units= c("days")))/365.25)%>%
   group_by(subject)%>%
   filter(Visit != 3) %>%
   filter(n()>=2)%>%
   relocate(Visit, .after=sex)%>%
-  ungroup()
+  ungroup()%>%
+  left_join(., time_diff)%>%
+  mutate(time_diff = ifelse(Visit == 1, 0, time_diff))
 
+fit_cog_simple_PACC<-lmer(Z_PACC ~ kids_total*time_diff +age_cog + APOE_binary + education + A +(1 | subject), data_cog_long[data_cog_long$sex==2,])
+summary(fit_cog_simple_PACC)
 
-fit_cog_PACC<-lmer(Z_PACC ~ kids_total*A*sex +age_cog + APOE_binary + education +(1 | subject), data_cog_long)
+fit_cog_PACC<-lmer(Z_PACC ~ kids_total*A*time_diff +age_cog + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex==2,])
 summary(fit_cog_PACC)
 
+```
+The two-way parity and time interaction did not produce any significan main effect on PACC score at visit 1 and 2. However, a three-way interaction between time, parity and A status was found (p=`r tidy(fit_cog_PACC)$p.value[11]`). Results suggest that whilst parity and Aβ status did not seem to affect PACC score at time = 0, Aβ- women appeared to show a positive relationship between parity and PACC score as time went on, and Aβ+ women the opposite.
 
+```{r, echo=F, warning=F}
+
+preds_PACC <- ggpredict(fit_cog_PACC, terms = c("time_diff", "kids_total", "A"))
+
+preds_PACC_A0<-as.data.frame(preds_PACC)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==0)%>%
+  filter(kids_total_factor!=3)%>%
+  mutate(A = ifelse(A==0, "Aβ-", "Aβ-"),
+         kids_total_factor = ifelse(kids_total_factor== 4, "3+", as.character(kids_total_factor)))
+
+
+preds_PACC_A1<-as.data.frame(preds_PACC)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==1)%>%
+  filter(kids_total_factor!=3)%>%
+  mutate(A = ifelse(A==1, "Aβ+", "Aβ+"),
+         kids_total_factor = ifelse(kids_total_factor== 4, "3+", as.character(kids_total_factor)))
+
+#by time diff with predicted values - preferred?
+data_cog_long_composites %>%
+  filter(sex == 2, !is.na(A)) %>%
+  mutate(kids_total_factor = ifelse(kids_total >= 3, "3+", as.character(kids_total)),
+         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = time_diff, y = Z_PACC, color = kids_total_factor)) +
+  geom_point(alpha = 0.3, size=2) +
+  geom_line(data =preds_PACC_A0, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_line(data =preds_PACC_A1, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_ribbon(data =preds_PACC_A0, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  geom_ribbon(data =preds_PACC_A1, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  facet_wrap(~A) +
+  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3+" = "#0A5940")) +
+  th +
+  labs(x = "Time difference (days)", 
+       y = "PACC Z-score", 
+       color = "Number of childbirths")
+```
+
+
+```{r, include=F}
 ###Composites
 
 composites1<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 1 - Cognition Z Scores.xlsx")%>%
@@ -636,7 +680,7 @@ composite_all<-full_join(composites1, composites2)%>%
 
 data_cog_long_composites<-left_join(data_cog_long, composite_all)
 
-#no interaction, men and women
+#no interaction, women
 
 outcome_vars_cog <- c(
   "Z_Attention_Composite", "Z_Memory_Composite", "Z_Executive_Composite", "Z_Language_Composite", "Z_Visual_Composite"
@@ -650,9 +694,9 @@ model_names_cog <- c(
 models_cog <- setNames(
   lapply(outcome_vars_cog, function(outcome) {
     formula <- as.formula(
-      paste(outcome, "~ kids_total + A + sex + education + age_cog + APOE_binary + (1 | subject)")
+      paste(outcome, "~ kids_total*time_diff + A  + education + age_cog + APOE_binary + (1 | subject)")
     )
-    lmer(formula, data = data_cog_long_composites)
+    lmer(formula, data = data_cog_long_composites[data_cog_long_composites$sex==2,])
   }),
   model_names_cog
 )
@@ -668,7 +712,6 @@ fdr_cog_sex<-tidy_models_cog%>%
   pull(p.value)%>%
   p.adjust(., method = "fdr")%>%
   format(., scientific = FALSE)
-# sex highly significant in attention , memory, executive and visual but not language. kids and a status not at all
 
 
 # interaction
@@ -676,9 +719,9 @@ fdr_cog_sex<-tidy_models_cog%>%
 models_cog_int <- setNames(
   lapply(outcome_vars_cog, function(outcome) {
     formula <- as.formula(
-      paste(outcome, "~ kids_total *A+ sex + education + age_cog + APOE_binary + (1 | subject)")
+      paste(outcome, "~ kids_total *time_diff*A + education + age_cog + APOE_binary + (1 | subject)")
     )
-    lmer(formula, data = data_cog_long_composites)
+    lmer(formula, data = data_cog_long_composites[data_cog_long_composites$sex==2,])
   }),
   model_names_cog
 )
@@ -689,85 +732,14 @@ tidy_models_cog_int <- map_dfr(models_cog_int, ~ {
 }, .id = "composite")%>%
   filter(term == "A"| term == "kids_total"| term == "kids_total:A" )
 
-# interaction 3 way
-
-models_cog_int_3 <- setNames(
-  lapply(outcome_vars_cog, function(outcome) {
-    formula <- as.formula(
-      paste(outcome, "~ kids_total *A*sex + education + age_cog + APOE_binary + (1 | subject)")
-    )
-    lmer(formula, data = data_cog_long_composites)
-  }),
-  model_names_cog
-)
-
-
-tidy_models_cog_int_3 <- map_dfr(models_cog_int_3, ~ {
-  broom.mixed::tidy(.x, terms = c("kids_total", "A", "kids_total:A"))   # Add consistent term column
-}, .id = "composite")%>%
-  filter(term == "A"| term == "kids_total"| term == "kids_total:A:sex2" )
-
 ```
 
-We used mixed effect modelling to investigate the effect of sex, parity and Aβ status on cognitive trajectory. There was a significant main effect of sex on attention (adj.p< 0.0001), memory (adj.p< 0.0001), executive (adj.p= `r fdr_cog_sex[3]`) and visual domains (adj.p< 0.0001). whilst being a woman was associatied with greater decline in the attention, executive and visual processing domains, the opposite was true for memory. No effect of sex was found on the PACC.
-In addition to this, there was no significant effect of parity, Aβ status or their interaction in any of the cognitive measures tested.
 
-```{r, include = F}
-#women only
-
-models_cog_w <- setNames(
-  lapply(outcome_vars_cog, function(outcome) {
-    formula <- as.formula(
-      paste(outcome, "~ kids_total + A + education + age_cog + APOE_binary + (1 | subject)")
-    )
-    lmer(formula, data = data_cog_long_composites[data_cog_long_composites$sex==2,])
-  }),
-  model_names_cog
-)
-
-
-tidy_models_cog_w <- map_dfr(models_cog_w, ~ {
-  broom.mixed::tidy(.x, terms = c("kids_total", "A"))   # Add consistent term column
-}, .id = "composite")%>%
-  filter(term == "A"| term == "kids_total")
-
-# interaction
-
-models_cog_w_int <- setNames(
-  lapply(outcome_vars_cog, function(outcome) {
-    formula <- as.formula(
-      paste(outcome, "~ kids_total *A + education + age_cog + APOE_binary + (1 | subject)")
-    )
-    lmer(formula, data = data_cog_long_composites[data_cog_long_composites$sex==2,])
-  }),
-  model_names_cog
-)
-
-
-tidy_models_cog_w_int <- map_dfr(models_cog_w_int, ~ {
-  broom.mixed::tidy(.x, terms = c("kids_total", "A"))   # Add consistent term column
-}, .id = "composite")%>%
-  filter(term == "A"| term == "kids_total"| term== "kids_total:A")
-
-fdr_cog_int_w<-tidy_models_cog_w_int%>%
-  filter(term == "kids_total:A")%>%
-  pull(p.value)%>%
-  p.adjust(., method = "fdr")%>%
-  format(., scientific = FALSE)
-```
-
-After stratifying by sex, no main effect of parity was found on any of the cognitive measures in women or men. We observed an initially significant interaction of parity*Aβ status on the executive domain (p= 0.023) - however, this did not survive FDR comparison (adj.p= `r fdr_cog_int_w[3]`). 
 
 # Discussion
 
 We aimed to investigate the impact of parity on hippocampal subfield volumes and relation to AD pathology in post-menopausal women at risk of AD and men who share similar age and AD risk. Our results suggest that...
-- parity influence hippocampal subfield volume independently in women, higher parity bigger volume
-- parity interacts with A status to influence hippocampal subfield volume, in women, higher parity better in amyloid negative, worse in amyloid positive
-- these results aren't present in men suggesting it's biological?
-- possible effect of parity on NFL - higher parity higher NFL - but no interaction with AD pathology. 
-- no effect on AD cortical signature - could be because of sample's young age, but no relation with NFL either, so neurodegeneration doesn't seem involved in this effect (yet?)
-- possible impact on execuive functions- results not significant after adjusting but seems normal given the short amount of time between sessions and how early we are catching people
-- Hippocampus region involved are known to be crucial for....
+
 
 Limitations:
 - unequal number of men and women
@@ -832,18 +804,18 @@ models<-list(
 
 
 pred_hippo_all <- map_dfr(models, ~ {
-  broom.mixed::tidy(.x, terms = c("kids_total", "A"))   # Add consistent term column
+  broom.mixed::tidy(.x, terms = c("kids_total", "A1"))   # Add consistent term column
 }, .id = "region")%>%
-  filter(term %in% c("kids_total", "A", "kids_total:A"))%>%
+  filter(term %in% c("kids_total", "A1", "kids_total:A1"))%>%
   dplyr::select(region, term, estimate, std.error)%>%
   pivot_wider(names_from = term, values_from = c(estimate, std.error))%>%
   mutate(plot_estimate_kids_A0 = estimate_kids_total,
-         plot_estimate_kids_A1 = estimate_kids_total + `estimate_kids_total:A`,
+         plot_estimate_kids_A1 = estimate_kids_total + `estimate_kids_total:A1`,
          plot_conf.low_kids_A0 = estimate_kids_total - 1.96 * std.error_kids_total,
          plot_conf.high_kids_A0 = estimate_kids_total + 1.96 * std.error_kids_total,
-         plot_conf.low_kids_A1 = (estimate_kids_total + `estimate_kids_total:A` - 1.96 * `std.error_kids_total:A`),
-         plot_conf.high_kids_A1 = (estimate_kids_total + `estimate_kids_total:A` + 1.96 * `std.error_kids_total:A`))%>%
-  dplyr::select(-estimate_kids_total, -estimate_A,-`estimate_kids_total:A` ,-`std.error_kids_total`, -std.error_A ,         -`std.error_kids_total:A`)%>%
+         plot_conf.low_kids_A1 = (estimate_kids_total + `estimate_kids_total:A1` - 1.96 * `std.error_kids_total:A1`),
+         plot_conf.high_kids_A1 = (estimate_kids_total + `estimate_kids_total:A1` + 1.96 * `std.error_kids_total:A1`))%>%
+  dplyr::select(-estimate_kids_total, -estimate_A1,-`estimate_kids_total:A1` ,-`std.error_kids_total`, -std.error_A1 ,         -`std.error_kids_total:A1`)%>%
   pivot_longer(
     cols = starts_with("plot_"),  # Keep 'term' as-is
     names_to = c(".value", "A"),  # .value creates columns like estimate, conf.low, etc.
@@ -855,6 +827,7 @@ pred_hippo_all <- map_dfr(models, ~ {
                                   region == "Subiculum" ~ "trend",
                                   region == "Parasubiculum" ~ "significant",
                                   .default = "normal"))
+
 ```
 
 ```{r, echo=F, warning=F}
@@ -934,4 +907,84 @@ ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_interaction.png", width = 9, he
 ```
 
 
+# Miscellaneous
+
+```{r, eval= FALSE}
+
+#hipp subfields
+
+hippo_data_long%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_lmer_regressions( .,c( "kids_total" ,"A","sex", "age_mri", "APOE_binary", "scale(TIV)", "(1 | subject)"))
+
+
+models_hip <- setNames(
+  lapply(outcome_vars, function(outcome) {
+    formula <- as.formula(
+      paste(outcome, "~ kids_total + sex +A + scale(TIV) + age_mri + APOE_binary + (1 | subject)")
+    )
+    lmer(formula, data = hippo_data_long)
+  }),
+  model_names
+)
+
+tidy_models_hip <- map_dfr(models_hip, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "sex2"))   # Add consistent term column
+}, .id = "region")%>%
+  filter(term == "sex2"| term == "kids_total")
+
+fdr_hip_sex<-tidy_models_hip%>%
+  filter(term == "sex2")%>%
+  pull(p.value)%>%
+  p.adjust(method = "fdr")%>%
+  format(., scientific = FALSE)%>%
+  as.numeric()
+
+fdr_hip_parity<-tidy_models_hip%>%
+  filter(term == "kids_total")%>%
+  pull(p.value)%>%
+  p.adjust(method = "fdr")%>%
+  format(., scientific = FALSE)%>%
+  as.numeric()
+
+
+```
+
+## Jack's signature
+
+```{r, eval = F}
+jack<-read_excel("G:/My Drive/Data/ALFA+/Jack signature ALFA+/bx_signature_jack_ALFA_PLUS_V1_20231120_20250527_142751.xlsx")%>%
+  filter(weighted == "TRUE")%>%
+  dplyr::select(-ID, -signature, -weighted)%>%
+  pivot_wider(names_from = measurement, values_from = value, names_prefix = "jack_")%>%
+  mutate(subject = as.numeric(subject),
+         Visit = "V1")
+
+jack2<-read_excel("G:/My Drive/Data/ALFA+/Jack signature ALFA+/bx_signature_jack_ALFA_PLUS_V2_20230518_20250210_114442.xlsx")%>%
+  filter(weighted == "TRUE")%>%
+  dplyr::select(-ID, -signature, -weighted)%>%
+  pivot_wider(names_from = measurement, values_from = value, names_prefix = "jack_")%>%
+  mutate(subject = as.numeric(subject),
+         Visit = "V2")
+
+jack_data<-bind_rows(jack, jack2)
+
+jack_data_long<-left_join(hippo_data_long, jack_data)
+  
+#all pts
+fit_jack_cort <- lmer(jack_ThickAvg ~ kids_total*A + sex +Visit +age_mri + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long) 
+summary(fit_jack_cort)
+
+fit_jack_grey <- lmer(jack_GrayVol ~ kids_total*A + sex +Visit +age_mri + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long) 
+summary(fit_jack_grey)
+
+#women
+fit_jack_cort_w <- lmer(jack_ThickAvg ~ kids_total*A  +Visit +age_mri + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
+summary(fit_jack_cort_w)
+
+fit_jack_grey_w <- lmer(jack_GrayVol ~ kids_total*A  +Visit +age_mri + APOE_binary + scale(TIV) + (1 | subject) , jack_data_long[jack_data_long$sex==2,]) 
+summary(fit_jack_grey_w)
+```
+
+We used mixed effect models to investigate the impact of parity and parity*Aβ status interaction on Jack's signature, for both cortical thickness and gray matter volume. No significant effect was found. 
 
