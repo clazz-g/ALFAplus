@@ -605,16 +605,58 @@ library(corrplot)
 
 # Standardize all continuous variables before SEM
 #continuous_vars <- c("CSF_GFAP_V1", "CSF_GFAP_V2", "repro_span" , "Age_at_first_birth",
-                     "CSF_Neurogranin_V1", "CSF_Neurogranin_V2", "CSF_sTREM2_V1", "CSF_sTREM2_V2",
-                     "vol_Whole_hippocampus_V1", "vol_Whole_hippocampus_V2")
+                     #"CSF_Neurogranin_V1", "CSF_Neurogranin_V2", "CSF_sTREM2_V1", "CSF_sTREM2_V2",
+                     #"vol_Whole_hippocampus_V1", "vol_Whole_hippocampus_V2")
 
-# Standardize (mean=0, sd=1)
-#data_sem[continuous_vars] <- scale(data_sem[continuous_vars])
+```
 
-m1<-' i =~ 1*vol_Whole_hippocampus_V1+ 1*vol_Whole_hippocampus_V2
-s =~ 0*vol_Whole_hippocampus_V1 + 1*vol_Whole_hippocampus_V2'
+### bayesian model
+```{r}
+library(bnlearn)
 
-fit_m1<-growth(m1, data = data_sem)
+data_bn<-data_sem%>%
+  filter(sex==2)%>%
+  dplyr::select(kids_total, HRT, age_v1, repro_span, hypertension, high_chol, CSF_Neurogranin_V1, CSF_GFAP_V1, CSF_A_V1)
+
+#kids - A
+#kids - hypertension
+#kids - high cholesterol
+#hypertension - neurogranin
+#hypertension - GFAP
+#hypertension - A
+#high cholesterol - all same
+#neurogranin - hypocampus volume
+#GFAP - hippocampus volume
+# A - hippocampus volume
+#hippocampus volume - PACC_V2
+#A - PACC_V2
+
+vars<-c("kids_total", "A", "hypertension", "high_chol", "CSF_Neurogranin_V1", "CSF_GFAP_V1")
+adj <- matrix(
+        0L, 
+        ncol = 6, 
+        nrow = 6,
+        dimnames = list(vars, vars)
+       )
+adj["kids_total", "A"] = 1L
+adj["kids_total", "hypertension"] = 1L
+adj["kids_total", "high_chol"] = 1L
+adj["hypertension", "CSF_Neurogranin_V1"] = 1L
+adj["hypertension", "CSF_GFAP_V1"] = 1L
+print(adj)
+
+dag  <- empty.graph(vars)
+amat(dag) <- adj
+
+plot(dag)
+
+net = hc(data_bn)
+bn = bn.fit(net, data_bn)
+bn
+
+
+test<-glm(high_chol ~ repro_span + kids_total + age_v1 + APOE_binary, family = binomial, data = data_cog_long[data_cog_long$sex==2 & data_cog_long$Visit==1,])
+summary(test)
 ```
 
 
