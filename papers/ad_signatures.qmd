@@ -541,127 +541,6 @@ pred_hippo_all %>%
   guides(colour = "none")
   
 ```
-
-
-## SEM
-```{r, eval=FALSE}
-
-diff_mri_df<-date_mri_long%>%
-  dplyr::select(subject, diff_mri)
-
-hippo_V1<-hippo%>%
-  rename_with(~ paste(., "V1", sep = "_"))%>%
-  rename(subject = subject_V1)
-
-hippo_sem<-hippo2%>%
-  rename_with(~ paste(., "V2", sep = "_"))%>%
-  rename(subject = subject_V2)%>%
-  right_join(., hippo_V1, join_by(subject))%>%
-  dplyr::select(-Visit_V1, -Visit_V2)%>%
-  left_join(., diff_mri_df)%>%
-  mutate(rate_CA1 = (vol_CA1_V2-vol_CA1_V1)/diff_mri,
-         rate_CA3 = (vol_CA3_V2-vol_CA3_V1)/diff_mri,
-         rate_CA4 = (vol_CA4_V2-vol_CA4_V1)/diff_mri,
-         rate_GC_ML_DG = (vol_GC_ML_DG_V2-vol_GC_ML_DG_V1)/diff_mri,
-         rate_HATA = (vol_HATA_V2-vol_HATA_V1)/diff_mri,
-         rate_Hippocampal_tail = (vol_Hippocampal_tail_V2-vol_Hippocampal_tail_V1)/diff_mri,
-         rate_fimbria = (vol_fimbria_V2-vol_fimbria_V1)/diff_mri,
-         rate_molecular_layer_HP = (vol_molecular_layer_HP_V2-vol_molecular_layer_HP_V1)/diff_mri,
-         rate_parasubiculum = (vol_parasubiculum_V2-vol_parasubiculum_V1)/diff_mri,
-         rate_presubiculum = (vol_presubiculum_V2-vol_presubiculum_V1)/diff_mri,
-         rate_subiculum = (vol_subiculum_V2-vol_subiculum_V1)/diff_mri)
-  
-
-# need to do SEM with GFAP, sTREM, neurogranin, IL6
-
-
-
-biomarkers_long<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
-    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
-  mutate(subject=as.numeric(subject))%>%
-  rename(CSF_A = A,
-         CSF_AT = AT)%>%
-  drop_na(Visit)%>%
-  dplyr::select(-collection_dt)%>%
-  pivot_wider(names_from = Visit, values_from = c(starts_with("CSF_")))%>%
-  left_join(., time_diff)
-
-data_naked<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
-    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
-  mutate(sex=factor(sex))
-
-data_sem<-full_join(biomarkers_long, hippo_sem, join_by(subject))%>%
-  right_join(., data_naked)
-
-
-
-
-#this removes v2 of some people who have neuroimaging but not biomarkers. might have to revise it
-
-library(lavaan)
-library(semPlot)
-library(corrplot)
-
-
-# Standardize all continuous variables before SEM
-#continuous_vars <- c("CSF_GFAP_V1", "CSF_GFAP_V2", "repro_span" , "Age_at_first_birth",
-                     #"CSF_Neurogranin_V1", "CSF_Neurogranin_V2", "CSF_sTREM2_V1", "CSF_sTREM2_V2",
-                     #"vol_Whole_hippocampus_V1", "vol_Whole_hippocampus_V2")
-
-```
-
-### bayesian model
-```{r}
-library(bnlearn)
-
-data_bn<-data_sem%>%
-  filter(sex==2)%>%
-  dplyr::select(kids_total, HRT, age_v1, repro_span, hypertension, high_chol, CSF_Neurogranin_V1, CSF_GFAP_V1, CSF_A_V1)
-
-#kids - A
-#kids - hypertension
-#kids - high cholesterol
-#hypertension - neurogranin
-#hypertension - GFAP
-#hypertension - A
-#high cholesterol - all same
-#neurogranin - hypocampus volume
-#GFAP - hippocampus volume
-# A - hippocampus volume
-#hippocampus volume - PACC_V2
-#A - PACC_V2
-
-vars<-c("kids_total", "A", "hypertension", "high_chol", "CSF_Neurogranin_V1", "CSF_GFAP_V1")
-adj <- matrix(
-        0L, 
-        ncol = 6, 
-        nrow = 6,
-        dimnames = list(vars, vars)
-       )
-adj["kids_total", "A"] = 1L
-adj["kids_total", "hypertension"] = 1L
-adj["kids_total", "high_chol"] = 1L
-adj["hypertension", "CSF_Neurogranin_V1"] = 1L
-adj["hypertension", "CSF_GFAP_V1"] = 1L
-print(adj)
-
-dag  <- empty.graph(vars)
-amat(dag) <- adj
-
-plot(dag)
-
-net = hc(data_bn)
-bn = bn.fit(net, data_bn)
-bn
-
-
-test<-glm(high_chol ~ repro_span + kids_total + age_v1 + APOE_binary, family = binomial, data = data_cog_long[data_cog_long$sex==2 & data_cog_long$Visit==1,])
-summary(test)
-```
-
-
-
-
 ## Cognitive trajectory
 
 ```{r, include=F}
@@ -834,6 +713,228 @@ tidy_models_cog_int <- map_dfr(models_cog_int, ~ {
 ```
 
 No significant main effect of parity was found on any of the cognitive composites used after FDR correction.
+
+
+## SEM
+```{r, eval=FALSE}
+
+diff_mri_df<-date_mri_long%>%
+  dplyr::select(subject, diff_mri)
+
+hippo_V1<-hippo%>%
+  rename_with(~ paste(., "V1", sep = "_"))%>%
+  rename(subject = subject_V1)
+
+hippo_sem<-hippo2%>%
+  rename_with(~ paste(., "V2", sep = "_"))%>%
+  rename(subject = subject_V2)%>%
+  right_join(., hippo_V1, join_by(subject))%>%
+  dplyr::select(-Visit_V1, -Visit_V2)%>%
+  left_join(., diff_mri_df)%>%
+  mutate(rate_CA1 = (vol_CA1_V2-vol_CA1_V1)/diff_mri,
+         rate_CA3 = (vol_CA3_V2-vol_CA3_V1)/diff_mri,
+         rate_CA4 = (vol_CA4_V2-vol_CA4_V1)/diff_mri,
+         rate_GC_ML_DG = (vol_GC_ML_DG_V2-vol_GC_ML_DG_V1)/diff_mri,
+         rate_HATA = (vol_HATA_V2-vol_HATA_V1)/diff_mri,
+         rate_Hippocampal_tail = (vol_Hippocampal_tail_V2-vol_Hippocampal_tail_V1)/diff_mri,
+         rate_fimbria = (vol_fimbria_V2-vol_fimbria_V1)/diff_mri,
+         rate_molecular_layer_HP = (vol_molecular_layer_HP_V2-vol_molecular_layer_HP_V1)/diff_mri,
+         rate_parasubiculum = (vol_parasubiculum_V2-vol_parasubiculum_V1)/diff_mri,
+         rate_presubiculum = (vol_presubiculum_V2-vol_presubiculum_V1)/diff_mri,
+         rate_subiculum = (vol_subiculum_V2-vol_subiculum_V1)/diff_mri)
+  
+
+# need to do SEM with GFAP, sTREM, neurogranin, IL6
+
+
+
+biomarkers_long<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(subject=as.numeric(subject))%>%
+  rename(CSF_A = A,
+         CSF_AT = AT)%>%
+  drop_na(Visit)%>%
+  dplyr::select(-collection_dt)%>%
+  pivot_wider(names_from = Visit, values_from = c(starts_with("CSF_")))
+
+data_naked<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(sex=factor(sex))
+
+data_sem<-full_join(biomarkers_long, hippo_sem, join_by(subject))%>%
+  right_join(., data_naked)
+
+
+
+
+#this removes v2 of some people who have neuroimaging but not biomarkers. might have to revise it
+
+cog_sem<-data_cog_long_composites%>%
+  dplyr::select(subject, Visit, c(starts_with("Z_")))%>%
+  mutate(Visit = ifelse(Visit == 1, "V1", "V2"))%>%
+  pivot_wider(names_from = Visit, values_from = c(starts_with("Z_")))
+  
+data_sem<-left_join(data_sem, cog_sem)
+
+library(lavaan)
+library(semPlot)
+library(corrplot)
+
+```
+
+### bayesian model
+```{r}
+library(bnlearn)
+
+data_bn<-data_sem%>%
+  filter(sex==2)%>%
+  dplyr::select(kids_total, HRT, age_v1, repro_span, hypertension, high_chol, CSF_Neurogranin_V1, CSF_Neurogranin_V2, CSF_GFAP_V1, CSF_GFAP_V2, diabetes, `CSF_IL-6_V1`, `CSF_IL-6_V2`, vol_Whole_hippocampus_V1 , vol_Whole_hippocampus_V2, CSF_A_V1, CSF_A_V2, CSF_sTREM2_V1, CSF_sTREM2_V2, Z_PACC_V1, Z_PACC_V2, bmi, occupation, ingreso_hogar, education)%>%
+  rename(CSF_IL_6_V1= `CSF_IL-6_V1`,
+         CSF_IL_6_V2= `CSF_IL-6_V2`)%>%
+  na.omit()
+
+library(gplots)
+rho = cor(data_bn)
+palette.breaks = seq(-1, 1, 0.2)
+par(oma = c(2, 2, 2, 1))
+heatmap.2(rho, scale = "none", trace = "none", revC = TRUE, breaks = palette.breaks)
+
+ug = empty.graph(colnames(rho))
+amat(ug) = (rho > 0.4) + 0L - diag(1L, nrow(rho))
+library(Rgraphviz)
+graphviz.plot(ug, layout = "fdp", shape = "ellipse")
+
+#blacklist
+
+bl = tiers2blacklist(list("HRT", "age_v1", "repro_span", "occupation", "education",
+       c("hypertension", "high_chol", "CSF_Neurogranin_V1", "CSF_GFAP_V1", "diabetes", "CSF_IL-6_V1", "vol_Whole_hippocampus_V1", "CSF_A_V1", "Z_PACC_V1", "CSF_sTREM2_V1", "ingreso_hogar", "bmi")))
+bl = rbind(bl, c("kids_total", "repro_span"), c("repro_span", "kids_total"))
+bl = rbind(bl, c("kids_total", "age_v1"), c("age_v1", "kids_total"))
+bl = rbind(bl, c("repro_span", "HRT"), c("HRT", "repro_span"))
+
+
+#whitelist
+wl = matrix(c(
+              "repro_span", "hypertension",
+             "CSF_A_V1", "vol_Whole_hippocampus_V1",
+             "vol_Whole_hippocampus_V1", "Z_PACC_V1",
+             "CSF_A_V1", "Z_PACC_V1",
+             "education", "Z_PACC_V1",
+             "education", "occupation",
+             "education", "kids_total"),
+        ncol = 2, byrow = TRUE, dimnames = list(NULL, c("from", "to")))
+
+dag = hc(data_bn, blacklist = bl, whitelist = wl)
+dag
+
+graphviz.plot(dag, shape = "ellipse")
+
+
+str.diff = boot.strength(data_bn, R = 200, algorithm = "hc", algorithm.args = list(whitelist = wl, blacklist = bl))
+
+attr(str.diff, "threshold")
+avg.diff = averaged.network(str.diff)
+strength.plot(avg.diff, str.diff, shape = "ellipse", highlight = list(arcs = wl))
+
+par(mfrow = c(1, 2))
+graphviz.compare(avg.diff, dag, shape = "ellipse", main = c("averaged DAG", "single DAG"))
+
+plot(str.diff)
+abline(v = 0.75, col = "tomato", lty = 2, lwd = 2)
+abline(v = 0.85, col = "steelblue", lty = 2, lwd = 2)
+
+nrow(str.diff[str.diff$strength > 0.85 & str.diff$direction > 0.5, ])
+
+avg.simpler = averaged.network(str.diff, threshold = 0.85)
+strength.plot(avg.simpler, str.diff, shape = "ellipse", highlight = list(arcs = wl))
+
+fitted.simpler = bn.fit(avg.simpler, data_bn)
+fitted.simpler
+
+
+#longitudinal attempt
+
+const = "kids_total"
+t1.variables = grep("V1$", names(data_bn), value = TRUE)
+t1.variables
+t2.variables = grep("V2$", names(data_bn), value = TRUE)
+t2.variables
+
+#creating blacklist to stop V2 from influencing V1 and V1 from influencing V1
+#We blacklist all the arcs going into all the variables at time t1, because we assume that the arcs between the variables at time t1 are the same as the corresponding variables in time t2 and it's pointless to learn them twice.
+
+roots = expand.grid(from = setdiff(names(data_bn), c("HRT", "age_v1", "repro_span", "occupation", "education")), to = c("HRT", "age_v1", "repro_span", "occupation", "education"), stringsAsFactors = FALSE)
+
+empty.t1 = expand.grid(from = c(t1.variables), to = c(t1.variables),
+              stringsAsFactors = FALSE)
+bl = rbind(tiers2blacklist(list(t1.variables, t2.variables)), roots, empty.t1)
+
+dyn.dag = tabu(data_bn, blacklist = bl, whitelist = wl)
+dyn.dag
+
+
+gR = graphviz.plot(dyn.dag, shape = "rectangle", render = FALSE)
+sg0 = list(graph = subGraph(const, gR), cluster = TRUE)
+sg1 = list(graph = subGraph(t1.variables, gR), cluster = TRUE)
+sg2 = list(graph = subGraph(t2.variables, gR), cluster = TRUE)
+gR = layoutGraph(gR, subGList = list(sg0, sg1, sg2),
+        attrs = list(graph = list(rankdir = "LR")))
+nodeRenderInfo(gR)$fill[t1.variables] = "tomato"
+nodeRenderInfo(gR)$fill[t2.variables] = "gold"
+nodeRenderInfo(gR)$fontsize = 35
+renderGraph(gR)
+
+dyn.str = boot.strength(data_bn, R = 200, algorithm = "tabu",
+            algorithm.args = list(blacklist = bl, whitelist = wl))
+plot(dyn.str)
+dyn.avg = averaged.network(dyn.str)
+par(mfrow = c(1, 2))
+graphviz.compare(dyn.dag, dyn.avg, shape = "rectangle")
+
+```
+
+### PCA
+```{r}
+data_reproductive<-data%>%
+  dplyr::select(kids_total, HRT, age_menopause_pmm, age_menarche, abortions, repro_span)%>%
+  na.omit()
+pca_result <- prcomp(data_reproductive, scale = TRUE)
+summary(pca_result)
+plot(pca_result, type = "l", main = "Scree Plot")
+
+# Extract loadings
+loadings <- data.frame(pca_result$rotation)
+loadings$Variable <- rownames(loadings)
+
+# Plot loadings for PC1 and PC2
+ggplot(loadings, aes(x = PC1, y = PC2)) +
+  geom_point() +
+  geom_text(aes(label = Variable), hjust = 0, vjust = 0) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  labs(title = "PCA Loadings Plot")
+
+library(factoextra)
+
+# Scree plot
+fviz_eig(pca_result, addlabels = TRUE)
+
+# Biplot
+fviz_pca_biplot(pca_result, repel = TRUE)
+
+# Variables plot
+fviz_pca_var(pca_result, col.var = "contrib", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+# Individuals plot
+fviz_pca_ind(pca_result, col.ind = "cos2", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+```
+
+
+
+
 
 # Discussion
 
