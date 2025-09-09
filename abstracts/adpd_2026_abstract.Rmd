@@ -618,26 +618,23 @@ preds_A0<-as.data.frame(preds)%>%
   rename(kids_total_factor = group,
          A=facet)%>%
   filter(A==0)%>%
-  filter(kids_total_factor!=3)%>%
   mutate(A = ifelse(A==0, "Aβ-", "Aβ-"),
-         kids_total_factor = ifelse(kids_total_factor== 4, "3+", as.character(kids_total_factor)))
+         kids_total_factor = ifelse(kids_total_factor== 4, "4+", as.character(kids_total_factor)))
 
 
 preds_A1<-as.data.frame(preds)%>%
   rename(kids_total_factor = group,
          A=facet)%>%
   filter(A==1)%>%
-  filter(kids_total_factor!=3)%>%
   mutate(A = ifelse(A==1, "Aβ+", "Aβ+"),
-         kids_total_factor = ifelse(kids_total_factor== 4, "3+", as.character(kids_total_factor)))
+         kids_total_factor = ifelse(kids_total_factor== 4, "4+", as.character(kids_total_factor)))
 
 #by time diff with predicted values - preferred?
 data_cog_long_composites %>%
   filter(sex == 2, !is.na(A)) %>%
-  mutate(kids_total_factor = ifelse(kids_total >= 3, "3+", as.character(kids_total)),
+  mutate(kids_total_factor = ifelse(kids_total == 4, "4+", as.character(kids_total)),
          A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
   ggplot(aes(x = time_diff, y = Z_PACC, color = kids_total_factor)) +
-  geom_point(alpha = 0.3, size=2) +
   geom_line(data =preds_A0, aes(x=x, 
                                 y=predicted, 
                                 group=kids_total_factor), size=1.3) +
@@ -653,13 +650,13 @@ data_cog_long_composites %>%
                                   ymax = conf.high, 
                                   group=kids_total_factor), inherit.aes = F, alpha=.07)+
   facet_wrap(~A) +
-  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3+" = "#0A5940")) +
+  scale_color_manual(values = c("0" = "#A3D5FF", "1" = "#6BB6FF", "2" = "#2E86C1", "3" = "#1B4F72", "4+" = "#0D2A42")) +
   th +
   labs(x = "Time difference (days)", 
        y = "PACC Z-score", 
        color = "Number of childbirths")
 
-
+ggsave("G:/My Drive/ADPD 2026/plot_PACC_time_int.png", width = 9, height = 5)
 
 #by visit instead of time
 
