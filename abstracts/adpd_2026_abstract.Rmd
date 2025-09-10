@@ -581,35 +581,6 @@ th <- call_aesthethics(15)
 
 ```{r, echo=FALSE}
 
-data_figure_diff<-data_cog_long_composites%>%
-  dplyr::select(subject, Visit, Z_PACC)%>%
-  pivot_wider(names_from = Visit, values_from = Z_PACC, names_prefix = "Z_PACC")%>%
-  mutate(diff_Z_PACC = Z_PACC2-Z_PACC1)%>%
-  dplyr::select(-Z_PACC1, -Z_PACC2)%>%
-  mutate(Visit = "2")
-
-data_figure_cog<-data_cog_long_composites%>%
-  dplyr::select(subject, Visit, Z_PACC, kids_total, A, time_diff, sex)%>%
-  left_join(., data_figure_diff, join_by(subject, Visit))%>%
-  mutate(diff_Z_PACC = ifelse(Visit== "1", 0, diff_Z_PACC))
-
-
-#initial try with score differences to have 0 as departure
-
-data_figure_cog %>%
-  filter(sex == 2, !is.na(A)) %>%
-  mutate(kids_total_factor = ifelse(kids_total >= 3, "3+", as.character(kids_total)),
-         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
-  ggplot(aes(x = time_diff, y = diff_Z_PACC, color = kids_total_factor)) +
-  geom_line(aes(group = subject), alpha = 0.3) +
-  geom_smooth(aes(group = kids_total_factor), method = "lm", se = TRUE) +
-  facet_wrap(~A) +
-  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3+" = "#0A5940")) +
-  th +
-  labs(x = "Time difference (days)", 
-       y = "PACC change from baseline", 
-       color = "Number of childbirths")
-
 
 mod_cog_plot<- lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2,])
 preds <- ggpredict(mod_cog_plot, terms = c("time_diff", "kids_total", "A"))
@@ -661,86 +632,11 @@ data_cog_long_composites %>%
 
 ggsave("G:/My Drive/ADPD 2026/plot_PACC_time_int.png", width = 9, height = 5)
 
-#by visit instead of time
-
-data_cog_long_composites %>%
-  filter(sex == 2, !is.na(A)) %>%
-  mutate(kids_total_factor = ifelse(kids_total >= 3, "3+", as.character(kids_total)),
-         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
-  ggplot(aes(x = kids_total_factor, y = Z_PACC, fill = Visit)) +
-  geom_boxplot(position = position_dodge(width = 0.8), alpha = 0.7) +
-  facet_wrap(~A) +
-  scale_fill_manual(values = c("1" = "#E8F4F8", "2" = "#4A90A4")) +
-  th +
-  labs(x = "Number of childbirths", 
-       y = "PACC Z-score", 
-       fill = "Visit") +
-  scale_x_discrete(limits = c("0", "1", "2", "3+"))
-
-
 ```
 
 
 
 ## hipp ~ childbirth*AB
-
-### Boxplot for parasubiculum subfield values per A, parity and visit 
-
-```{r, echo=FALSE}
-mod_plot<-lmer(vol_parasubiculum ~ kids_total*A + Visit + as.factor(APOE_binary) + scale(TIV) +(1| subject), data=hippo_data_long[hippo_data_long$sex==2,] )
-summary(mod_plot)
-
-plot_model(mod_plot, type= "est", title = "", axis.title = "Parasubiculum volume change model estimate" )
-
-preds <- ggpredict(mod_plot, terms = c("kids_total", "A", "Visit")) 
-
-hippo_data_long %>%
-  filter(sex == 2) %>%
-  drop_na(A) %>%
-  mutate(kids_total_factor=ifelse(kids_total>=3, "3+", kids_total))%>%
-  mutate(A = factor(A, labels = c("Aβ-", "Aβ+"))) %>%
-  ggplot(aes(x = Visit, y = vol_parasubiculum, color = kids_total_factor, fill=kids_total_factor)) +
-  geom_point(alpha = 0.6, 
-             position = position_dodge(width = 1)) +
-  geom_boxplot(position = position_dodge(width = 0.9), 
-               alpha=.5)+
-  facet_wrap(~A) +
-  th +
-  labs(x = "Visit", 
-       y = "Parasubiculum volume", 
-       color = "Number of childbirths", 
-       fill= "Number of childbirths")+
-  scale_color_manual(values = c("0" = "lightblue", "1" = "steelblue", "2" = "darkblue", "3+" = "navy", "4" = "midnightblue")) +
-  scale_fill_manual(values = c("0" = "lightblue", "1" = "steelblue", "2" = "darkblue", "3+" = "navy", "4" = "midnightblue"))+
-  scale_x_discrete(expand = expansion(mult = c(0.8, 0.8)))
-
-ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_interaction.png", width = 9, height = 5)
-```
-
-### Boxplot for whole hppocampus values per A, parity and visit 
-```{r, echo=FALSE}
-#need to add signif stars
-hippo_data_long %>%
-  filter(sex == 2) %>%
-  drop_na(A) %>%
-  mutate(kids_total_factor=as.character(kids_total))%>%
-  mutate(A = factor(A, labels = c("Aβ-", "Aβ+"))) %>%
-  ggplot(aes(x = kids_total_factor, y = vol_Whole_hippocampus, color = A, fill=A)) +
-  geom_point(alpha = 0.6, 
-             position = position_dodge(width = 1)) +
-  geom_boxplot(position = position_dodge(width = 0.9), 
-               alpha=.5)+
-  facet_wrap(~Visit) +
-  th +
-  labs(x = "Visit", 
-       y = "Hippocampus volume", 
-       color = "Number of childbirths", 
-       fill= "Number of childbirths")+
-  scale_x_discrete(expand = expansion(mult = c(0.3, 0.3)))
-
-
-ggsave("G:/My Drive/ADPD 2026/plot_whole_hippocampus_interaction.png", width = 9, height = 5)
-```
 
 
 
@@ -1309,4 +1205,63 @@ plot_model(mod_plot,
                   size = 0.8)
  
 ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_estimation.png", width = 8, height = 5)
+```
+
+
+### Boxplot for parasubiculum subfield values per A, parity and visit 
+
+```{r, echo=FALSE}
+mod_plot<-lmer(vol_parasubiculum ~ kids_total*A + Visit + as.factor(APOE_binary) + scale(TIV) +(1| subject), data=hippo_data_long[hippo_data_long$sex==2,] )
+summary(mod_plot)
+
+plot_model(mod_plot, type= "est", title = "", axis.title = "Parasubiculum volume change model estimate" )
+
+preds <- ggpredict(mod_plot, terms = c("kids_total", "A", "Visit")) 
+
+hippo_data_long %>%
+  filter(sex == 2) %>%
+  drop_na(A) %>%
+  mutate(kids_total_factor=ifelse(kids_total>=3, "3+", kids_total))%>%
+  mutate(A = factor(A, labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = Visit, y = vol_parasubiculum, color = kids_total_factor, fill=kids_total_factor)) +
+  geom_point(alpha = 0.6, 
+             position = position_dodge(width = 1)) +
+  geom_boxplot(position = position_dodge(width = 0.9), 
+               alpha=.5)+
+  facet_wrap(~A) +
+  th +
+  labs(x = "Visit", 
+       y = "Parasubiculum volume", 
+       color = "Number of childbirths", 
+       fill= "Number of childbirths")+
+  scale_color_manual(values = c("0" = "lightblue", "1" = "steelblue", "2" = "darkblue", "3+" = "navy", "4" = "midnightblue")) +
+  scale_fill_manual(values = c("0" = "lightblue", "1" = "steelblue", "2" = "darkblue", "3+" = "navy", "4" = "midnightblue"))+
+  scale_x_discrete(expand = expansion(mult = c(0.8, 0.8)))
+
+ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_interaction.png", width = 9, height = 5)
+```
+
+### Boxplot for whole hppocampus values per A, parity and visit 
+```{r, echo=FALSE}
+#need to add signif stars
+hippo_data_long %>%
+  filter(sex == 2) %>%
+  drop_na(A) %>%
+  mutate(kids_total_factor=as.character(kids_total))%>%
+  mutate(A = factor(A, labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = kids_total_factor, y = vol_Whole_hippocampus, color = A, fill=A)) +
+  geom_point(alpha = 0.6, 
+             position = position_dodge(width = 1)) +
+  geom_boxplot(position = position_dodge(width = 0.9), 
+               alpha=.5)+
+  facet_wrap(~Visit) +
+  th +
+  labs(x = "Visit", 
+       y = "Hippocampus volume", 
+       color = "Number of childbirths", 
+       fill= "Number of childbirths")+
+  scale_x_discrete(expand = expansion(mult = c(0.3, 0.3)))
+
+
+ggsave("G:/My Drive/ADPD 2026/plot_whole_hippocampus_interaction.png", width = 9, height = 5)
 ```
