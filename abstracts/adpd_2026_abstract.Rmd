@@ -619,7 +619,8 @@ preds_A0<-as.data.frame(preds)%>%
          A=facet)%>%
   filter(A==0)%>%
   mutate(A = ifelse(A==0, "Aβ-", "Aβ-"),
-         kids_total_factor = ifelse(kids_total_factor== 4, "4+", as.character(kids_total_factor)))
+         kids_total_factor = ifelse(kids_total_factor== 4, "4+", as.character(kids_total_factor)),
+         x = as.numeric(x)/365.25)
 
 
 preds_A1<-as.data.frame(preds)%>%
@@ -627,13 +628,15 @@ preds_A1<-as.data.frame(preds)%>%
          A=facet)%>%
   filter(A==1)%>%
   mutate(A = ifelse(A==1, "Aβ+", "Aβ+"),
-         kids_total_factor = ifelse(kids_total_factor== 4, "4+", as.character(kids_total_factor)))
+         kids_total_factor = ifelse(kids_total_factor== 4, "4+", as.character(kids_total_factor)),
+         x = as.numeric(x)/365.25)
 
 #by time diff with predicted values - preferred?
 data_cog_long_composites %>%
   filter(sex == 2, !is.na(A)) %>%
   mutate(kids_total_factor = ifelse(kids_total == 4, "4+", as.character(kids_total)),
-         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
+         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+")),
+         time_diff = as.numeric(time_diff)/365.25) %>%
   ggplot(aes(x = time_diff, y = Z_PACC, color = kids_total_factor)) +
   geom_line(data =preds_A0, aes(x=x, 
                                 y=predicted, 
@@ -652,7 +655,7 @@ data_cog_long_composites %>%
   facet_wrap(~A) +
   scale_color_manual(values = c("0" = "#A3D5FF", "1" = "#6BB6FF", "2" = "#2E86C1", "3" = "#1B4F72", "4+" = "#0D2A42")) +
   th +
-  labs(x = "Time difference (days)", 
+  labs(x = "Time difference (Years)", 
        y = "PACC Z-score", 
        color = "Number of childbirths")
 
@@ -871,12 +874,12 @@ library(gtsummary)
 library(gt)
 
 
-data_table<-data_desc%>%
+data_table<-data%>%
   mutate(TIV_cm=TIV/100)%>%
   filter(sex == "2")%>%
-  dplyr::select(age_v1, kids_total, A, APOE_binary, TIV_cm, diff_mri)%>%
-  mutate(A=factor(A),
-         APOE_binary=factor(APOE_binary))
+  dplyr::select(age_v1, kids_total, A, APOE_binary, diff_mri, education)%>%
+  mutate(A=ifelse(A==1, "Aβ+", "Aβ-"),
+         APOE_binary=ifelse(APOE_binary==1, "Carrier", "Non-Carrier"))
  
 
 desc_table<-tbl_summary(data_table,
@@ -887,10 +890,11 @@ desc_table<-tbl_summary(data_table,
                      APOE_binary = "APOE-E4 carrier, Count (%)",
                      age_v1 = "Age at first visit, Mean (SD)",
                      TIV_cm = "Total Intracranial Volume (cm3), Mean (SD)",
-                     diff_mri = "Time between visits (years), Mean (SD)"))%>%
+                     diff_mri = "Time between visits (years), Mean (SD)",
+                     education = "Education (years), Mean (SD)"))%>%
   add_n()%>%
   add_p%>%
-  modify_header(label = "**Variable**") %>% # update the column header
+  modify_header(label = "**Number of childbirths**") %>% # update the column header
   bold_labels()
 
 desc_table
