@@ -67,6 +67,7 @@ library(lmerTest)
 library(gtsummary)
 library(broom.mixed)
 library(purrr)
+library(huxtable)
 ```
 
 ```{r setup, include=FALSE}
@@ -75,20 +76,22 @@ options(scipen = 1, digits = 3)
 
 ```
 
-
-
-
-Lancet Guidelines
-
-Be up to 3500 words (4500 for randomised controlled trials) with 30 references (the word count is for the manuscript text only) • Include an abstract (semi-structured summary), with five paragraphs (Background, Methods, Findings, Interpretation, and Funding), not exceeding 300 words. Our electronic submission system will ask you to copy and paste this section at the “Submit Abstract” stage • For randomised trials, the abstract should adhere to CONSORT extensions: abstracts (see Lancet 2008; 371: 281–83) • When reporting Kaplan-Meier survival data, at each timepoint, authors must include numbers at risk, and are encouraged to include the number of censored patients. • For intervention studies, the abstract should include the primary outcome expressed as the difference between groups with a confidence interval on that difference (absolute differences are more useful than relative ones). Secondary outcomes can be included as long as they are clearly marked as secondary and all such outcomes are reported • Use the recommended international non-proprietary name (rINN) for drug names. Ensure that the dose, route, and frequency of administration of any drug you mention are correct • All accepted Articles should include a link to the full study protocol published on the authors’ institutional website (see Lancet 2009; 373: 992 and Lancet 2010; 375: 348) • We encourage researchers to enrol women and ethnic groups into clinical trials of all phases, and to plan to analyse data by sex and by race
-
-All research papers (including systematic reviews/meta-analyses) submitted to any journal in The Lancet family must include a panel putting their research into context with previous work in the format outlined below (see Lancet 2014; 384: 2176–77, for the original rationale). This panel should not contain references. Editors will use this information at the first assessment stage and peer reviewers will be specifically asked to check the content and accuracy • The Discussion section should contain a full description and discussion of the context. Authors are also invited to either report their own, up-to-date systematic review or cite a recent systematic review of other trials, putting their trial into context of the review
+```{r}
+# Lancet Guidelines
+# Be up to 3500 words (4500 for randomised controlled trials) with 30 references (the word count is for the manuscript text only) • Include an abstract (semi-structured summary), with five paragraphs (Background, Methods, Findings, Interpretation, and Funding), not exceeding 300 words. Our electronic submission system will ask you to copy and paste this section at the “Submit Abstract” stage • For randomised trials, the abstract should adhere to CONSORT extensions: abstracts (see Lancet 2008; 371: 281–83) • When reporting Kaplan-Meier survival data, at each timepoint, authors must include numbers at risk, and are encouraged to include the number of censored patients. • For intervention studies, the abstract should include the primary outcome expressed as the difference between groups with a confidence interval on that difference (absolute differences are more useful than relative ones). Secondary outcomes can be included as long as they are clearly marked as secondary and all such outcomes are reported • Use the recommended international non-proprietary name (rINN) for drug names. Ensure that the dose, route, and frequency of administration of any drug you mention are correct • All accepted Articles should include a link to the full study protocol published on the authors’ institutional website (see Lancet 2009; 373: 992 and Lancet 2010; 375: 348) • We encourage researchers to enrol women and ethnic groups into clinical trials of all phases, and to plan to analyse data by sex and by race
+# 
+# All research papers (including systematic reviews/meta-analyses) submitted to any journal in The Lancet family must include a panel putting their research into context with previous work in the format outlined below (see Lancet 2014; 384: 2176–77, for the original rationale). This panel should not contain references. Editors will use this information at the first assessment stage and peer reviewers will be specifically asked to check the content and accuracy • The Discussion section should contain a full description and discussion of the context. Authors are also invited to either report their own, up-to-date systematic review or cite a recent systematic review of other trials, putting their trial into context of the review
+```
 
 # Abstract
 
 # Introduction
 
 # Methods
+
+## Study design
+
+The ALFA+ project is a longitudinal cohort following healthly middle aged adults. This study was led in the cty of Barcelona, Spain, at the BarcelonaBeta Brain Research Center. Visit 1 was collected between ... and ..., and Visit 2 between ... and ... Visit 3 is still undergoing. The ALFA study protocol was approved by the Independent Ethics Committee Parc de Salut Mar Barcelona (and registered at Clinicaltrials.gov, NCT01835717). For a more detailed description of the cohort see Molinuevo et al.[@molinuevo2016].
 
 ## Participants
 
@@ -182,26 +185,37 @@ th <- call_aesthethics(15)
 
 ```
 
-Our sample includes `r pt_number` participants from the ALFA+ project, of which `r pt_number_w` are women (Clinicaltrials.gov Identifier: NCT01835717). This longitudinal cohort is composed of cognitively unimpaired individuals with heighteined AD risk [@molinuevo2016]. All participants had a Clinical Dementia Rating (CDR) scale = 0, and no history of cardiovascular disease. Women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample.
+In brief, inclusion criteria were being cognitively normal, Spanish and/or Catalan-speaking, being aged between 45 and 74 years and agreing with the study procedures and tests. A close relative was involved in the volunteer’s functional evaluation and both of them had to grant their written informed consent. Exclusion criterias Exclusion criteria were (1) Cognitive performance falling outside the established cutoffs, (2) a Clinical Dementia Rating above 0, (3) major psychiatric disorders (according to DSM-IV-TR), (4) Severe auditory and/or visual disorder, neurodevelopmental and/or psychomotor disorder, (5) Signiﬁcant diseases that could currently interfere with cognition, (6) neurological disorders, (7) Brain injuries and (8) a suspected pattern of family autosomal dominant AD.
 
-## MRI acquisition
+Our sample includes `r pt_number` participants from the ALFA+ project, of which `r pt_number_w` are women. In addition to the above exclusion criteria, women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample for analysis. Participants were recruited via advertisement campaigns in newspapers and followed-up via email/phonecalls.
 
-MRI scans were acquired on a 3.0 T scanner (GE Discovery MR750 W 3 T) using the same protocol for all participants, which included one T1- and three T2- weighted sequences. The 3D-T1w sequence was designed with an isotropic voxel size of1mm3 and a matrix size of256x256x160 (TR/TE/TI = 8.0/3.7/450 ms, NSA = 1, flip angle = 8°). Three 3D-T2w sequences, with a voxel size of1 mm× 1 mm× 3 mm, were also used: fluid attenuation inversion recovery (FLAIR: TR/TE/ TI = 11,000/90/2600 ms, flip angle = 160°), fast spin echo (FSE: TR/TE = 5000/85 ms, flip angle = 110°) and, gradient echo (GRE: TR/TE = 1300/23 ms, flip angle = 15°). All scans were visually assessed to verify their quality and to detect incidental findings by a trained neuroradiologist and have been reported elsewhere (Brugulat-Serrat et al. 2017). In this study, ten participants were excluded due to the presence of a meningioma, as well as 37 participants due to susceptibility, motion artefacts or segmentation problems, resulting in a total of 561 images available for subsequent analysis. The medial temporal lobe atrophy was assessed by Medial Temporal Atrophy scale (Scheltens et al. 1992).
+## Procedures
 
-## Hippocampal segmentation
+### Demographics
 
-Hippocampal subfield volumes were automatically calculated by FreeSurfer 7 using whole hippocampal segmentation provided by the standard ‘recon-all’ pipeline, which renders the most standard and widely-used volumetric estimation of hippocampal volumes. The subfields were delimited as following: CA1, CA3, CA4, GC-ML-DG, molecular layer, fimbria, parasubiculum, subiculum, presubiculum, HATA and tail.
+Demographic data was collected via oral questions administered by a clinician. Sex was self reported, and participants could choose from three options: male, female, or ... Race and ethnicity was also self-reported.
 
-![Freesurfer 7 segmentation pipeline.](/papers/ad_signatures_files/hipp subfield segmentation.png)
+Reproductive variables, such as number of biological kids, age at menopause, age at menarche and number of abortions, were self-reported at the baseline visit. In the subsequent visits, participants were also asked about hormonal replacement therapy.
 
+Social variables such as years of education, household income, occupational attainment and civil status were also sel-reported at baseline visit.
 
-## Lumbar puncture
+### MRI acquisition
+
+MRI scans were acquired on a 3.0 T scanner (GE Discovery MR750 W 3 T) using the same protocol for all participants, which included one T1- and three T2- weighted sequences. The 3D-T1w sequence was designed with an isotropic voxel size of1mm3 and a matrix size of256x256x160 (TR/TE/TI = 8.0/3.7/450 ms, NSA = 1, flip angle = 8°). Three 3D-T2w sequences, with a voxel size of1 mm× 1 mm× 3 mm, were also used: fluid attenuation inversion recovery (FLAIR: TR/TE/ TI = 11,000/90/2600 ms, flip angle = 160°), fast spin echo (FSE: TR/TE = 5000/85 ms, flip angle = 110°) and, gradient echo (GRE: TR/TE = 1300/23 ms, flip angle = 15°). All scans were visually assessed to verify their quality and to detect incidental findings by a trained neuroradiologist and have been reported elsewhere (Brugulat-Serrat et al. 2017). In this study, ten participants were excluded due to the presence of a meningioma, as well as 37 participants due to susceptibility, motion artefacts or segmentation problems, resulting in a total of 561 images available for subsequent analysis. The medial temporal lobe atrophy was assessed by Medial Temporal Atrophy scale [@scheltens1992a].
+
+### Hippocampal segmentation
+
+Hippocampal subfield volumes were automatically calculated by FreeSurfer 7 using whole hippocampal segmentation provided by the standard ‘recon-all’ pipeline, which renders the most standard and widely-used volumetric estimation of hippocampal volumes. The subfields were delimited as following: CA1, CA3, CA4, GC-ML-DG, molecular layer, fimbria, parasubiculum, subiculum, presubiculum, HATA, fissure, and tail. However, the fissure was removed from the analysis because of its lack of particular relevance to our topic.
+
+![Freesurfer 7 segmentation pipeline.](ad_signatures_files/hipp%20subfield%20segmentation.png)
+
+### Lumbar puncture
 
 CSF was collected by lumbar puncture between 9 and 12 a.m. in polypropylene tubes. Samples were processed within 1 hour and centrifuged at 4°C for 10 minutes at 2000 g, stored in polypropylene tubes and frozen at -80°C. Core AD biomarkers (namely Ab42, Ab40, total Tau, and p tau) and other molecules of interest (such as YKL-40, neurogranin and Ab oligomers) were analyzed and determined in Prof. Kaj Blennow’s laboratory (Institute ofNeuroscience and Physiology, Department of Psychiatry and Neurochemistry, The Sahlgrenska Academy at the University of Gothenburg, Sweden).
 
-## Cognitive measures
+### Cognitive measures
 
-Cognitive composite z-scores were computed in four different cognitive domains: attention (WAIS-IV: Digit Span, WMS-IV: Symbol Span and TMT-A), episodic memory (Free and Cued Selective Reminding Test, Memory Binding Test, WMS-IV Logical Memory and NIH-toolbox Picture Sequence Memory test), executive functions (TMT-B, Five digits test, WAIS-IV Coding, WAIS-IV Matrix reasoning and NIH-toolbox Flanker Inhibition test), language (Semantic fluency, Boston Naming), and visual processing (WAIS-IV Visual Puzzles and RBANS Judgment of line orientation). In addition, the Preclinical Alzheimer Cognitive Composite (PACC) was used. This cognitive assessment tool was developed to detect subtle cognitive changes in individuals who may be in the pre-clinical stages of AD [@Donohue2014], and includes elements of the Memory Binding Test, the Coding subtest of WAIS-IV, and semantic fluency. Cognitive change for each composite was calculated by subtracting the follow-up visit score from the baseline cognitive score. Negative values indicate worse performance in the follow-up visit.
+The Preclinical Alzheimer Cognitive Composite (PACC) was developed to detect subtle cognitive changes in individuals who may be in the pre-clinical stages of AD [@Donohue2014], and includes elements of the Memory Binding Test, the Coding subtest of WAIS-IV, and semantic fluency. After obtaining the PACC z-score, cognitive change was calculated by subtracting the follow-up visit score from the baseline cognitive score. Negative values indicate worse performance in the follow-up visit.
 
 ## Statistical analyses
 
@@ -238,7 +252,7 @@ desc_table
 
 Table 1 shows demographics and characteristics of the ALFA+ cohort, for all participants who have completed Visit 1 and 2, grouped by parity. Participants with higher parity were significantly more likely to be older. No difference was seen between groups regarding Aβ status and APOE-ε4 carriership.
 
-## Hippocampal volume (Women only)
+## Whole Hippocampal volume
 
 ```{r, include = F}
 # summing some groups together: "subject"\   
@@ -327,21 +341,31 @@ run_volume_lmer_regressions <- function(data, predictors) {
 }
 ```
 
-
 ```{r, include = F}
 ##whole hippocampus, simple
 
-mod_whole_simple<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + A + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+mod_whole_simple<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + A + scale(TIV) + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
 summary(mod_whole_simple)
 
-mod_whole_int<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+mod_whole_int<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(TIV) + education + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
 summary(mod_whole_int)
 
 plot_model(mod_whole_int, type= "int")
 
+# men 
+
+mod_whole_simple_men<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + A + scale(TIV) + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==1,])
+summary(mod_whole_simple_men)
+
+mod_whole_int_men<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(TIV) + education + (1|subject), data = hippo_data_long[hippo_data_long$sex==1,])
+summary(mod_whole_int_men)
+
 
 ```
-The two-way interaction between parity and time did not reveal any significant main effect of parity. However, when introducing a 3-way interaction with AB status, a significant parity and AB status interaction was found (β = `r tidy(mod_whole_int)$estimate[9]`, p = `r tidy(mod_whole_int)$p.value[9]`), such that Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X). Stratified analyses show 
+
+The two-way interaction between parity and time did not reveal any significant main effect of parity. However, when introducing a 3-way interaction with AB status, a trending parity and AB status interaction was found (β = `r tidy(mod_whole_int)$estimate[9]`, p = `r tidy(mod_whole_int)$p.value[9]`), such that Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X). Stratified analyses show
+
+When testing these interaction on the men in the cohort, no significant main effect or interaction was found after correction.
 
 ```{r, echo=F, warning=F}
 
@@ -393,10 +417,42 @@ hippo_data_long %>%
 
 ```
 
+### Sensitivity analyses
 
+```{r, include=F}
+
+mod_whole_intA0<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
+summary(mod_whole_intA0)
+
+mod_whole_intA1<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
+summary(mod_whole_intA1)
+
+```
+
+Stratifying the analysis by Aβ status resulted in the main effect of parity only being significant in the Aβ- group, suggesting the prior interaction is mainly present in the context of low amyloid.
+
+```{r, include=F}
+mod_whole_int<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+summary(mod_whole_int)
+
+mod_whole_int_reproductive_var<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education + scale(TIV) + repro_span  + HRT+ (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+summary(mod_whole_int_reproductive_var)
+
+mod_whole_int_social<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(TIV) + ingreso_hogar + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+summary(mod_whole_int_social)
+```
+
+
+```{r, echo=F, warning=F}
+huxreg(list("Basic" = mod_whole_int, "Reproductive var"=mod_whole_int_reproductive_var, "Social var" = mod_whole_int_social), bold_signif = 0.05, outer_borders =1, stars = c("†" = 0.1, "*" = 0.05, "**" = 0.01, "***" = 0.001))%>%
+  set_caption("Whole Hippocampus") %>% 
+  set_caption_pos("top")
+```
+
+## Hippocampal subfields
 
 ```{r, include = F}
-##no interaction, women only
+##subfields
 
 outcome_vars <- c(
   "vol_CA1", "vol_CA3", "vol_CA4", "vol_GC_ML_DG", "vol_HATA", 
@@ -415,45 +471,19 @@ model_names <- c(
 hippo_data_long%>%
   filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total*diff_mri", "A","age_v1", "APOE_binary", "scale(TIV)", "(1 | subject)"))
-
-
-models_hip_w <- setNames(
-  lapply(outcome_vars, function(outcome) {
-    formula <- as.formula(
-      paste(outcome, "~ kids_total +A + scale(TIV) + age_mri + APOE_binary + (1 | subject)")
-    )
-    lmer(formula, data = hippo_data_long[hippo_data_long$sex==2,])
-  }),
-  model_names
-)
-
-
-tidy_models_hip_w <- map_dfr(models_hip_w, ~ {
-  broom.mixed::tidy(.x, terms = c("kids_total", "sex"))   # Add consistent term column
-}, .id = "region")%>%
-  filter(term == "A"| term == "kids_total")
-
-fdr_hip_w<-tidy_models_hip_w%>%
-  filter(term == "kids_total")%>%
-  pull(p.value)%>%
-  p.adjust(., method = "fdr")%>%
-  format(., scientific = FALSE)%>%
-  as.numeric()
-
-#fimbria significant, fimbria trend
+run_volume_lmer_regressions( .,c( "kids_total*diff_mri", "A","age_v1", "APOE_binary", "education", "scale(TIV)", "(1 | subject)"))
 
 
 #interaction
 hippo_data_long%>%
   filter(sex == 2 )%>%
   dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
-run_volume_lmer_regressions( .,c( "kids_total*A*diff_mri", "age_v1", "APOE_binary", "scale(TIV)", "repro_span", "(1 | subject)"))
+run_volume_lmer_regressions( .,c( "kids_total*A*diff_mri", "age_v1",  "APOE_binary", "education", "scale(TIV)", "(1 | subject)"))
 
 models_hip_w_int <- setNames(
   lapply(outcome_vars, function(outcome) {
     formula <- as.formula(
-      paste(outcome, "~ kids_total*A + scale(TIV) + age_mri + APOE_binary + (1 | subject)")
+      paste(outcome, "~ kids_total*A*diff_mri + scale(TIV) + age_v1 + APOE_binary + education + (1 | subject)")
     )
     lmer(formula, data = hippo_data_long[hippo_data_long$sex==2,])
   }),
@@ -473,10 +503,45 @@ fdr_hip_w_int<-tidy_models_hip_w_int%>%
   format(., scientific = FALSE)%>%
   as.numeric()
 
-tidy_models_hip_w_int$estimate
+#men 
+
+hippo_data_long%>%
+  filter(sex == 1 )%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_lmer_regressions( .,c( "kids_total*diff_mri", "A","age_v1", "APOE_binary", "education","scale(TIV)", "(1 | subject)"))
+
+hippo_data_long%>%
+  filter(sex == 1 )%>%
+  dplyr::select(-vol_Whole_hippocampal_body, -vol_Whole_hippocampal_head, -vol_Whole_hippocampus, -`vol_hippocampal-fissure`)%>%
+run_volume_lmer_regressions( .,c( "kids_total*diff_mri*A","age_v1", "APOE_binary", "education","scale(TIV)", "(1 | subject)"))
+
+models_hip_w_int_men <- setNames(
+  lapply(outcome_vars, function(outcome) {
+    formula <- as.formula(
+      paste(outcome, "~ kids_total*A*diff_mri + scale(TIV) + age_v1 + APOE_binary + education + (1 | subject)")
+    )
+    lmer(formula, data = hippo_data_long[hippo_data_long$sex==1,])
+  }),
+  model_names
+)
+
+
+tidy_models_hip_w_int_men <- map_dfr(models_hip_w_int_men, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "kids_total:A1:diff_mri", "A1"))   # Add consistent term column
+}, .id = "region")%>%
+  filter(term == "kids_total:A1:diff_mri")
+
+fdr_hip_w_int_men<-tidy_models_hip_w_int_men%>%
+  pull(p.value)%>%
+  p.adjust(., method = "fdr")%>%
+  format(., scientific = FALSE)%>%
+  as.numeric()
+
 ```
 
 Applying the two-way time and parity interaction model to each individual hippocampal subfield revealed no significant main effect of parity after applying FDR correction. However, the three way interaction including Aβ status showed a significant effect of the interaction between parity and Aβ on the parasubiculum volume (β = `r tidy_models_hip_w_int$estimate[9]`, adj.p = `r fdr_hip_w_int[9]`), and a near significant effect on the CA4 (β = `r tidy_models_hip_w_int$estimate[3]`, adj.p = `r fdr_hip_w_int[3]`), dentate gyrus (β = `r tidy_models_hip_w_int$estimate[4]`, adj.p = `r fdr_hip_w_int[4]`), presubiculum (β = `r tidy_models_hip_w_int$estimate[10]`, adj.p = `r fdr_hip_w_int[10]`) and subiculum (β = `r tidy_models_hip_w_int$estimate[11]`, adj.p = `r fdr_hip_w_int[11]`). The direction of the effect followed the same as for the whole hippocampus, where Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X)
+
+When reproducing these analyses in men, the only significant effect found was a three-way interaction between parity, time and Aβ status in the molecular layer (β = `r tidy_models_hip_w_int_men$estimate[8]`, adj.p = `r fdr_hip_w_int_men[8]`).
 
 ```{r, echo=F, warning=F}
 data_forest_plot<-hippo_data_long%>%
@@ -541,6 +606,102 @@ pred_hippo_all %>%
   guides(colour = "none")
   
 ```
+
+### Sensitivity analyses
+
+```{r, eval=F}
+
+mod_para_A0<-lmer(vol_parasubiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
+
+mod_para_A1<-lmer(vol_parasubiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
+
+
+#parasubiculum driven by A+ women
+
+mod_CA4_A0<-lmer(vol_CA4 ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
+summary(mod_CA4_A0)
+mod_CA4_A1<-lmer(vol_CA4 ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
+summary(mod_CA4_A1)
+
+#CA4 driven by A- women
+
+mod_DG_A0<-lmer(vol_GC_ML_DG ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
+summary(mod_DG_A0)
+mod_DG_A1<-lmer(vol_GC_ML_DG ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
+summary(mod_DG_A1)
+
+#DG driven by A- women
+
+mod_subiculum_A0<-lmer(vol_subiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
+summary(mod_subiculum_A0)
+mod_subiculum_A1<-lmer(vol_subiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
+summary(mod_CA4_A1)
+
+#subiculum driven by A- women
+
+mod_presubiculum_A0<-lmer(vol_presubiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
+summary(mod_presubiculum_A0)
+mod_presubiculum_A1<-lmer(vol_presubiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
+summary(mod_presubiculum_A1)
+
+#presubiculum driven by A- women
+```
+
+Startifying the regressions per Aβ status showed that the effect was driven by Aβ status-women in all subfields but the parasubiculum, where the effect seemed to be driven by Aβ status+ women.
+
+```{r, echo=F, warning=F}
+mod_para<-lmer(vol_parasubiculum ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+mod_para_rep<-lmer(vol_parasubiculum ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + repro_span  + HRT+ (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+mod_para_soc<-lmer(vol_parasubiculum ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(TIV) + ingreso_hogar + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+
+mod_CA4<-lmer(vol_CA4 ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+mod_CA4_rep<-lmer(vol_CA4 ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + repro_span  + HRT+ (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+mod_CA4_soc<-lmer(vol_CA4 ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(TIV) + ingreso_hogar + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+
+mod_DG<-lmer(vol_GC_ML_DG ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+mod_DG_rep<-lmer(vol_GC_ML_DG ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + repro_span  + HRT+ (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+mod_DG_soc<-lmer(vol_GC_ML_DG ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(TIV) + ingreso_hogar + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+
+mod_subiculum<-lmer(vol_subiculum ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+mod_subiculum_rep<-lmer(vol_subiculum ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + repro_span  + HRT+ (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+mod_subiculum_soc<-lmer(vol_subiculum ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(TIV) + ingreso_hogar + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+
+mod_presubiculum<-lmer(vol_presubiculum ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+mod_presubiculum_rep<-lmer(vol_presubiculum ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + repro_span  + HRT+ (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+mod_presubiculum_soc<-lmer(vol_presubiculum ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(TIV) + ingreso_hogar + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
+
+huxreg(list("Basic" = mod_CA4, "Reproductive var"=mod_CA4_rep, "Social var" = mod_CA4_soc), bold_signif = 0.05, outer_borders =1, stars = c("†" = 0.1, "*" = 0.05, "**" = 0.01, "***" = 0.001))%>%
+  set_caption("CA4") %>% 
+  set_caption_pos("top")
+huxreg(list("Basic" = mod_DG, "Reproductive var"=mod_DG_rep, "Social var" = mod_DG_soc), bold_signif = 0.05, outer_borders =1, stars = c("†" = 0.1, "*" = 0.05, "**" = 0.01, "***" = 0.001))%>%
+  set_caption("Gentate Gyrus") %>% 
+  set_caption_pos("top")
+huxreg(list("Basic" = mod_para, "Reproductive var"=mod_para_rep, "Social var" = mod_para_soc), bold_signif = 0.05, outer_borders =1, stars = c("†" = 0.1, "*" = 0.05, "**" = 0.01, "***" = 0.001))%>%
+  set_caption("Parasubiculum") %>% 
+  set_caption_pos("top")
+huxreg(list("Basic" = mod_subiculum, "Reproductive var"=mod_subiculum_rep, "Social var" = mod_subiculum_soc), bold_signif = 0.05, outer_borders =1, stars = c("†" = 0.1, "*" = 0.05, "**" = 0.01, "***" = 0.001))%>%
+  set_caption("Subiculum") %>% 
+  set_caption_pos("top")
+huxreg(list("Basic" = mod_presubiculum, "Reproductive var"=mod_presubiculum_rep, "Social var" = mod_presubiculum_soc), bold_signif = 0.05, outer_borders =1, stars = c("†" = 0.1, "*" = 0.05, "**" = 0.01, "***" = 0.001))%>%
+  set_caption("Presubiculum") %>% 
+  set_caption_pos("top")
+
+```
+
 ## Cognitive trajectory
 
 ```{r, include=F}
@@ -568,13 +729,14 @@ data_cog_long<- left_join(data, cognition)%>%
   left_join(., time_diff)%>%
   mutate(time_diff = ifelse(Visit == 1, 0, time_diff))
 
-fit_cog_simple_PACC<-lmer(Z_PACC ~ kids_total*time_diff +age_cog + APOE_binary + education + A +(1 | subject), data_cog_long[data_cog_long$sex==2,])
+fit_cog_simple_PACC<-lmer(Z_PACC ~ kids_total*time_diff +age_v1 + APOE_binary + education + A +(1 | subject), data_cog_long[data_cog_long$sex==2,])
 summary(fit_cog_simple_PACC)
 
-fit_cog_PACC<-lmer(Z_PACC ~ kids_total*A*time_diff +age_cog + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex==2,])
+fit_cog_PACC<-lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex==2,])
 summary(fit_cog_PACC)
 
 ```
+
 The two-way parity and time interaction did not produce any significan main effect on PACC score at visit 1 and 2. However, a three-way interaction between time, parity and A status was found (β = `r tidy(fit_cog_PACC)$estimate[11]`, p=`r tidy(fit_cog_PACC)$p.value[11]`). Results suggest that whilst parity and Aβ status did not seem to affect PACC score at time = 0, Aβ- women appeared to show a positive relationship between parity and PACC score as time went on, and Aβ+ women the opposite.
 
 ```{r, echo=F, warning=F}
@@ -625,6 +787,37 @@ data_cog_long %>%
   labs(x = "Time difference (days)", 
        y = "PACC Z-score", 
        color = "Number of childbirths")
+```
+### Sensitivity analyses
+
+```{r}
+fit_cog_PACC_A0<-lmer(Z_PACC ~ kids_total*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex==2 & data_cog_long$A==0,])
+summary(fit_cog_PACC_A0)
+
+fit_cog_PACC_A1<-lmer(Z_PACC ~ kids_total*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex==2 & data_cog_long$A==1,])
+summary(fit_cog_PACC_A1)
+
+```
+Stratifying the analysis by Aβ status reveals the effect seems driven by Aβ- women.
+
+
+```{r, include=F}
+fit_cog_PACC<-lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex==2,])
+summary(fit_cog_PACC)
+
+fit_cog_PACC_reproductive_var<-lmer(Z_PACC ~ kids_total*A*time_diff + age_v1 +APOE_binary + education +  repro_span  + HRT+ (1|subject), data = data_cog_long[data_cog_long$sex==2,])
+summary(fit_cog_PACC_reproductive_var)
+
+fit_cog_PACC_social<-lmer(Z_PACC ~ kids_total*A*time_diff + age_v1 +APOE_binary + education + ingreso_hogar + (1|subject), data = data_cog_long[data_cog_long$sex==2,])
+summary(fit_cog_PACC_social)
+
+```
+
+
+```{r, echo=F, warning=F}
+huxreg(list("Basic" = fit_cog_PACC, "Reproductive var"=fit_cog_PACC_reproductive_var, "Social var" = fit_cog_PACC_social), bold_signif = 0.05, outer_borders =1, stars = c("†" = 0.1, "*" = 0.05, "**" = 0.01, "***" = 0.001))%>%
+  set_caption("PACC score") %>% 
+  set_caption_pos("top")
 ```
 
 
@@ -714,9 +907,9 @@ tidy_models_cog_int <- map_dfr(models_cog_int, ~ {
 
 No significant main effect of parity was found on any of the cognitive composites used after FDR correction.
 
-
 ## SEM
-```{r, eval=FALSE}
+
+```{r, include=F}
 
 diff_mri_df<-date_mri_long%>%
   dplyr::select(subject, diff_mri)
@@ -748,7 +941,7 @@ hippo_sem<-hippo2%>%
 
 
 
-biomarkers_long<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+biomarkers_wide<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
     delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
   mutate(subject=as.numeric(subject))%>%
   rename(CSF_A = A,
@@ -761,7 +954,7 @@ data_naked<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv",
     delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
   mutate(sex=factor(sex))
 
-data_sem<-full_join(biomarkers_long, hippo_sem, join_by(subject))%>%
+data_sem<-full_join(biomarkers_wide, hippo_sem, join_by(subject))%>%
   right_join(., data_naked)
 
 
@@ -782,8 +975,46 @@ library(corrplot)
 
 ```
 
-### bayesian model
+
+### DAG
+
 ```{r}
+library(dagitty)
+library(ggdag)
+
+g <- dagitty("dag{ 
+  Parity -> CVR;
+  Parity -> Hormones;
+  Hormones -> Reproductive_span;
+  Hormones -> CVR;
+  Education -> Parity ;
+  Reproductive_span -> HRT;
+  HRT -> CVR ;
+  HRT -> PACC;
+  Reproductive_span-> CVR ;
+  Reproductive_span-> PACC;
+  Reproductive_span-> Hippocampal_volume;
+  Education -> CVR ;
+  Education -> Income;
+  Education -> Hippocampal_volume;
+  Income -> CVR;
+  CVR -> A;
+  CVR -> Hippocampal_volume;
+  CVR -> PACC
+  A -> PACC
+ }")
+
+ggdag(g)
+```
+
+
+### bayesian model
+
+```{r, eval=F, include=F}
+
+#this could be an interesting approach but I need to fine tune my NA imputation and to figure out the kind of algorithm to use with my factor variables
+
+
 library(bnlearn)
 
 data_bn<-data_sem%>%
@@ -792,6 +1023,8 @@ data_bn<-data_sem%>%
   rename(CSF_IL_6_V1= `CSF_IL-6_V1`,
          CSF_IL_6_V2= `CSF_IL-6_V2`)%>%
   na.omit()
+
+#code is from https://www.bnlearn.com/examples/useR19-tutorial/
 
 library(gplots)
 rho = cor(data_bn)
@@ -807,7 +1040,7 @@ graphviz.plot(ug, layout = "fdp", shape = "ellipse")
 #blacklist
 
 bl = tiers2blacklist(list("HRT", "age_v1", "repro_span", "occupation", "education",
-       c("hypertension", "high_chol", "CSF_Neurogranin_V1", "CSF_GFAP_V1", "diabetes", "CSF_IL-6_V1", "vol_Whole_hippocampus_V1", "CSF_A_V1", "Z_PACC_V1", "CSF_sTREM2_V1", "ingreso_hogar", "bmi")))
+       c("hypertension", "high_chol", "CSF_Neurogranin_V1", "CSF_GFAP_V1", "diabetes", "CSF_IL_6_V1", "vol_Whole_hippocampus_V1", "CSF_A_V1", "Z_PACC_V1", "CSF_sTREM2_V1", "ingreso_hogar", "bmi")))
 bl = rbind(bl, c("kids_total", "repro_span"), c("repro_span", "kids_total"))
 bl = rbind(bl, c("kids_total", "age_v1"), c("age_v1", "kids_total"))
 bl = rbind(bl, c("repro_span", "HRT"), c("HRT", "repro_span"))
@@ -891,11 +1124,14 @@ dyn.avg = averaged.network(dyn.str)
 par(mfrow = c(1, 2))
 graphviz.compare(dyn.dag, dyn.avg, shape = "rectangle")
 
+
 ```
 
 ### PCA
-```{r}
+
+```{r, include=F}
 data_reproductive<-data%>%
+  filter(sex==2)%>%
   dplyr::select(kids_total, HRT, age_menopause_pmm, age_menarche, abortions, repro_span)%>%
   na.omit()
 pca_result <- prcomp(data_reproductive, scale = TRUE)
@@ -930,25 +1166,59 @@ fviz_pca_var(pca_result, col.var = "contrib",
 fviz_pca_ind(pca_result, col.ind = "cos2", 
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
 
+#PCA for latent avariable does not seem to be a good choice, not enough varaince explained with one of two dimensions
+
 ```
 
+### Mediation
+```{r, eval=FALSE}
+
+library(mediation)
+
+biomarkers_long<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(subject=as.numeric(subject),
+         Visit = ifelse(Visit == "V1", "1", "2"))
+
+data_med<-hippo%>%
+  bind_rows(hippo2)%>%
+  left_join(., data_naked, join_by(subject))%>%
+  mutate(Visit= ifelse(Visit=="V1","1", "2"))%>%
+  left_join(., cognition, join_by(subject, Visit))%>%
+  left_join(., biomarkers_long, join_by(subject, Visit))%>%
+  left_join(., diff_mri_df, join_by(subject))%>%
+  drop_na(Z_PACC, vol_subiculum)
+
+data_med_A0<-data_med%>%
+  filter(Visit=="1")%>%
+  filter(A==0)%>%
+  dplyr::select(subject)%>%
+  left_join(., data_med, join_by(subject))
+
+data_med_A1<-data_med%>%
+  filter(Visit=="1")%>%
+  filter(A==1)%>%
+  dplyr::select(subject)%>%
+  left_join(., data_med, join_by(subject))
 
 
+med.fit<-lme4::lmer(vol_parasubiculum ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
+
+summary(med.fit)
+out.fit<-lme4::lmer(Z_PACC ~ vol_parasubiculum + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
+summary(out.fit)
+
+med.out <- mediate(med.fit, out.fit, treat = "kids_total", mediator = "vol_parasubiculum", sims = 100)
+summary(med.out)
+
+```
 
 
 # Discussion
 
 We aimed to investigate the impact of parity on hippocampal subfield volumes and relation to AD pathology in post-menopausal women at risk of AD and men who share similar age and AD risk. Our results suggest that...
 
-
-Limitations:
-- unequal number of men and women
-- still early stages 
-- uniformity of sample both ethnically and socially
-- no more than 4 kids per women
-
-
-
+Limitations: - unequal number of men and women - still early stages - uniformity of sample both ethnically and socially - no more than 4 kids per women
 
 # Miscellaneous
 
@@ -1029,7 +1299,6 @@ fit_jack_grey_w <- lmer(jack_GrayVol ~ kids_total*A  +Visit +age_mri + APOE_bina
 summary(fit_jack_grey_w)
 ```
 
-
 ## Parasubiculum volume at visit 1 and 2 in women, grouped by number of childbirths and Aβ status.
 
 ```{r, eval=F}
@@ -1038,7 +1307,6 @@ summary(mod_plot)
 
 preds <- ggpredict(mod_plot, terms = c("kids_total", "A", "Visit"))
 ```
-
 
 ```{r, eval=F}
 hippo_data_long %>%
@@ -1063,5 +1331,3 @@ hippo_data_long %>%
 
 ggsave("G:/My Drive/ADPD 2026/plot_parasubiculum_interaction.png", width = 9, height = 5)
 ```
-
-
