@@ -617,6 +617,38 @@ age_menarche_pmm<-data_imp_multi_all%>%
 
 master_nd_pmm<-left_join(master_nd_pmm, age_menarche_pmm[,c(6, 7)])
 
+#hrt
+
+mice_dat<-master_nd%>%
+  filter(sex == 2)%>%
+  dplyr::select(HRT, subject, age_v1, sex, BP_SIST_2, bmi, education , APOE_binary)%>%
+  distinct()
+
+ini <- mice(mice_dat,maxit=0)
+pred1 <- ini$predictorMatrix
+pred1[,'subject'] <- 0
+imp_multi <- mice(mice_dat, pred = pred1, m = 5, method = "logreg")  # Impute missing values multiple times
+data_imp_multi_all <- complete(imp_multi,       # Store multiply imputed data
+                           "repeated",
+                           include = TRUE)
+
+HRT_pmm<-data_imp_multi_all%>%
+  dplyr::select(2:7)%>%
+  rowwise() %>%
+  mutate(HRT_pmm = {
+    values <- c_across(starts_with("HRT."))
+    as.numeric(names(sort(table(values), decreasing = TRUE))[1])
+  }) %>%
+  ungroup() %>%
+  # Add subject back
+  mutate(subject = data_imp_multi_all$subject.0) %>%
+  mutate(subject = factor(subject)) %>%
+  dplyr::select(subject, HRT_pmm)
+
+
+
+master_nd_pmm<-left_join(master_nd_pmm, HRT_pmm)
+
 
 master_nd_pmm%>%
   md.pattern(., rotate.names = T)
@@ -664,14 +696,7 @@ to adjust for the very unequal amount of observation per bin
 master_nd_pmm<-master_nd_pmm%>%
   mutate(new_ingreso = case_when(ingreso_hogar <=5 ~ "low",
                                  ingreso_hogar == 6 ~ "medium",
-                                 ingreso_hogar>6 ~ "high"),
-         new_ingreso2 = case_when(ingreso_hogar <5 ~ "low",
-                                 ingreso_hogar == 5 ~ "medium",
-                                 ingreso_hogar == 6 ~ "high",
-                                 ingreso_hogar>6 ~ "very high"))
-
-master_nd_pmm<-master_nd_pmm%>%
-  mutate(new_ingreso2 = factor(new_ingreso2))
+                                 ingreso_hogar>6 ~ "high"))
 
 
 ```
