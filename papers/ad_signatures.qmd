@@ -221,7 +221,7 @@ The Preclinical Alzheimer Cognitive Composite (PACC) was developed to detect sub
 
 ### Linear regression models
 
-Statistical analyses were carried using R v4.5.1. All linear regressions were adjusted for age, APOE-4 status, time and Aβ status when not part of the interaction. Linear regressions with cognitive scores as an outcome variable were also adjusted for years of education. Linear regressions with hippocampal subfield volumes as outcomes were adjusted for Total Intracranial Volume (TIV). p-values were adjusted using the False Discovery Rate (FDR) method.
+Statistical analyses were carried using R v4.5.1. All linear regressions were adjusted for age, APOE-4 status, time and Aβ status when not part of the interaction. Linear regressions with cognitive scores as an outcome variable were also adjusted for years of education. Linear regressions with hippocampal subfield volumes as outcomes were adjusted for Total Intracranial Volume (TIV). p-values were adjusted using the False Discovery Rate (FDR) method.To avoid over-adjusment ias in our primary analyses, we used directed acyclic graph (DAG) methodology to determine sufficient covariate selection.
 
 # Results
 
@@ -982,88 +982,103 @@ library(corrplot)
 library(dagitty)
 library(ggdag)
 
-g <- dagitty("dag{ 
-  Parity -> CVR;
-  Parity -> Hormones;
-  Hormones -> Reproductive_span;
-  Hormones -> CVR;
-  Education -> Parity ;
-  Reproductive_span -> HRT;
-  HRT -> CVR ;
-  HRT -> PACC;
-  Reproductive_span-> CVR ;
-  Reproductive_span-> PACC;
-  Reproductive_span-> Hippocampal_volume;
-  Education -> CVR ;
-  Education -> Income;
-  Education -> Hippocampal_volume;
-  Income -> CVR;
-  CVR -> A;
-  CVR -> Hippocampal_volume;
-  CVR -> PACC
-  A -> PACC
+g <- dagitty("dag{  
+  APOE_binary -> {A vol_Whole_hippocampus}
+  age_v1 -> {kids_total hypertension Hormones HRT_pmm vol_Whole_hippocampus A}
+  kids_total -> {hypertension Hormones}
+  Hormones -> {repro_span hypertension vol_Whole_hippocampus};
+  education -> {kids_total hypertension ingreso_hogar vol_Whole_hippocampus A};
+  repro_span -> {HRT_pmm hypertension vol_Whole_hippocampus};
+  HRT_pmm -> hypertension ;
+  ingreso_hogar -> {hypertension};
+  hypertension -> {A vol_Whole_hippocampus};
+  A -> vol_Whole_hippocampus
+  kids_total [exposure]
+  vol_Whole_hippocampus [outcome]
+  Hormones [unobserved]
  }")
 
 ggdag(g)
+
+library( lavaan )
+
+data_dag_v1<-hippo_data_long%>%
+  filter(Visit == "V1")%>%
+  filter(sex==2)%>%
+  mutate(APOE_binary= as.integer(APOE_binary),
+         A=as.integer(A))%>%
+  dplyr::select(subject, kids_total, repro_span, education, HRT_pmm, hypertension, high_chol, diabetes, vol_Whole_hippocampus, ingreso_hogar, A)
+corr <- lavCor( data_dag_v1 )
+localTests( g, sample.cov=corr, sample.nobs=nrow( data_dag_v1 ) )
+plotLocalTestResults( localTests( g, sample.cov=corr, sample.nobs=nrow( data_dag_v1 ) ) )
+
+adjustmentSets(
+  g,
+  type="minimal",
+  effect="total",
+  max.results = Inf
+)
+
+plot(data_dag_v1$kids_total, data_dag_v1$ingreso_hogar)
 ```
 
 
 ### bayesian model
 
 ```{r, eval=F, include=F}
-
 #this could be an interesting approach but I need to fine tune my NA imputation and to figure out the kind of algorithm to use with my factor variables
 
 
 library(bnlearn)
 
-data_bn<-data_sem%>%
+data_bn_v1<-data_sem%>%
   filter(sex==2)%>%
-  dplyr::select(kids_total, HRT, age_v1, repro_span, hypertension, high_chol, CSF_Neurogranin_V1, CSF_Neurogranin_V2, CSF_GFAP_V1, CSF_GFAP_V2, diabetes, `CSF_IL-6_V1`, `CSF_IL-6_V2`, vol_Whole_hippocampus_V1 , vol_Whole_hippocampus_V2, CSF_A_V1, CSF_A_V2, CSF_sTREM2_V1, CSF_sTREM2_V2, Z_PACC_V1, Z_PACC_V2, bmi, occupation, ingreso_hogar, education)%>%
+  dplyr::select(kids_total, HRT_pmm, age_v1, repro_span, CSF_Neurogranin_V1, CSF_GFAP_V1, CAIDE_scr_20M1, `CSF_IL-6_V1`, vol_Whole_hippocampus_V1 , CSF_A_V1, CSF_sTREM2_V1, ingreso_hogar, education, APOE_binary)%>%
+  rename(CSF_IL_6_V1= `CSF_IL-6_V1`)%>%
+  na.omit()%>%
+  mutate(HRT_pmm = as.factor(HRT_pmm),
+         CSF_A_V1 = as.factor(CSF_A_V1),
+         ingreso_hogar = as.factor(ingreso_hogar),
+         APOE_binary = as.factor(APOE_binary))
+
+
+
+data_bn_all<-data_sem%>%
+  filter(sex==2)%>%
+  dplyr::select(kids_total, HRT_pmm, age_v1, repro_span, CSF_Neurogranin_V1, CSF_Neurogranin_V2, CSF_GFAP_V1, CSF_GFAP_V2, CAIDE_scr_20M1, `CSF_IL-6_V1`, `CSF_IL-6_V2`, vol_Whole_hippocampus_V1 , vol_Whole_hippocampus_V2, CSF_A_V1, CSF_A_V2, CSF_sTREM2_V1, CSF_sTREM2_V2, ingreso_hogar, education, APOE_binary)%>%
   rename(CSF_IL_6_V1= `CSF_IL-6_V1`,
          CSF_IL_6_V2= `CSF_IL-6_V2`)%>%
-  na.omit()
+  na.omit()%>%
+  mutate(HRT_pmm = as.factor(HRT_pmm),
+         CSF_A_V1 = as.factor(CSF_A_V1),
+         CSF_A_V2 = as.factor(CSF_A_V2),
+         ingreso_hogar = as.factor(ingreso_hogar),
+         APOE_binary = as.factor(APOE_binary))
 
 #code is from https://www.bnlearn.com/examples/useR19-tutorial/
 
-library(gplots)
-rho = cor(data_bn)
-palette.breaks = seq(-1, 1, 0.2)
-par(oma = c(2, 2, 2, 1))
-heatmap.2(rho, scale = "none", trace = "none", revC = TRUE, breaks = palette.breaks)
-
-ug = empty.graph(colnames(rho))
-amat(ug) = (rho > 0.4) + 0L - diag(1L, nrow(rho))
-library(Rgraphviz)
-graphviz.plot(ug, layout = "fdp", shape = "ellipse")
 
 #blacklist
 
-bl = tiers2blacklist(list("HRT", "age_v1", "repro_span", "occupation", "education",
-       c("hypertension", "high_chol", "CSF_Neurogranin_V1", "CSF_GFAP_V1", "diabetes", "CSF_IL_6_V1", "vol_Whole_hippocampus_V1", "CSF_A_V1", "Z_PACC_V1", "CSF_sTREM2_V1", "ingreso_hogar", "bmi")))
+bl = tiers2blacklist(list("HRT_pmm", "age_v1", "repro_span", "education", "APOE_binary",
+       c("CSF_Neurogranin_V1", "CSF_GFAP_V1", "CAIDE_scr_20M1", "CSF_IL_6_V1", "CSF_A_V1",  "CSF_sTREM2_V1", "ingreso_hogar", "vol_Whole_hippocampus_V1")))
 bl = rbind(bl, c("kids_total", "repro_span"), c("repro_span", "kids_total"))
 bl = rbind(bl, c("kids_total", "age_v1"), c("age_v1", "kids_total"))
-bl = rbind(bl, c("repro_span", "HRT"), c("HRT", "repro_span"))
 
 
 #whitelist
-wl = matrix(c(
-              "repro_span", "hypertension",
-             "CSF_A_V1", "vol_Whole_hippocampus_V1",
-             "vol_Whole_hippocampus_V1", "Z_PACC_V1",
-             "CSF_A_V1", "Z_PACC_V1",
-             "education", "Z_PACC_V1",
-             "education", "occupation",
+wl = matrix(c("APOE_binary", "CSF_A_V1",
+              "education", "vol_Whole_hippocampus_V1",
              "education", "kids_total"),
         ncol = 2, byrow = TRUE, dimnames = list(NULL, c("from", "to")))
 
-dag = hc(data_bn, blacklist = bl, whitelist = wl)
+dag = hc(data_bn_v1, blacklist = bl, whitelist = wl)
 dag
 
 graphviz.plot(dag, shape = "ellipse")
 
 
-str.diff = boot.strength(data_bn, R = 200, algorithm = "hc", algorithm.args = list(whitelist = wl, blacklist = bl))
+str.diff = boot.strength(data_bn_v1, R = 200, algorithm = "hc", algorithm.args = list(whitelist = wl, blacklist = bl))
 
 attr(str.diff, "threshold")
 avg.diff = averaged.network(str.diff)
@@ -1081,28 +1096,40 @@ nrow(str.diff[str.diff$strength > 0.85 & str.diff$direction > 0.5, ])
 avg.simpler = averaged.network(str.diff, threshold = 0.85)
 strength.plot(avg.simpler, str.diff, shape = "ellipse", highlight = list(arcs = wl))
 
-fitted.simpler = bn.fit(avg.simpler, data_bn)
+fitted.simpler = bn.fit(avg.simpler, clgaussian.test)
 fitted.simpler
 
+##other method
 
+
+```
+
+
+```{r, eval=F, include=F}
 #longitudinal attempt
 
 const = "kids_total"
-t1.variables = grep("V1$", names(data_bn), value = TRUE)
+t1.variables = grep("V1$", names(data_bn_all), value = TRUE)
 t1.variables
-t2.variables = grep("V2$", names(data_bn), value = TRUE)
+t2.variables = grep("V2$", names(data_bn_all), value = TRUE)
 t2.variables
 
 #creating blacklist to stop V2 from influencing V1 and V1 from influencing V1
 #We blacklist all the arcs going into all the variables at time t1, because we assume that the arcs between the variables at time t1 are the same as the corresponding variables in time t2 and it's pointless to learn them twice.
 
-roots = expand.grid(from = setdiff(names(data_bn), c("HRT", "age_v1", "repro_span", "occupation", "education")), to = c("HRT", "age_v1", "repro_span", "occupation", "education"), stringsAsFactors = FALSE)
+roots = expand.grid(from = setdiff(names(data_bn_all), c("HRT_pmm", "age_v1", "repro_span", "education")), to = c("HRT_pmm", "age_v1", "repro_span", "education"), stringsAsFactors = FALSE)
 
 empty.t1 = expand.grid(from = c(t1.variables), to = c(t1.variables),
               stringsAsFactors = FALSE)
 bl = rbind(tiers2blacklist(list(t1.variables, t2.variables)), roots, empty.t1)
 
-dyn.dag = tabu(data_bn, blacklist = bl, whitelist = wl)
+bl= rbind(bl, c("APOE_binary", "CSF_A_V1"))
+
+wl = matrix(c("APOE_binary", "CSF_A_V2",
+             "education", "kids_total"),
+        ncol = 2, byrow = TRUE, dimnames = list(NULL, c("from", "to")))
+
+dyn.dag = tabu(data_bn_all, blacklist = bl, whitelist = wl)
 dyn.dag
 
 
@@ -1117,7 +1144,7 @@ nodeRenderInfo(gR)$fill[t2.variables] = "gold"
 nodeRenderInfo(gR)$fontsize = 35
 renderGraph(gR)
 
-dyn.str = boot.strength(data_bn, R = 200, algorithm = "tabu",
+dyn.str = boot.strength(data_bn_all, R = 1000, algorithm = "tabu",
             algorithm.args = list(blacklist = bl, whitelist = wl))
 plot(dyn.str)
 dyn.avg = averaged.network(dyn.str)
@@ -1127,9 +1154,223 @@ graphviz.compare(dyn.dag, dyn.avg, shape = "rectangle")
 
 ```
 
+
+
+### Mediation
+```{r, eval=FALSE}
+
+library(mediation)
+
+biomarkers_long<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(subject=as.numeric(subject),
+         Visit = ifelse(Visit == "V1", "1", "2"))
+
+data_med<-hippo%>%
+  bind_rows(hippo2)%>%
+  left_join(., data_naked, join_by(subject))%>%
+  mutate(Visit= ifelse(Visit=="V1","1", "2"))%>%
+  left_join(., cognition, join_by(subject, Visit))%>%
+  left_join(., biomarkers_long, join_by(subject, Visit))%>%
+  left_join(., diff_mri_df, join_by(subject))%>%
+  drop_na(Z_PACC, vol_subiculum)
+
+data_med_A0<-data_med%>%
+  filter(Visit=="1")%>%
+  filter(A==0)%>%
+  dplyr::select(subject)%>%
+  left_join(., data_med, join_by(subject))
+
+data_med_A1<-data_med%>%
+  filter(Visit=="1")%>%
+  filter(A==1)%>%
+  dplyr::select(subject)%>%
+  left_join(., data_med, join_by(subject))
+
+data_med_A0_v1 <- data_med_A0%>%
+  filter(Visit == "1")
+
+#mediation of PACC by hippo volume
+
+med.fit_A0<-lme4::lm(vol_parasubiculum ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
+
+out.fit_A0<-lme4::lmer(Z_PACC ~ vol_parasubiculum + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "vol_parasubiculum", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lme4::lmer(vol_presubiculum ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
+
+out.fit_A0<-lme4::lmer(Z_PACC ~ vol_presubiculum + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "vol_presubiculum", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lme4::lmer(vol_subiculum ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
+
+out.fit_A0<-lme4::lmer(Z_PACC ~ vol_subiculum + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "vol_subiculum", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lme4::lmer(vol_CA4 ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
+
+out.fit_A0<-lme4::lmer(Z_PACC ~ vol_CA4 + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "vol_CA4", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lme4::lmer(vol_GC_ML_DG ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
+
+out.fit_A0<-lme4::lmer(Z_PACC ~ vol_GC_ML_DG + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "vol_GC_ML_DG", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lme4::lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
+
+out.fit_A0<-lme4::lmer(Z_PACC ~ vol_Whole_hippocampus + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "vol_Whole_hippocampus", sims = 5000)
+summary(med.out_A0)
+
+
+#mediation of hippo volume by biomarkers
+
+med.fit_A0<-lm(CSF_Neurogranin ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CSF_Neurogranin + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_Neurogranin", sims = 5000)
+summary(med.out_A0)
+
+
+med.fit_A0<-lm(`CSF_a-Synuclein` ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ `CSF_a-Synuclein` + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_a-Synuclein", sims = 5000)
+summary(med.out_A0)
+
+
+med.fit_A0<-lm(CSF_NFL ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CSF_NFL + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_NFL", sims = 5000)
+summary(med.out_A0)
+
+
+med.fit_A0<-lm(CSF_sTREM2 ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CSF_sTREM2 + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_sTREM2", sims = 5000)
+summary(med.out_A0)
+
+
+
+med.fit_A0<-lm(CSF_sVCAM1 ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CSF_sVCAM1 + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_sVCAM1", sims = 5000)
+summary(med.out_A0)
+
+
+
+med.fit_A0<-lm(CSF_Synaptotagmin ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CSF_Synaptotagmin + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_Synaptotagmin", sims = 5000)
+summary(med.out_A0)
+
+
+med.fit_A0<-lm(`CSF_IL-6` ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ `CSF_IL-6` + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_IL-6", sims = 5000)
+summary(med.out_A0)
+
+
+med.fit_A0<-lm(CSF_YKL40 ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CSF_YKL40 + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_YKL40", sims = 5000)
+summary(med.out_A0)
+
+#mediation of hippo volume by social factors
+
+med.fit_A0<-lm(ingreso_hogar ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ ingreso_hogar + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "ingreso_hogar", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lm(education ~ kids_total + scale(age_v1)  + scale(TIV) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ education + kids_total + scale(age_v1)  + scale(TIV) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "education", sims = 5000)
+summary(med.out_A0)
+
+#mediation of hippo volume by CVR
+
+med.fit_A0<-lm(CAIDE_scr_20M1 ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CAIDE_scr_20M1 + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CAIDE_scr_20M1", sims = 5000)
+summary(med.out_A0)
+
+# mediation effect by repro factors
+
+med.fit_A0<-lm(repro_span ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ repro_span + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "repro_span", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-glm(HRT_pmm ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,], family = binomial)
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ HRT_pmm + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "HRT_pmm", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lm(age_menopause ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ age_menopause + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "age_menopause", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-glm(APOE_binary ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,], family = binomial)
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ APOE_binary + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "APOE_binary", sims = 5000)
+summary(med.out_A0)
+
+```
+
+
+# Discussion
+
+We aimed to investigate the impact of parity on hippocampal subfield volumes and relation to AD pathology in post-menopausal women at risk of AD and men who share similar age and AD risk. Our results suggest that...
+
+Limitations: - unequal number of men and women - still early stages - uniformity of sample both ethnically and socially - no more than 4 kids per women
+
+# Miscellaneous
+
 ### PCA
 
-```{r, include=F}
+```{r, include=F, eval=F}
 data_reproductive<-data%>%
   filter(sex==2)%>%
   dplyr::select(kids_total, HRT, age_menopause_pmm, age_menarche, abortions, repro_span)%>%
@@ -1169,58 +1410,6 @@ fviz_pca_ind(pca_result, col.ind = "cos2",
 #PCA for latent avariable does not seem to be a good choice, not enough varaince explained with one of two dimensions
 
 ```
-
-### Mediation
-```{r, eval=FALSE}
-
-library(mediation)
-
-biomarkers_long<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
-    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
-  mutate(subject=as.numeric(subject),
-         Visit = ifelse(Visit == "V1", "1", "2"))
-
-data_med<-hippo%>%
-  bind_rows(hippo2)%>%
-  left_join(., data_naked, join_by(subject))%>%
-  mutate(Visit= ifelse(Visit=="V1","1", "2"))%>%
-  left_join(., cognition, join_by(subject, Visit))%>%
-  left_join(., biomarkers_long, join_by(subject, Visit))%>%
-  left_join(., diff_mri_df, join_by(subject))%>%
-  drop_na(Z_PACC, vol_subiculum)
-
-data_med_A0<-data_med%>%
-  filter(Visit=="1")%>%
-  filter(A==0)%>%
-  dplyr::select(subject)%>%
-  left_join(., data_med, join_by(subject))
-
-data_med_A1<-data_med%>%
-  filter(Visit=="1")%>%
-  filter(A==1)%>%
-  dplyr::select(subject)%>%
-  left_join(., data_med, join_by(subject))
-
-
-med.fit<-lme4::lmer(vol_parasubiculum ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
-
-summary(med.fit)
-out.fit<-lme4::lmer(Z_PACC ~ vol_parasubiculum + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
-summary(out.fit)
-
-med.out <- mediate(med.fit, out.fit, treat = "kids_total", mediator = "vol_parasubiculum", sims = 100)
-summary(med.out)
-
-```
-
-
-# Discussion
-
-We aimed to investigate the impact of parity on hippocampal subfield volumes and relation to AD pathology in post-menopausal women at risk of AD and men who share similar age and AD risk. Our results suggest that...
-
-Limitations: - unequal number of men and women - still early stages - uniformity of sample both ethnically and socially - no more than 4 kids per women
-
-# Miscellaneous
 
 ```{r, eval= FALSE}
 
