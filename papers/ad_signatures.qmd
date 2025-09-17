@@ -76,6 +76,37 @@ options(scipen = 1, digits = 3)
 
 ```
 
+```{r, include=FALSE}
+## Plot aesthetics
+
+
+call_aesthethics <- function(text_size){
+  th <- theme(   panel.grid.major = element_blank(),
+                 panel.grid.minor = element_blank(),
+                 panel.border = element_blank(),
+                 panel.background = element_blank(),
+                 axis.line = element_line(linewidth = 0.5),
+                 legend.position = 'right',
+                 legend.text = element_text(size= text_size, family="Helvetica"),
+                 text = element_text(size= text_size, family="Helvetica"),
+                 strip.text.x = element_text(size = rel(0.90)),
+                 strip.text.y = element_text(size = rel(0.90)),
+                 axis.title.x = element_text(vjust=-0.3),
+                 plot.title = element_text(hjust = 0.5, vjust = 0),
+                 axis.ticks = element_line(linewidth = 0.4),
+                 axis.text.x.bottom  = element_text(size = rel(0.90), margin = unit(c(t = 2.5, r = 0, b = 0, l = 0), "mm")),
+                 axis.title.y = element_text(vjust = 1),
+                 axis.text.y = element_text(size = rel(0.90), margin = unit(c(t = 0, r = 2.5, b = 0, l = 0), "mm")),
+                 axis.ticks.length = unit(-1.2, "mm"),
+                 axis.text.x.top = element_text(size = rel(0.90), margin = unit(c(t = 0, r = 0, b = 2.5, l = 0), "mm")))
+  return(th)
+}
+
+
+th <- call_aesthethics(15)
+
+```
+
 ```{r}
 # Lancet Guidelines
 # Be up to 3500 words (4500 for randomised controlled trials) with 30 references (the word count is for the manuscript text only) • Include an abstract (semi-structured summary), with five paragraphs (Background, Methods, Findings, Interpretation, and Funding), not exceeding 300 words. Our electronic submission system will ask you to copy and paste this section at the “Submit Abstract” stage • For randomised trials, the abstract should adhere to CONSORT extensions: abstracts (see Lancet 2008; 371: 281–83) • When reporting Kaplan-Meier survival data, at each timepoint, authors must include numbers at risk, and are encouraged to include the number of censored patients. • For intervention studies, the abstract should include the primary outcome expressed as the difference between groups with a confidence interval on that difference (absolute differences are more useful than relative ones). Secondary outcomes can be included as long as they are clearly marked as secondary and all such outcomes are reported • Use the recommended international non-proprietary name (rINN) for drug names. Ensure that the dose, route, and frequency of administration of any drug you mention are correct • All accepted Articles should include a link to the full study protocol published on the authors’ institutional website (see Lancet 2009; 373: 992 and Lancet 2010; 375: 348) • We encourage researchers to enrol women and ethnic groups into clinical trials of all phases, and to plan to analyse data by sex and by race
@@ -96,7 +127,6 @@ The ALFA+ project is a longitudinal cohort following healthly middle aged adults
 ## Participants
 
 ```{r, include=FALSE}
-
 # creating basic dataset
 
 data<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
@@ -137,57 +167,50 @@ data_biomarkers<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_pr
 data<-left_join(data, data_biomarkers)%>%
   mutate(A = factor(A))
 
-data_cognition_desc<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+participants_v1_cog<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+  dplyr::select(IdParticipante, Visit, Z_PACC)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = as.numeric(subject))%>%
+  filter(Visit == 1)%>%
+  dplyr::select(subject)%>%
+  nrow()
+
+
+participants_v2_cog<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
   dplyr::select(IdParticipante, Visit, Z_PACC)%>%
   rename(subject = IdParticipante)%>%
   mutate(subject = as.numeric(subject))%>%
   filter(Visit == 2)%>%
-  dplyr::select(subject)
-
-#special dataset for descriptives that includes only participants who have cognition and mri at visit 2
-data_desc<-inner_join(data, data_cognition_desc)%>%
-  drop_na(A)
-
-pt_number <- data_desc%>%
+  dplyr::select(subject)%>%
   nrow()
+  
 
-pt_number_w<-data_desc%>%
-  filter(sex==2)%>%
+participants_v1_mri<-data%>%
+  drop_na(scandate_v1)%>%
   nrow
 
-## Plot aesthetics
+participants_v2_mri<-data%>%
+  drop_na(scandate_v2)%>%
+  nrow
 
+participants_v1_bio<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  filter(Visit == "V1")%>%
+  nrow()
 
-call_aesthethics <- function(text_size){
-  th <- theme(   panel.grid.major = element_blank(),
-                 panel.grid.minor = element_blank(),
-                 panel.border = element_blank(),
-                 panel.background = element_blank(),
-                 axis.line = element_line(linewidth = 0.5),
-                 legend.position = 'right',
-                 legend.text = element_text(size= text_size, family="Helvetica"),
-                 text = element_text(size= text_size, family="Helvetica"),
-                 strip.text.x = element_text(size = rel(0.90)),
-                 strip.text.y = element_text(size = rel(0.90)),
-                 axis.title.x = element_text(vjust=-0.3),
-                 plot.title = element_text(hjust = 0.5, vjust = 0),
-                 axis.ticks = element_line(linewidth = 0.4),
-                 axis.text.x.bottom  = element_text(size = rel(0.90), margin = unit(c(t = 2.5, r = 0, b = 0, l = 0), "mm")),
-                 axis.title.y = element_text(vjust = 1),
-                 axis.text.y = element_text(size = rel(0.90), margin = unit(c(t = 0, r = 2.5, b = 0, l = 0), "mm")),
-                 axis.ticks.length = unit(-1.2, "mm"),
-                 axis.text.x.top = element_text(size = rel(0.90), margin = unit(c(t = 0, r = 0, b = 2.5, l = 0), "mm")))
-  return(th)
-}
-
-
-th <- call_aesthethics(15)
-
+participants_v2_bio<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  filter(Visit == "V2")%>%
+  nrow()
 ```
 
 In brief, inclusion criteria were being cognitively normal, Spanish and/or Catalan-speaking, being aged between 45 and 74 years and agreing with the study procedures and tests. A close relative was involved in the volunteer’s functional evaluation and both of them had to grant their written informed consent. Exclusion criterias Exclusion criteria were (1) Cognitive performance falling outside the established cutoffs, (2) a Clinical Dementia Rating above 0, (3) major psychiatric disorders (according to DSM-IV-TR), (4) Severe auditory and/or visual disorder, neurodevelopmental and/or psychomotor disorder, (5) Signiﬁcant diseases that could currently interfere with cognition, (6) neurological disorders, (7) Brain injuries and (8) a suspected pattern of family autosomal dominant AD.
 
-Our sample includes `r pt_number` participants from the ALFA+ project, of which `r pt_number_w` are women. In addition to the above exclusion criteria, women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample for analysis. Participants were recruited via advertisement campaigns in newspapers and followed-up via email/phonecalls.
+In addition to the above exclusion criteria, women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample for analysis. Participants were recruited via advertisement campaigns in newspapers and followed-up via email/phonecalls.
+
+Our sample includes `r nrow(data)` participants from the ALFA+ project, of which `r nrow(data[data$sex==2,])` are women. Visit 1 included MRI data from `r participants_v1_mri` participants, cognitive testing from `r participants_v1_cog` participants and CSF biomarkers from `r participants_v1_bio` participants. Visit 2 included MRI data from `r participants_v2_mri` participants, cognitive testing from `r participants_v2_cog` participants and CSF biomarkers from `r participants_v2_bio` participants.
+
+Data imputation methods were implemented using the mice package in R (v.3.18.0).
 
 ## Procedures
 
@@ -221,36 +244,104 @@ The Preclinical Alzheimer Cognitive Composite (PACC) was developed to detect sub
 
 ### Linear regression models
 
-Statistical analyses were carried using R v4.5.1. All linear regressions were adjusted for age, APOE-4 status, time and Aβ status when not part of the interaction. Linear regressions with cognitive scores as an outcome variable were also adjusted for years of education. Linear regressions with hippocampal subfield volumes as outcomes were adjusted for Total Intracranial Volume (TIV). p-values were adjusted using the False Discovery Rate (FDR) method.To avoid over-adjusment ias in our primary analyses, we used directed acyclic graph (DAG) methodology to determine sufficient covariate selection.
+Statistical analyses were carried using R v4.5.1. All linear regressions were adjusted for age at baseline, APOE-4 status, time and Aβ status when not part of the interaction. Linear regressions with hippocampal subfield volumes as outcomes were adjusted for Total Intracranial Volume (TIV). p-values were adjusted using the False Discovery Rate (FDR) method.To identify other potential confounders in our primary analyses, we used directed acyclic graph (DAG) methodology to aid with covariate selection. Using Pearl's backdoor criteria, we decided to covary for education in all our analyses given that the effet of this variable on both the exposure and outcome variable, therefore making it a cofounding variable in our analyses along with age at baseline.
+
+```{r, include=F}
+library(dagitty)
+library(ggdag)
+
+set.seed(123)
+
+g <- dagitty("dag{  
+  APOE_binary -> {A vol_Whole_hippocampus}
+  age_v1 -> {kids_total CAIDE_scr_20M1 Hormones HRT_pmm vol_Whole_hippocampus A}
+  kids_total -> {CAIDE_scr_20M1 Hormones}
+  Hormones -> {repro_span CAIDE_scr_20M1 vol_Whole_hippocampus};
+  education -> {kids_total CAIDE_scr_20M1 ingreso_hogar vol_Whole_hippocampus A};
+  repro_span -> {HRT_pmm CAIDE_scr_20M1 vol_Whole_hippocampus};
+  HRT_pmm -> CAIDE_scr_20M1 ;
+  ingreso_hogar -> {CAIDE_scr_20M1};
+  CAIDE_scr_20M1 -> {A vol_Whole_hippocampus};
+  A -> vol_Whole_hippocampus
+  kids_total [exposure]
+  vol_Whole_hippocampus [outcome]
+  Hormones [unobserved]
+ }")
+
+coords<-list(
+  x=c(age_v1 = 1, APOE_binary = 1, kids_total = 3, education = 2, HRT_pmm = 3, repro_span = 3, ingreso_hogar = 3, CAIDE_scr_20M1 = 4, A= 5, vol_Whole_hippocampus = 6),
+  y=c(age_v1 = 0, APOE_binary = 2, education = 1, HRT_pmm= 0, kids_total = -1, repro_span = 1, ingreso_hogar= 2, CAIDE_scr_20M1= 1, A = 1, vol_Whole_hippocampus = 1))
+
+dag_r<-dagify(vol_Whole_hippocampus ~ kids_total + education + age_v1 + CAIDE_scr_20M1+ A + HRT_pmm + age_v1,
+              CAIDE_scr_20M1 ~ repro_span + HRT_pmm + kids_total + age_v1 + education + ingreso_hogar,
+              ingreso_hogar ~ education,
+              A ~ age_v1 + APOE_binary + CAIDE_scr_20M1,
+              kids_total ~ education + age_v1,
+              labels = c(kids_total = "Parity",
+                         APOE_binary = "APOE-E4 Carriership",
+                         education = "Education",
+                         repro_span = "Reproductive span",
+                         CAIDE_scr_20M1 = "CAIDE score",
+                         A = "Aβ status",
+                         HRT_pmm = "HRT",
+                         vol_Whole_hippocampus = "Whole hippocampal volume",
+                         age_v1 = "Age at baseline",
+                         ingreso_hogar = "Household income"),
+              exposure = "kids_total",
+              outcome = "vol_Whole_hippocampus",
+              coords = coords)
+
+dag_r_tidy<-tidy_dagitty(dag_r, layout="nicely")%>%
+  node_dconnected(controlling_for = c("age_v1", "education"))
+```
+
+```{r, echo=F, warning=F}
+dag_r_tidy%>%
+  mutate(adjusted=str_to_title(adjusted),
+         arrow=ifelse(adjusted == "Adjusted", 0.15, 0.85))%>%
+  ggplot(aes(x=x, y=y, xend=xend, yend=yend, colour=adjusted, fill=adjusted, shape=adjusted))+
+  geom_dag_point()+
+  geom_dag_edges(aes(edge_alpha=arrow), edge_width=0.7)+
+  geom_dag_label_repel(aes(label = label), colour = "white", show.legend = FALSE)+
+  theme_dag() +
+  theme(legend.position= "none")+
+  scale_shape_manual(values = c(22, 21))
+```
 
 # Results
 
 ## Descriptive results
 
 ```{r, include = F}
-
-data_table<-data_desc%>%
-  dplyr::select(age_v1, sex, kids_total, A, APOE_binary)%>%
-  mutate(A=factor(A),
-         APOE_binary=factor(APOE_binary))
+data_table<-data%>%
+  mutate(TIV_cm=TIV/100)%>%
+  dplyr::select(age_v1, kids_total, A, APOE_binary, diff_mri, education)%>%
+  mutate(A=ifelse(A==1, "Aβ+", "Aβ-"),
+         APOE_binary=ifelse(APOE_binary==1, "Carrier", "Non-Carrier"))
  
 
 desc_table<-tbl_summary(data_table,
             by = kids_total, 
             missing = "no",
             label= list(kids_total = "Number of childbirths",
-                     A= "Aβ+",
-                     APOE_binary = "APOE-E4 carrier",
-                     age_v1 = "Age at first visit"))%>%
+                     A= "Aβ status, Count (%)",
+                     APOE_binary = "APOE-E4 carrier, Count (%)",
+                     age_v1 = "Age at first visit, Mean (SD)",
+                     TIV_cm = "Total Intracranial Volume (cm3), Mean (SD)",
+                     diff_mri = "Time between visits (years), Mean (SD)",
+                     education = "Education (years), Mean (SD)"))%>%
   add_n()%>%
   add_p%>%
-  modify_header(label = "**Variable**") %>% # update the column header
+  modify_header(label = "**Number of childbirths**") %>% # update the column header
   bold_labels()
 
+```
+
+```{r, echo = F, warning=F}
 desc_table
 ```
 
-Table 1 shows demographics and characteristics of the ALFA+ cohort, for all participants who have completed Visit 1 and 2, grouped by parity. Participants with higher parity were significantly more likely to be older. No difference was seen between groups regarding Aβ status and APOE-ε4 carriership.
+Table 1 shows demographics and characteristics of the ALFA+ cohort for all participants, grouped by parity. Participants with higher parity were significantly more likely to be older. No difference was seen between groups regarding Aβ status and APOE-ε4 carriership.
 
 ## Whole Hippocampal volume
 
@@ -363,7 +454,7 @@ summary(mod_whole_int_men)
 
 ```
 
-The two-way interaction between parity and time did not reveal any significant main effect of parity. However, when introducing a 3-way interaction with AB status, a trending parity and AB status interaction was found (β = `r tidy(mod_whole_int)$estimate[9]`, p = `r tidy(mod_whole_int)$p.value[9]`), such that Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X). Stratified analyses show
+The two-way interaction between parity and time did not reveal any significant main effect of parity. However, when introducing a 3-way interaction with AB status, a trending parity and AB status interaction was found (β = `r tidy(mod_whole_int)$estimate[10]`, p = `r tidy(mod_whole_int)$p.value[10]`), such that Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X). Stratified analyses show
 
 When testing these interaction on the men in the cohort, no significant main effect or interaction was found after correction.
 
@@ -441,7 +532,6 @@ summary(mod_whole_int_reproductive_var)
 mod_whole_int_social<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(TIV) + ingreso_hogar + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
 summary(mod_whole_int_social)
 ```
-
 
 ```{r, echo=F, warning=F}
 huxreg(list("Basic" = mod_whole_int, "Reproductive var"=mod_whole_int_reproductive_var, "Social var" = mod_whole_int_social), bold_signif = 0.05, outer_borders =1, stars = c("†" = 0.1, "*" = 0.05, "**" = 0.01, "***" = 0.001))%>%
@@ -788,9 +878,10 @@ data_cog_long %>%
        y = "PACC Z-score", 
        color = "Number of childbirths")
 ```
+
 ### Sensitivity analyses
 
-```{r}
+```{r, include=F}
 fit_cog_PACC_A0<-lmer(Z_PACC ~ kids_total*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex==2 & data_cog_long$A==0,])
 summary(fit_cog_PACC_A0)
 
@@ -798,8 +889,8 @@ fit_cog_PACC_A1<-lmer(Z_PACC ~ kids_total*time_diff +age_v1 + APOE_binary + educ
 summary(fit_cog_PACC_A1)
 
 ```
-Stratifying the analysis by Aβ status reveals the effect seems driven by Aβ- women.
 
+Stratifying the analysis by Aβ status reveals the effect seems driven by Aβ- women.
 
 ```{r, include=F}
 fit_cog_PACC<-lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex==2,])
@@ -813,101 +904,13 @@ summary(fit_cog_PACC_social)
 
 ```
 
-
 ```{r, echo=F, warning=F}
 huxreg(list("Basic" = fit_cog_PACC, "Reproductive var"=fit_cog_PACC_reproductive_var, "Social var" = fit_cog_PACC_social), bold_signif = 0.05, outer_borders =1, stars = c("†" = 0.1, "*" = 0.05, "**" = 0.01, "***" = 0.001))%>%
   set_caption("PACC score") %>% 
   set_caption_pos("top")
 ```
 
-
-```{r, include=F}
-###Composites
-
-composites1<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 1 - Cognition Z Scores.xlsx")%>%
-  dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -Z_PACC_Composite_1.2._v1 )%>%
-  rename(subject = IdParticipante,
-         Z_Attention_Composite = Z_Attention_Composite_v1,
-         Z_Memory_Composite = Z_Memory_Composite_v1,
-         Z_Executive_Composite = Z_Executive_Composite_v1,
-         Z_Language_Composite = Z_Language_Composite_v1,
-         Z_Visual_Composite = Z_Visual_Composite_v1)%>%
-  mutate(Visit = "1")
-
-composites2<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 2 - Cognition Z Scores.xlsx")%>%
-  dplyr::select(-Gender, -Age_V1S1, -Years_Edu, -V1S1_dt, -V2S1_dt, -Z_PACC_Composite_1.2._V2 )%>%
-  rename(subject = IdParticipante,
-         Z_Attention_Composite = Z_Attention_Composite_V2,
-         Z_Memory_Composite = Z_Memory_Composite_V2,
-         Z_Executive_Composite = Z_Executive_Composite_V2,
-         Z_Language_Composite = Z_Language_Composite_V2,
-         Z_Visual_Composite = Z_Visual_Composite_V2)%>%
-  mutate(Visit = "2")
-
-composite_all<-full_join(composites1, composites2)%>%
-  group_by(subject) %>%
-  ungroup()%>%
-  mutate(subject = as.numeric(subject))
-
-data_cog_long_composites<-left_join(data_cog_long, composite_all)
-
-#no interaction, women
-
-outcome_vars_cog <- c(
-  "Z_Attention_Composite", "Z_Memory_Composite", "Z_Executive_Composite", "Z_Language_Composite", "Z_Visual_Composite"
-)
-
-
-model_names_cog <- c(
-  "Attention", "Memory", "Executive", "Language", "Visual"
-)
-
-models_cog <- setNames(
-  lapply(outcome_vars_cog, function(outcome) {
-    formula <- as.formula(
-      paste(outcome, "~ kids_total*time_diff + A  + education + age_cog + APOE_binary + (1 | subject)")
-    )
-    lmer(formula, data = data_cog_long_composites[data_cog_long_composites$sex==2,])
-  }),
-  model_names_cog
-)
-
-
-tidy_models_cog <- map_dfr(models_cog, ~ {
-  broom.mixed::tidy(.x, terms = c("kids_total", "A", "sex2"))   # Add consistent term column
-}, .id = "composite")%>%
-  filter(term == "A"| term == "kids_total"| term== "sex2" )
-
-fdr_cog_sex<-tidy_models_cog%>%
-  filter(term == "sex2")%>%
-  pull(p.value)%>%
-  p.adjust(., method = "fdr")%>%
-  format(., scientific = FALSE)
-
-
-# interaction
-
-models_cog_int <- setNames(
-  lapply(outcome_vars_cog, function(outcome) {
-    formula <- as.formula(
-      paste(outcome, "~ kids_total *time_diff*A + education + age_cog + APOE_binary + (1 | subject)")
-    )
-    lmer(formula, data = data_cog_long_composites[data_cog_long_composites$sex==2,])
-  }),
-  model_names_cog
-)
-
-
-tidy_models_cog_int <- map_dfr(models_cog_int, ~ {
-  broom.mixed::tidy(.x, terms = c("kids_total", "A", "kids_total:A"))   # Add consistent term column
-}, .id = "composite")%>%
-  filter(term == "A"| term == "kids_total"| term == "kids_total:A" )
-
-```
-
-No significant main effect of parity was found on any of the cognitive composites used after FDR correction.
-
-## SEM
+## Post-Hoc
 
 ```{r, include=F}
 
@@ -975,188 +978,8 @@ library(corrplot)
 
 ```
 
-
-### DAG
-
-```{r}
-library(dagitty)
-library(ggdag)
-
-g <- dagitty("dag{  
-  APOE_binary -> {A vol_Whole_hippocampus}
-  age_v1 -> {kids_total hypertension Hormones HRT_pmm vol_Whole_hippocampus A}
-  kids_total -> {hypertension Hormones}
-  Hormones -> {repro_span hypertension vol_Whole_hippocampus};
-  education -> {kids_total hypertension ingreso_hogar vol_Whole_hippocampus A};
-  repro_span -> {HRT_pmm hypertension vol_Whole_hippocampus};
-  HRT_pmm -> hypertension ;
-  ingreso_hogar -> {hypertension};
-  hypertension -> {A vol_Whole_hippocampus};
-  A -> vol_Whole_hippocampus
-  kids_total [exposure]
-  vol_Whole_hippocampus [outcome]
-  Hormones [unobserved]
- }")
-
-ggdag(g)
-
-library( lavaan )
-
-data_dag_v1<-hippo_data_long%>%
-  filter(Visit == "V1")%>%
-  filter(sex==2)%>%
-  mutate(APOE_binary= as.integer(APOE_binary),
-         A=as.integer(A))%>%
-  dplyr::select(subject, kids_total, repro_span, education, HRT_pmm, hypertension, high_chol, diabetes, vol_Whole_hippocampus, ingreso_hogar, A)
-corr <- lavCor( data_dag_v1 )
-localTests( g, sample.cov=corr, sample.nobs=nrow( data_dag_v1 ) )
-plotLocalTestResults( localTests( g, sample.cov=corr, sample.nobs=nrow( data_dag_v1 ) ) )
-
-adjustmentSets(
-  g,
-  type="minimal",
-  effect="total",
-  max.results = Inf
-)
-
-plot(data_dag_v1$kids_total, data_dag_v1$ingreso_hogar)
-```
-
-
-### bayesian model
-
-```{r, eval=F, include=F}
-#this could be an interesting approach but I need to fine tune my NA imputation and to figure out the kind of algorithm to use with my factor variables
-
-
-library(bnlearn)
-
-data_bn_v1<-data_sem%>%
-  filter(sex==2)%>%
-  dplyr::select(kids_total, HRT_pmm, age_v1, repro_span, CSF_Neurogranin_V1, CSF_GFAP_V1, CAIDE_scr_20M1, `CSF_IL-6_V1`, vol_Whole_hippocampus_V1 , CSF_A_V1, CSF_sTREM2_V1, ingreso_hogar, education, APOE_binary)%>%
-  rename(CSF_IL_6_V1= `CSF_IL-6_V1`)%>%
-  na.omit()%>%
-  mutate(HRT_pmm = as.factor(HRT_pmm),
-         CSF_A_V1 = as.factor(CSF_A_V1),
-         ingreso_hogar = as.factor(ingreso_hogar),
-         APOE_binary = as.factor(APOE_binary))
-
-
-
-data_bn_all<-data_sem%>%
-  filter(sex==2)%>%
-  dplyr::select(kids_total, HRT_pmm, age_v1, repro_span, CSF_Neurogranin_V1, CSF_Neurogranin_V2, CSF_GFAP_V1, CSF_GFAP_V2, CAIDE_scr_20M1, `CSF_IL-6_V1`, `CSF_IL-6_V2`, vol_Whole_hippocampus_V1 , vol_Whole_hippocampus_V2, CSF_A_V1, CSF_A_V2, CSF_sTREM2_V1, CSF_sTREM2_V2, ingreso_hogar, education, APOE_binary)%>%
-  rename(CSF_IL_6_V1= `CSF_IL-6_V1`,
-         CSF_IL_6_V2= `CSF_IL-6_V2`)%>%
-  na.omit()%>%
-  mutate(HRT_pmm = as.factor(HRT_pmm),
-         CSF_A_V1 = as.factor(CSF_A_V1),
-         CSF_A_V2 = as.factor(CSF_A_V2),
-         ingreso_hogar = as.factor(ingreso_hogar),
-         APOE_binary = as.factor(APOE_binary))
-
-#code is from https://www.bnlearn.com/examples/useR19-tutorial/
-
-
-#blacklist
-
-bl = tiers2blacklist(list("HRT_pmm", "age_v1", "repro_span", "education", "APOE_binary",
-       c("CSF_Neurogranin_V1", "CSF_GFAP_V1", "CAIDE_scr_20M1", "CSF_IL_6_V1", "CSF_A_V1",  "CSF_sTREM2_V1", "ingreso_hogar", "vol_Whole_hippocampus_V1")))
-bl = rbind(bl, c("kids_total", "repro_span"), c("repro_span", "kids_total"))
-bl = rbind(bl, c("kids_total", "age_v1"), c("age_v1", "kids_total"))
-
-
-#whitelist
-wl = matrix(c("APOE_binary", "CSF_A_V1",
-              "education", "vol_Whole_hippocampus_V1",
-             "education", "kids_total"),
-        ncol = 2, byrow = TRUE, dimnames = list(NULL, c("from", "to")))
-
-dag = hc(data_bn_v1, blacklist = bl, whitelist = wl)
-dag
-
-graphviz.plot(dag, shape = "ellipse")
-
-
-str.diff = boot.strength(data_bn_v1, R = 200, algorithm = "hc", algorithm.args = list(whitelist = wl, blacklist = bl))
-
-attr(str.diff, "threshold")
-avg.diff = averaged.network(str.diff)
-strength.plot(avg.diff, str.diff, shape = "ellipse", highlight = list(arcs = wl))
-
-par(mfrow = c(1, 2))
-graphviz.compare(avg.diff, dag, shape = "ellipse", main = c("averaged DAG", "single DAG"))
-
-plot(str.diff)
-abline(v = 0.75, col = "tomato", lty = 2, lwd = 2)
-abline(v = 0.85, col = "steelblue", lty = 2, lwd = 2)
-
-nrow(str.diff[str.diff$strength > 0.85 & str.diff$direction > 0.5, ])
-
-avg.simpler = averaged.network(str.diff, threshold = 0.85)
-strength.plot(avg.simpler, str.diff, shape = "ellipse", highlight = list(arcs = wl))
-
-fitted.simpler = bn.fit(avg.simpler, clgaussian.test)
-fitted.simpler
-
-##other method
-
-
-```
-
-
-```{r, eval=F, include=F}
-#longitudinal attempt
-
-const = "kids_total"
-t1.variables = grep("V1$", names(data_bn_all), value = TRUE)
-t1.variables
-t2.variables = grep("V2$", names(data_bn_all), value = TRUE)
-t2.variables
-
-#creating blacklist to stop V2 from influencing V1 and V1 from influencing V1
-#We blacklist all the arcs going into all the variables at time t1, because we assume that the arcs between the variables at time t1 are the same as the corresponding variables in time t2 and it's pointless to learn them twice.
-
-roots = expand.grid(from = setdiff(names(data_bn_all), c("HRT_pmm", "age_v1", "repro_span", "education")), to = c("HRT_pmm", "age_v1", "repro_span", "education"), stringsAsFactors = FALSE)
-
-empty.t1 = expand.grid(from = c(t1.variables), to = c(t1.variables),
-              stringsAsFactors = FALSE)
-bl = rbind(tiers2blacklist(list(t1.variables, t2.variables)), roots, empty.t1)
-
-bl= rbind(bl, c("APOE_binary", "CSF_A_V1"))
-
-wl = matrix(c("APOE_binary", "CSF_A_V2",
-             "education", "kids_total"),
-        ncol = 2, byrow = TRUE, dimnames = list(NULL, c("from", "to")))
-
-dyn.dag = tabu(data_bn_all, blacklist = bl, whitelist = wl)
-dyn.dag
-
-
-gR = graphviz.plot(dyn.dag, shape = "rectangle", render = FALSE)
-sg0 = list(graph = subGraph(const, gR), cluster = TRUE)
-sg1 = list(graph = subGraph(t1.variables, gR), cluster = TRUE)
-sg2 = list(graph = subGraph(t2.variables, gR), cluster = TRUE)
-gR = layoutGraph(gR, subGList = list(sg0, sg1, sg2),
-        attrs = list(graph = list(rankdir = "LR")))
-nodeRenderInfo(gR)$fill[t1.variables] = "tomato"
-nodeRenderInfo(gR)$fill[t2.variables] = "gold"
-nodeRenderInfo(gR)$fontsize = 35
-renderGraph(gR)
-
-dyn.str = boot.strength(data_bn_all, R = 1000, algorithm = "tabu",
-            algorithm.args = list(blacklist = bl, whitelist = wl))
-plot(dyn.str)
-dyn.avg = averaged.network(dyn.str)
-par(mfrow = c(1, 2))
-graphviz.compare(dyn.dag, dyn.avg, shape = "rectangle")
-
-
-```
-
-
-
 ### Mediation
+
 ```{r, eval=FALSE}
 
 library(mediation)
@@ -1359,16 +1182,202 @@ summary(med.out_A0)
 
 ```
 
+Mediation analyses were done post-hoc using the mediation R package \[v.4.5.1\] to (1) investigate potential mechanisms of the ways through which parity could interact with amyloid load to affect hippocampal volume and (2) see if the effect of the parity and amyloid interaction on PACC score decline was mediated by the hippocampal volume loss.
+
+Given the association between parity and amyloid status was only significant in AB- women, we stratified our sample by amyloid positivity to reduce the complexity of our mediation model. We tested potential mediation roles of CSF biomarkers associated with inflammation \[SNAP-25, GAP-43, Neurogranin\] and cardiovascular health \[VCAM1\], proxy measures of sex hormones \[HRT use, reproductive span\] and social variables \[household income, occupation type\], on hippocampal volume then subfield volume. Our analyses did not reveal any significant mediation effect.
+
+Similarly, we verified if whole hippocampal volume or its subfields mediated the effect we observed of the 3-way interaction between parity, time and amyloid load on PACC decline. Our analysis did not yield any significant mediation effect either.
+
+### bayesian model
+
+```{r, eval=F, include=F}
+#this could be an interesting approach but I need to fine tune my NA imputation and to figure out the kind of algorithm to use with my factor variables
+
+
+library(bnlearn)
+
+data_bn_v1<-data_sem%>%
+  filter(sex==2)%>%
+  dplyr::select(kids_total, HRT_pmm, age_v1, repro_span, CSF_Neurogranin_V1, CSF_GFAP_V1, CAIDE_scr_20M1, `CSF_IL-6_V1`, vol_Whole_hippocampus_V1 , CSF_A_V1, CSF_sTREM2_V1, ingreso_hogar, education, APOE_binary)%>%
+  rename(CSF_IL_6_V1= `CSF_IL-6_V1`)%>%
+  na.omit()%>%
+  mutate(HRT_pmm = as.factor(HRT_pmm),
+         CSF_A_V1 = as.factor(CSF_A_V1),
+         ingreso_hogar = as.factor(ingreso_hogar),
+         APOE_binary = as.factor(APOE_binary))
+
+
+
+data_bn_all<-data_sem%>%
+  filter(sex==2)%>%
+  dplyr::select(kids_total, HRT_pmm, age_v1, repro_span, CSF_Neurogranin_V1, CSF_Neurogranin_V2, CSF_GFAP_V1, CSF_GFAP_V2, CAIDE_scr_20M1, `CSF_IL-6_V1`, `CSF_IL-6_V2`, vol_Whole_hippocampus_V1 , vol_Whole_hippocampus_V2, CSF_A_V1, CSF_A_V2, CSF_sTREM2_V1, CSF_sTREM2_V2, ingreso_hogar, education, APOE_binary)%>%
+  rename(CSF_IL_6_V1= `CSF_IL-6_V1`,
+         CSF_IL_6_V2= `CSF_IL-6_V2`)%>%
+  na.omit()%>%
+  mutate(HRT_pmm = as.factor(HRT_pmm),
+         CSF_A_V1 = as.factor(CSF_A_V1),
+         CSF_A_V2 = as.factor(CSF_A_V2),
+         ingreso_hogar = as.factor(ingreso_hogar),
+         APOE_binary = as.factor(APOE_binary))
+
+#code is from https://www.bnlearn.com/examples/useR19-tutorial/
+
+
+#blacklist
+
+bl = tiers2blacklist(list("HRT_pmm", "age_v1", "repro_span", "education", "APOE_binary",
+       c("CSF_Neurogranin_V1", "CSF_GFAP_V1", "CAIDE_scr_20M1", "CSF_IL_6_V1", "CSF_A_V1",  "CSF_sTREM2_V1", "ingreso_hogar", "vol_Whole_hippocampus_V1")))
+bl = rbind(bl, c("kids_total", "repro_span"), c("repro_span", "kids_total"))
+bl = rbind(bl, c("kids_total", "age_v1"), c("age_v1", "kids_total"))
+
+
+#whitelist
+wl = matrix(c("APOE_binary", "CSF_A_V1",
+              "education", "vol_Whole_hippocampus_V1",
+             "education", "kids_total"),
+        ncol = 2, byrow = TRUE, dimnames = list(NULL, c("from", "to")))
+
+dag = hc(data_bn_v1, blacklist = bl, whitelist = wl)
+dag
+
+graphviz.plot(dag, shape = "ellipse")
+
+
+str.diff = boot.strength(data_bn_v1, R = 200, algorithm = "hc", algorithm.args = list(whitelist = wl, blacklist = bl))
+
+attr(str.diff, "threshold")
+avg.diff = averaged.network(str.diff)
+strength.plot(avg.diff, str.diff, shape = "ellipse", highlight = list(arcs = wl))
+
+par(mfrow = c(1, 2))
+graphviz.compare(avg.diff, dag, shape = "ellipse", main = c("averaged DAG", "single DAG"))
+
+plot(str.diff)
+abline(v = 0.75, col = "tomato", lty = 2, lwd = 2)
+abline(v = 0.85, col = "steelblue", lty = 2, lwd = 2)
+
+nrow(str.diff[str.diff$strength > 0.85 & str.diff$direction > 0.5, ])
+
+avg.simpler = averaged.network(str.diff, threshold = 0.85)
+strength.plot(avg.simpler, str.diff, shape = "ellipse", highlight = list(arcs = wl))
+
+fitted.simpler = bn.fit(avg.simpler, clgaussian.test)
+fitted.simpler
+
+##other method
+
+
+```
+
+```{r, eval=F, include=F}
+#longitudinal attempt
+
+const = "kids_total"
+t1.variables = grep("V1$", names(data_bn_all), value = TRUE)
+t1.variables
+t2.variables = grep("V2$", names(data_bn_all), value = TRUE)
+t2.variables
+
+#creating blacklist to stop V2 from influencing V1 and V1 from influencing V1
+#We blacklist all the arcs going into all the variables at time t1, because we assume that the arcs between the variables at time t1 are the same as the corresponding variables in time t2 and it's pointless to learn them twice.
+
+roots = expand.grid(from = setdiff(names(data_bn_all), c("HRT_pmm", "age_v1", "repro_span", "education")), to = c("HRT_pmm", "age_v1", "repro_span", "education"), stringsAsFactors = FALSE)
+
+empty.t1 = expand.grid(from = c(t1.variables), to = c(t1.variables),
+              stringsAsFactors = FALSE)
+bl = rbind(tiers2blacklist(list(t1.variables, t2.variables)), roots, empty.t1)
+
+bl= rbind(bl, c("APOE_binary", "CSF_A_V1"))
+
+wl = matrix(c("APOE_binary", "CSF_A_V2",
+             "education", "kids_total"),
+        ncol = 2, byrow = TRUE, dimnames = list(NULL, c("from", "to")))
+
+dyn.dag = tabu(data_bn_all, blacklist = bl, whitelist = wl)
+dyn.dag
+
+
+gR = graphviz.plot(dyn.dag, shape = "rectangle", render = FALSE)
+sg0 = list(graph = subGraph(const, gR), cluster = TRUE)
+sg1 = list(graph = subGraph(t1.variables, gR), cluster = TRUE)
+sg2 = list(graph = subGraph(t2.variables, gR), cluster = TRUE)
+gR = layoutGraph(gR, subGList = list(sg0, sg1, sg2),
+        attrs = list(graph = list(rankdir = "LR")))
+nodeRenderInfo(gR)$fill[t1.variables] = "tomato"
+nodeRenderInfo(gR)$fill[t2.variables] = "gold"
+nodeRenderInfo(gR)$fontsize = 35
+renderGraph(gR)
+
+dyn.str = boot.strength(data_bn_all, R = 1000, algorithm = "tabu",
+            algorithm.args = list(blacklist = bl, whitelist = wl))
+plot(dyn.str)
+dyn.avg = averaged.network(dyn.str)
+par(mfrow = c(1, 2))
+graphviz.compare(dyn.dag, dyn.avg, shape = "rectangle")
+
+
+```
 
 # Discussion
 
 We aimed to investigate the impact of parity on hippocampal subfield volumes and relation to AD pathology in post-menopausal women at risk of AD and men who share similar age and AD risk. Our results suggest that...
 
-Limitations: - unequal number of men and women - still early stages - uniformity of sample both ethnically and socially - no more than 4 kids per women
+Parity interacts with amyloid pathology to influence neurodegeneration and cognition. In our sample, parity was not associated with hippocampal volume size directly but appeared to moderate the effet of amyloid accumulation on hippocampal volume. In the context of low amyloid, female participants appeared to exhibit greater volumes especially in the subiculum and dentate gyrus area.
+
+Interestingly, introducing variables that serve as proxy for hormonal exposure, such as HRT use and reproductive span, seemed to explain some of this effet in the dentate gyrus area but not in the subiculum.
+
+Similarly, parity does not impact PACC score independently but appears to moderate the impact of amyloid pathology on cognitive trajectory. In the context of low amyloid, female participants with higher parity showed lesser cognitive decline. However, this effect was very small, especially compared with the effect of other variables, like education. Whilst including covariates related to sex steroid exposure did not modify this relationship, including household income did.
+
+Mediation analyses trying to identify a possible mechanism behind the parity and amyloid accumulation did not yield any suitable candidates.
+
+The biggest limitation of this study is the lack of hormonal measurements. By only using proxy measurements, we are only able to estimate the role of sex steroid hormones in the results found, but cannot make any definitive conclusions. It is very possible the role of sex hormones in our observatioins was underestimated due to this missing variable. In addition to this, the ALFA+ cohort is very homogeneous: participants are majoritarily caucasian whites, from middle and upper-middle class background, who were selected due to their impeccable health records. Therefore, we must use cuation when generalising our results to a wider population. Additionally, our sample lacked highly multiparous individuals. Previous studies on the effect of parity on cognition and neurodegeneration have found an inverted u-shaped relation between parity and outcome measures, indicating that our lack of women having had more than 4 children might be leading to an incomplete picture of the phenomenon.
 
 # Miscellaneous
 
+```{r, eval=F}
+
+cent<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_ftm_centiloids_ALFA_PET_FTM_20210421_20250703_170207.xlsx")%>%
+  dplyr::select(-ID)%>%
+  mutate(Visit = 1)
+cent2<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_ftm_centiloids_ALFA_PLUS_V2_PET_20250703_170258.xlsx")%>%
+  dplyr::select(-ID)%>%
+  mutate(Visit = 2)
+
+data_cent<-cent%>%
+  bind_rows(cent2)%>%
+  mutate(subject=as.numeric(subject))%>%
+  right_join(., data)
+
+test<-lmer(centiloids ~ kids_total*diff_mri + age_v1  + APOE_binary +(1|subject), data = data_cent[data_cent$sex== 2, ])
+summary(test)
+
+```
+
 ### PCA
+
+```{r, eval=F}
+library( lavaan )
+
+data_dag_v1<-hippo_data_long%>%
+  filter(Visit == "V1")%>%
+  filter(sex==2)%>%
+  mutate(APOE_binary= as.integer(APOE_binary),
+         A=as.integer(A))%>%
+  dplyr::select(subject, kids_total, repro_span, education, HRT_pmm, hypertension, high_chol, diabetes, vol_Whole_hippocampus, ingreso_hogar, A, CAIDE_scr_20M1)
+
+adjustmentSets(
+  g,
+  type="minimal",
+  effect="total",
+  max.results = Inf
+)
+
+corr <- lavCor( data_dag_v1 )
+localTests( g, sample.cov=corr, sample.nobs=nrow( data_dag_v1 ) )
+plotLocalTestResults( localTests( g, sample.cov=corr, sample.nobs=nrow( data_dag_v1 ) ) )
+
+
+```
 
 ```{r, include=F, eval=F}
 data_reproductive<-data%>%
