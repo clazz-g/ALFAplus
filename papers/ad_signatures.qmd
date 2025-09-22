@@ -515,8 +515,11 @@ hippo_data_long %>%
 mod_whole_intA0<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
 summary(mod_whole_intA0)
 
+
 mod_whole_intA1<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
 summary(mod_whole_intA1)
+
+
 
 ```
 
@@ -965,7 +968,7 @@ data_sem<-full_join(biomarkers_wide, hippo_sem, join_by(subject))%>%
 
 #this removes v2 of some people who have neuroimaging but not biomarkers. might have to revise it
 
-cog_sem<-data_cog_long_composites%>%
+cog_sem<-data_cog_long%>%
   dplyr::select(subject, Visit, c(starts_with("Z_")))%>%
   mutate(Visit = ifelse(Visit == 1, "V1", "V2"))%>%
   pivot_wider(names_from = Visit, values_from = c(starts_with("Z_")))
@@ -1330,7 +1333,108 @@ Similarly, parity does not impact PACC score independently but appears to modera
 
 Mediation analyses trying to identify a possible mechanism behind the parity and amyloid accumulation did not yield any suitable candidates.
 
+mention liisa galea's recent findings and how we don't find an interaction with APOE?
+
 The biggest limitation of this study is the lack of hormonal measurements. By only using proxy measurements, we are only able to estimate the role of sex steroid hormones in the results found, but cannot make any definitive conclusions. It is very possible the role of sex hormones in our observatioins was underestimated due to this missing variable. In addition to this, the ALFA+ cohort is very homogeneous: participants are majoritarily caucasian whites, from middle and upper-middle class background, who were selected due to their impeccable health records. Therefore, we must use cuation when generalising our results to a wider population. Additionally, our sample lacked highly multiparous individuals. Previous studies on the effect of parity on cognition and neurodegeneration have found an inverted u-shaped relation between parity and outcome measures, indicating that our lack of women having had more than 4 children might be leading to an incomplete picture of the phenomenon.
+
+# Appendix
+
+## Analysis reproduction with ASHS
+
+```{r, eval=F}
+ashs1<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/ASHS/bx_ashs_volumes_ALFA_PLUS_V1_20231120_20250702_164509.xlsx")%>%
+  dplyr::select(subject, region, side, volume)%>%
+  group_by(subject, region) %>%
+  summarize(volume = sum(volume), .groups = "drop")%>%
+  pivot_wider(names_from = region, values_from = volume, names_prefix = "vol_")%>%
+  mutate(Visit = 1)
+
+ashs1b<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/ASHS/bx_ashs_volumes_ALFA_PLUS_EXP_20250918_161906.xlsx")%>%
+  dplyr::select(subject, region, side, volume)%>%
+  group_by(subject, region) %>%
+  summarize(volume = sum(volume), .groups = "drop")%>%
+  pivot_wider(names_from = region, values_from = volume, names_prefix = "vol_")%>%
+  mutate(Visit = 1)%>%
+  filter(subject != "11331",
+         subject != "10634")
+  
+
+ashs2<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/ASHS/bx_ashs_volumes_ALFA_PLUS_V2_20230518_20250702_165801.xlsx")%>%
+  dplyr::select(subject, region, side, volume)%>%
+  group_by(subject, region) %>%
+  summarize(volume = sum(volume), .groups = "drop")%>%
+  pivot_wider(names_from = region, values_from = volume, names_prefix = "vol_")%>%
+  mutate(Visit = 2)
+
+data_ashs<-ashs1%>%
+  bind_rows(ashs1b)%>%
+  bind_rows(ashs2)%>%
+  mutate(subject = as.numeric(subject),
+         vol_HIPP = vol_CA1+vol_CA2+vol_CA3+vol_DG+vol_SUB)%>%
+  right_join(., data)%>%
+  mutate(diff_mri = ifelse(Visit==1, 0, diff_mri))#%>%
+  #filter(subject != 21136,
+         #subject != 12560,
+         #subject !=12489)
+
+mod_ashs<-lmer(vol_HIPP ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education  +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs<-lmer(vol_CA1 ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs<-lmer(vol_CA2 ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs<-lmer(vol_CA3 ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs<-lmer(vol_DG ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs<-lmer(vol_SUB ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs<-lmer(vol_ERC ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs<-lmer(vol_PHC ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs<-lmer(vol_BA35 ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs<-lmer(vol_BA36 ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+
+test<-data_ashs%>%
+  dplyr::select(subject, vol_HIPP, Visit)
+
+test1<-hippo_data_long%>%
+  dplyr::select(subject, vol_Whole_hippocampus, Visit)%>%
+  mutate(Visit= ifelse(Visit=="V1", 1, 2))
+
+test2<-left_join(test, test1)%>%
+  group_by(subject)%>%
+  filter(n()==2)
+
+plot(test2$vol_HIPP[test2$Visit==1], test2$vol_HIPP[test2$Visit==2])
+text(test2$vol_HIPP[test2$Visit==1], test2$vol_HIPP[test2$Visit==2], 
+     labels = test2$subject[test2$Visit==1])
+
+plot(test2$vol_Whole_hippocampus[test2$Visit==1], test2$vol_HIPP[test2$Visit==1])
+
+data_ashs%>%
+  filter(sex==2)%>%
+  drop_na(A)%>%
+  ggplot(aes(x= diff_mri, y= vol_DG, group= kids_total, colour=kids_total))+
+  geom_point()+
+  facet_wrap(~ A)+
+  geom_smooth(method="lm")
+
+
+```
 
 # Miscellaneous
 
