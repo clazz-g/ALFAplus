@@ -116,13 +116,15 @@ th <- call_aesthethics(15)
 
 # Abstract
 
+300 words
+
 # Introduction
 
 # Methods
 
 ## Study design
 
-The ALFA+ project is a longitudinal cohort following healthly middle aged adults. This study was led in the cty of Barcelona, Spain, at the BarcelonaBeta Brain Research Center. Visit 1 was collected between ... and ..., and Visit 2 between ... and ... Visit 3 is still undergoing. The ALFA study protocol was approved by the Independent Ethics Committee Parc de Salut Mar Barcelona (and registered at Clinicaltrials.gov, NCT01835717). For a more detailed description of the cohort see Molinuevo et al.[@molinuevo2016].
+This study was realised within the context of the The ALFA+ project, a longitudinal observational cohort of healthly middle aged adults. This project currently takes place in the city of Barcelona, Spain, at the BarcelonaBeta Brain Research Center. Visit 1 was collected between ... and ..., and Visit 2 between ... and ... Visit 3 is still undergoing. The ALFA study protocol was approved by the Independent Ethics Committee Parc de Salut Mar Barcelona (and registered at Clinicaltrials.gov, NCT01835717). For a more detailed description of the cohort see Molinuevo et al.[@molinuevo2016].
 
 ## Participants
 
@@ -206,29 +208,29 @@ participants_v2_bio<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CS
 
 In brief, inclusion criteria were being cognitively normal, Spanish and/or Catalan-speaking, being aged between 45 and 74 years and agreing with the study procedures and tests. A close relative was involved in the volunteer’s functional evaluation and both of them had to grant their written informed consent. Exclusion criterias Exclusion criteria were (1) Cognitive performance falling outside the established cutoffs, (2) a Clinical Dementia Rating above 0, (3) major psychiatric disorders (according to DSM-IV-TR), (4) Severe auditory and/or visual disorder, neurodevelopmental and/or psychomotor disorder, (5) Signiﬁcant diseases that could currently interfere with cognition, (6) neurological disorders, (7) Brain injuries and (8) a suspected pattern of family autosomal dominant AD.
 
-In addition to the above exclusion criteria, women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample for analysis. Participants were recruited via advertisement campaigns in newspapers and followed-up via email/phonecalls.
+In addition to the above exclusion criteria, women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample for analysis.
 
-Our sample includes `r nrow(data)` participants from the ALFA+ project, of which `r nrow(data[data$sex==2,])` are women. Visit 1 included MRI data from `r participants_v1_mri` participants, cognitive testing from `r participants_v1_cog` participants and CSF biomarkers from `r participants_v1_bio` participants. Visit 2 included MRI data from `r participants_v2_mri` participants, cognitive testing from `r participants_v2_cog` participants and CSF biomarkers from `r participants_v2_bio` participants.
-
-Data imputation methods were implemented using the mice package in R (v.3.18.0).
+Participants were recruited via advertisement campaigns in newspapers and followed-up via email/phonecalls.
 
 ## Procedures
 
 ### Demographics
 
-Demographic data was collected via oral questions administered by a clinician. Sex was self reported, and participants could choose from three options: male, female, or ... Race and ethnicity was also self-reported.
+Demographic data was collected via oral questions administered by a clinician. Sex was self reported, and participants could choose from three options: male, female, or ... Race and ethnicity were also self-reported.
 
 Reproductive variables, such as number of biological kids, age at menopause, age at menarche and number of abortions, were self-reported at the baseline visit. In the subsequent visits, participants were also asked about hormonal replacement therapy.
 
-Social variables such as years of education, household income, occupational attainment and civil status were also sel-reported at baseline visit.
+Social variables such as years of education, household income, occupational attainment and civil status were also self-reported at baseline visit.
 
 ### MRI acquisition
 
-MRI scans were acquired on a 3.0 T scanner (GE Discovery MR750 W 3 T) using the same protocol for all participants, which included one T1- and three T2- weighted sequences. The 3D-T1w sequence was designed with an isotropic voxel size of1mm3 and a matrix size of256x256x160 (TR/TE/TI = 8.0/3.7/450 ms, NSA = 1, flip angle = 8°). Three 3D-T2w sequences, with a voxel size of1 mm× 1 mm× 3 mm, were also used: fluid attenuation inversion recovery (FLAIR: TR/TE/ TI = 11,000/90/2600 ms, flip angle = 160°), fast spin echo (FSE: TR/TE = 5000/85 ms, flip angle = 110°) and, gradient echo (GRE: TR/TE = 1300/23 ms, flip angle = 15°). All scans were visually assessed to verify their quality and to detect incidental findings by a trained neuroradiologist and have been reported elsewhere (Brugulat-Serrat et al. 2017). In this study, ten participants were excluded due to the presence of a meningioma, as well as 37 participants due to susceptibility, motion artefacts or segmentation problems, resulting in a total of 561 images available for subsequent analysis. The medial temporal lobe atrophy was assessed by Medial Temporal Atrophy scale [@scheltens1992a].
+MRI scans were acquired on a in-house 3.0 T scanner (GE Discovery MR750 W 3 T) using the same protocol for all participants, which included one T1- and three T2- weighted sequences. The 3D-T1w sequence was designed with an isotropic voxel size of1mm3 and a matrix size of256x256x160 (TR/TE/TI = 8.0/3.7/450 ms, NSA = 1, flip angle = 8°). Three 3D-T2w sequences, with a voxel size of1 mm× 1 mm× 3 mm, were also used: fluid attenuation inversion recovery (FLAIR: TR/TE/ TI = 11,000/90/2600 ms, flip angle = 160°), fast spin echo (FSE: TR/TE = 5000/85 ms, flip angle = 110°) and, gradient echo (GRE: TR/TE = 1300/23 ms, flip angle = 15°). All scans were visually assessed to verify their quality and to detect incidental findings by a trained neuroradiologist and have been reported elsewhere (Brugulat-Serrat et al. 2017). At visit 1, ten participants were excluded due to the presence of a meningioma, as well as 37 participants due to susceptibility, motion artefacts or segmentation problems, resulting in a total of 561 images available for subsequent analysis. At Visit 2, ... The medial temporal lobe atrophy was assessed by Medial Temporal Atrophy scale [@scheltens1992a].
 
 ### Hippocampal segmentation
 
 Hippocampal subfield volumes were automatically calculated by FreeSurfer 7 using whole hippocampal segmentation provided by the standard ‘recon-all’ pipeline, which renders the most standard and widely-used volumetric estimation of hippocampal volumes. The subfields were delimited as following: CA1, CA3, CA4, GC-ML-DG, molecular layer, fimbria, parasubiculum, subiculum, presubiculum, HATA, fissure, and tail. However, the fissure was removed from the analysis because of its lack of particular relevance to our topic.
+
+Repoduction of the analysis using ASHS segmentation can be found in the Appendix section.
 
 ![Freesurfer 7 segmentation pipeline.](ad_signatures_files/hipp%20subfield%20segmentation.png)
 
@@ -238,13 +240,17 @@ CSF was collected by lumbar puncture between 9 and 12 a.m. in polypropylene tube
 
 ### Cognitive measures
 
-The Preclinical Alzheimer Cognitive Composite (PACC) was developed to detect subtle cognitive changes in individuals who may be in the pre-clinical stages of AD [@Donohue2014], and includes elements of the Memory Binding Test, the Coding subtest of WAIS-IV, and semantic fluency. After obtaining the PACC z-score, cognitive change was calculated by subtracting the follow-up visit score from the baseline cognitive score. Negative values indicate worse performance in the follow-up visit.
+The Preclinical Alzheimer Cognitive Composite (PACC) was developed to detect subtle cognitive changes in individuals who may be in the pre-clinical stages of AD [@Donohue2014], and includes elements of the Memory Binding Test, the Coding subtest of WAIS-IV, and semantic fluency. Z-scores were computed for Visit 1 and 2.
 
 ## Statistical analyses
 
+study size? "Explain how the study size was arrived at"
+
 ### Linear regression models
 
-Statistical analyses were carried using R v4.5.1. All linear regressions were adjusted for age at baseline, APOE-4 status, time and Aβ status when not part of the interaction. Linear regressions with hippocampal subfield volumes as outcomes were adjusted for Total Intracranial Volume (TIV). p-values were adjusted using the False Discovery Rate (FDR) method.To identify other potential confounders in our primary analyses, we used directed acyclic graph (DAG) methodology to aid with covariate selection. Using Pearl's backdoor criteria, we decided to covary for education in all our analyses given that the effet of this variable on both the exposure and outcome variable, therefore making it a cofounding variable in our analyses along with age at baseline.
+Statistical analyses were carried using R v4.5.1. Our exposure variables included parity, time and Aβ positivity. Parity was defined as number of biological children and treated as a continuous predictor. Time was assessed as number of days between either MRI scans or cognitive testing sessions at visit 1 and 2. Aβ positivity was defined using a CSF Aβ42/40 ratio inferior to 0.071. All analyses were stratified by sex.
+
+To identify other potential confounders in our primary analyses, we used directed acyclic graph (DAG) methodology to aid with covariate selection. Using Pearl's backdoor criteria, we decided to covary for education in all our analyses given that the effet of this variable on both the exposure and outcome variable, therefore making it a cofounding variable in our analyses along with age at baseline. All linear regressions were also adjusted for age at baseline, APOE-4 status, time and Aβ status when not part of the interaction. Linear regressions with hippocampal subfield volumes as outcomes were adjusted for Total Intracranial Volume (TIV). p-values were adjusted using the False Discovery Rate (FDR) method.
 
 ```{r, include=F}
 library(dagitty)
@@ -308,6 +314,10 @@ dag_r_tidy%>%
   scale_shape_manual(values = c(22, 21))
 ```
 
+We first carried out linear mixed-effect models including parity and time as exposure and hippocampal volume as outcome. AD-specific biomakrers were then introduced as a moderator. These analyses were reproduced using PACC as outcome. For sensitivity analyses, we performed the same linear regressions but stratified by Aβ positivity. We also tested the inclusion of other covariates to examine the effect of AD-related biomarkers, female reproductive health and social factors on our outcomes. Mediation analyses were performed...
+
+Data imputation methods were implemented using the mice package in R (v.3.18.0) on covariates, but not exposure or outcome variables. For continous variables, predictive mean matching with 5 donors was used. For categorical variables, logistic regression was used.
+
 # Results
 
 ## Descriptive results
@@ -335,13 +345,18 @@ desc_table<-tbl_summary(data_table,
   modify_header(label = "**Number of childbirths**") %>% # update the column header
   bold_labels()
 
+
 ```
 
 ```{r, echo = F, warning=F}
 desc_table
 ```
 
-Table 1 shows demographics and characteristics of the ALFA+ cohort for all participants, grouped by parity. Participants with higher parity were significantly more likely to be older. No difference was seen between groups regarding Aβ status and APOE-ε4 carriership.
+`r nrow(data)` participants from the ALFA+ project were included in our analyses, of which `r nrow(data[data$sex==2,])` are women. Visit 1 included MRI data from `r participants_v1_mri` participants, cognitive testing from `r participants_v1_cog` participants and CSF biomarkers from `r participants_v1_bio` participants. Visit 2 included MRI data from `r participants_v2_mri` participants, cognitive testing from `r participants_v2_cog` participants and CSF biomarkers from `r participants_v2_bio` participants. Average time between visits was 3.32 years.
+
+(Flowchart?)
+
+Table 1 shows demographics and characteristics of the ALFA+ cohort for all aprticipants included in Visit 1, grouped by parity. Participants with higher parity were significantly more likely to be older. No difference was seen between groups regarding Aβ status and APOE-ε4 carriership.
 
 ## Whole Hippocampal volume
 
@@ -454,9 +469,7 @@ summary(mod_whole_int_men)
 
 ```
 
-The two-way interaction between parity and time did not reveal any significant main effect of parity. However, when introducing a 3-way interaction with AB status, a trending parity and AB status interaction was found (β = `r tidy(mod_whole_int)$estimate[10]`, p = `r tidy(mod_whole_int)$p.value[10]`), such that Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X). Stratified analyses show
-
-When testing these interaction on the men in the cohort, no significant main effect or interaction was found after correction.
+We foudn no significant independent effect of parity on whole hippocampal volume. However, a trending parity and Aβ positivity interaction was found (β = `r tidy(mod_whole_int)$estimate[10]`, p = `r tidy(mod_whole_int)$p.value[10]`), such that Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X).
 
 ```{r, echo=F, warning=F}
 
@@ -508,8 +521,6 @@ hippo_data_long %>%
 
 ```
 
-### Sensitivity analyses
-
 ```{r, include=F}
 
 mod_whole_intA0<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
@@ -519,11 +530,16 @@ summary(mod_whole_intA0)
 mod_whole_intA1<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education +(1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
 summary(mod_whole_intA1)
 
+mod_whole_intA0_CSF<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education + CSF_NFL + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
+summary(mod_whole_intA0_CSF)
 
 
+#synaptotagmin trend, GAP43 trend, sTREM2 very significant, 
 ```
 
-Stratifying the analysis by Aβ status resulted in the main effect of parity only being significant in the Aβ- group, suggesting the prior interaction is mainly present in the context of low amyloid.
+No significant interaction with time was found, indicating that this effect appears constant over visits. Subsequent stratification of the analysis revealed a significant main effect of parity on hippocampus volume only in Aβ- women (β = `r tidy(mod_whole_intA0)$estimate[2]` , p=`r tidy(mod_whole_intA0)$p.value[2]`), but no interaction with time.
+
+No significant main effect of parity or interaction between parity and Aβ positivity was found in men.
 
 ```{r, include=F}
 mod_whole_int<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
@@ -536,7 +552,7 @@ mod_whole_int_social<-lmer(vol_Whole_hippocampus ~ kids_total*diff_mri*A + age_v
 summary(mod_whole_int_social)
 ```
 
-```{r, echo=F, warning=F}
+```{r, include=F}
 huxreg(list("Basic" = mod_whole_int, "Reproductive var"=mod_whole_int_reproductive_var, "Social var" = mod_whole_int_social), bold_signif = 0.05, outer_borders =1, stars = c("†" = 0.1, "*" = 0.05, "**" = 0.01, "***" = 0.001))%>%
   set_caption("Whole Hippocampus") %>% 
   set_caption_pos("top")
@@ -632,9 +648,7 @@ fdr_hip_w_int_men<-tidy_models_hip_w_int_men%>%
 
 ```
 
-Applying the two-way time and parity interaction model to each individual hippocampal subfield revealed no significant main effect of parity after applying FDR correction. However, the three way interaction including Aβ status showed a significant effect of the interaction between parity and Aβ on the parasubiculum volume (β = `r tidy_models_hip_w_int$estimate[9]`, adj.p = `r fdr_hip_w_int[9]`), and a near significant effect on the CA4 (β = `r tidy_models_hip_w_int$estimate[3]`, adj.p = `r fdr_hip_w_int[3]`), dentate gyrus (β = `r tidy_models_hip_w_int$estimate[4]`, adj.p = `r fdr_hip_w_int[4]`), presubiculum (β = `r tidy_models_hip_w_int$estimate[10]`, adj.p = `r fdr_hip_w_int[10]`) and subiculum (β = `r tidy_models_hip_w_int$estimate[11]`, adj.p = `r fdr_hip_w_int[11]`). The direction of the effect followed the same as for the whole hippocampus, where Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X)
-
-When reproducing these analyses in men, the only significant effect found was a three-way interaction between parity, time and Aβ status in the molecular layer (β = `r tidy_models_hip_w_int_men$estimate[8]`, adj.p = `r fdr_hip_w_int_men[8]`).
+Similarly, no significant main effect of parity was found in any of the subfields after FDR correction. However, the three way interaction including Aβ status showed a significant effect of the interaction between parity and Aβ on the parasubiculum volume (β = `r tidy_models_hip_w_int$estimate[9]`, adj.p = `r fdr_hip_w_int[9]`), and a near significant effect on the CA4 (β = `r tidy_models_hip_w_int$estimate[3]`, adj.p = `r fdr_hip_w_int[3]`), dentate gyrus (β = `r tidy_models_hip_w_int$estimate[4]`, adj.p = `r fdr_hip_w_int[4]`), presubiculum (β = `r tidy_models_hip_w_int$estimate[10]`, adj.p = `r fdr_hip_w_int[10]`) and subiculum (β = `r tidy_models_hip_w_int$estimate[11]`, adj.p = `r fdr_hip_w_int[11]`). The direction of the effect followed the same as for the whole hippocampus, where Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X)
 
 ```{r, echo=F, warning=F}
 data_forest_plot<-hippo_data_long%>%
@@ -700,49 +714,58 @@ pred_hippo_all %>%
   
 ```
 
-### Sensitivity analyses
+```{r, include=F}
 
-```{r, eval=F}
+mod_para_A0<-lmer(vol_parasubiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + education+ scale(TIV)  +(1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
+summary(mod_para_A0)
 
-mod_para_A0<-lmer(vol_parasubiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
-
-mod_para_A1<-lmer(vol_parasubiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
+mod_para_A1<-lmer(vol_parasubiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + education+ scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
+summary(mod_para_A1)
 
 
 #parasubiculum driven by A+ women
 
-mod_CA4_A0<-lmer(vol_CA4 ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
+mod_CA4_A0<-lmer(vol_CA4 ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education+ (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
 summary(mod_CA4_A0)
-mod_CA4_A1<-lmer(vol_CA4 ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
+mod_CA4_A1<-lmer(vol_CA4 ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education+ (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
 summary(mod_CA4_A1)
 
-#CA4 driven by A- women
+#CA4 driven by A- women. sTREM2 very significant
 
-mod_DG_A0<-lmer(vol_GC_ML_DG ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
+mod_DG_A0<-lmer(vol_GC_ML_DG ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education+ (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
 summary(mod_DG_A0)
-mod_DG_A1<-lmer(vol_GC_ML_DG ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
+mod_DG_A1<-lmer(vol_GC_ML_DG ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education+ (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
 summary(mod_DG_A1)
 
-#DG driven by A- women
+#DG driven by A- women sTREM2 highly significant
 
-mod_subiculum_A0<-lmer(vol_subiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
+mod_subiculum_A0<-lmer(vol_subiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education+ (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
 summary(mod_subiculum_A0)
-mod_subiculum_A1<-lmer(vol_subiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
+mod_subiculum_A1<-lmer(vol_subiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education+ (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
 summary(mod_CA4_A1)
 
-#subiculum driven by A- women
+#subiculum driven by A- women, sTREM2 sig
 
-mod_presubiculum_A0<-lmer(vol_presubiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
+mod_presubiculum_A0<-lmer(vol_presubiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==0,])
 summary(mod_presubiculum_A0)
-mod_presubiculum_A1<-lmer(vol_presubiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
+mod_presubiculum_A1<-lmer(vol_presubiculum ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education + (1|subject), data = hippo_data_long[hippo_data_long$sex==2&hippo_data_long$A==1,])
 summary(mod_presubiculum_A1)
 
-#presubiculum driven by A- women
+#presubiculum driven by A- women, sTREM2 sig
+
+mod_ML_A0<-lmer(vol_molecular_layer_HP ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education + (1|subject), data = hippo_data_long[hippo_data_long$sex==1&hippo_data_long$A==0,])
+summary(mod_ML_A0)
+mod_ML_A1<-lmer(vol_molecular_layer_HP ~ kids_total*diff_mri + age_v1 +APOE_binary + scale(TIV) + education + (1|subject), data = hippo_data_long[hippo_data_long$sex==1&hippo_data_long$A==1,])
+summary(mod_ML_A1)
 ```
 
-Startifying the regressions per Aβ status showed that the effect was driven by Aβ status-women in all subfields but the parasubiculum, where the effect seemed to be driven by Aβ status+ women.
+Susequent stratification of the regressions by Aβ status showed that the effect was driven by Aβ- women in all subfields, but the parasubiculum, where the effect seemed to be driven by Aβ+ women.
 
-```{r, echo=F, warning=F}
+In men, no significant main effect of parity was found on any of the hippocampal subfields. However, a significant three-way interaction was found between parity, time and Aβ status in the molecular layer (β = `r tidy_models_hip_w_int_men$estimate[8]`, adj.p = `r fdr_hip_w_int_men[8]`).
+
+Stratification by Aβ status shows the effect is driven by Aβ+ men. 
+
+```{r, include=F}
 mod_para<-lmer(vol_parasubiculum ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
 
 mod_para_rep<-lmer(vol_parasubiculum ~ kids_total*diff_mri*A + age_v1 +APOE_binary + education +scale(TIV) + repro_span  + HRT+ (1|subject), data = hippo_data_long[hippo_data_long$sex==2,])
@@ -830,7 +853,7 @@ summary(fit_cog_PACC)
 
 ```
 
-The two-way parity and time interaction did not produce any significan main effect on PACC score at visit 1 and 2. However, a three-way interaction between time, parity and A status was found (β = `r tidy(fit_cog_PACC)$estimate[11]`, p=`r tidy(fit_cog_PACC)$p.value[11]`). Results suggest that whilst parity and Aβ status did not seem to affect PACC score at time = 0, Aβ- women appeared to show a positive relationship between parity and PACC score as time went on, and Aβ+ women the opposite.
+No significan main effect of parity on PACC score was found. However, after moderation by Aβ status, a modest yet significant effect was found (β = `r tidy(fit_cog_PACC)$estimate[11]`, p=`r tidy(fit_cog_PACC)$p.value[11]`). Results suggest that whilst parity and Aβ status did not seem to affect PACC score at time = 0, Aβ- women appeared to show a positive relationship between parity and PACC score as time went on, and Aβ+ women the opposite.
 
 ```{r, echo=F, warning=F}
 
@@ -891,6 +914,9 @@ summary(fit_cog_PACC_A0)
 fit_cog_PACC_A1<-lmer(Z_PACC ~ kids_total*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex==2 & data_cog_long$A==1,])
 summary(fit_cog_PACC_A1)
 
+fit_cog_PACC_A0<-lmer(Z_PACC ~ kids_total*time_diff +age_v1 + APOE_binary + education  + (1 | subject), data_cog_long[data_cog_long$sex==2 & data_cog_long$A==0,])
+summary(fit_cog_PACC_A0)
+
 ```
 
 Stratifying the analysis by Aβ status reveals the effect seems driven by Aβ- women.
@@ -907,7 +933,7 @@ summary(fit_cog_PACC_social)
 
 ```
 
-```{r, echo=F, warning=F}
+```{r, include=F}
 huxreg(list("Basic" = fit_cog_PACC, "Reproductive var"=fit_cog_PACC_reproductive_var, "Social var" = fit_cog_PACC_social), bold_signif = 0.05, outer_borders =1, stars = c("†" = 0.1, "*" = 0.05, "**" = 0.01, "***" = 0.001))%>%
   set_caption("PACC score") %>% 
   set_caption_pos("top")
@@ -999,7 +1025,7 @@ data_med<-hippo%>%
   left_join(., cognition, join_by(subject, Visit))%>%
   left_join(., biomarkers_long, join_by(subject, Visit))%>%
   left_join(., diff_mri_df, join_by(subject))%>%
-  drop_na(Z_PACC, vol_subiculum)
+  drop_na(CSF_sTREM2, vol_CA4, Z_PACC)
 
 data_med_A0<-data_med%>%
   filter(Visit=="1")%>%
@@ -1018,9 +1044,9 @@ data_med_A0_v1 <- data_med_A0%>%
 
 #mediation of PACC by hippo volume
 
-med.fit_A0<-lme4::lm(vol_parasubiculum ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
+med.fit_A0<-lme4::lmer(vol_parasubiculum ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A1[data_med_A1$sex==2 ,])
 
-out.fit_A0<-lme4::lmer(Z_PACC ~ vol_parasubiculum + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
+out.fit_A0<-lme4::lmer(Z_PACC ~ vol_parasubiculum + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A1[data_med_A1$sex==2 ,])
 
 med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "vol_parasubiculum", sims = 5000)
 summary(med.out_A0)
@@ -1182,6 +1208,21 @@ out.fit_A0<-lm(vol_Whole_hippocampus ~ APOE_binary + kids_total + scale(age_v1) 
 
 med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "APOE_binary", sims = 5000)
 summary(med.out_A0)
+
+
+med_model <- lme4::lmer(CSF_sTREM2 ~ kids_total*diff_mri*A + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med[data_med$sex==2 ,])
+
+# Test if A moderates the C→X pathway  
+out_model <- lme4::lmer(vol_CA4 ~ kids_total*A*diff_mri + CSF_sTREM2*A*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med[data_med$sex==2 ,])
+
+# Conditional mediation effects
+med_A0 <- mediate(med_model, out_model, treat = "kids_total", mediator = "CSF_sTREM2", 
+                  covariates = list(A = 0), sims = 5000)
+med_A1 <- mediate(med_model, out_model, treat = "kids_total", mediator = "CSF_sTREM2", 
+                  covariates = list(A = 1), sims = 5000)
+
+# Test difference between conditional effects
+test.modmed(med_A0, med_A1)
 
 ```
 
