@@ -149,7 +149,7 @@ summary(fit_cogA0)
 fit_cogA1<-lmer(Z_PACC ~ kids_total*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex == 2 & data_cog_long$A==1,])
 summary(fit_cogA1)
 
-#using emmeans is better because of quite unequal group sizes
+#using emmeans is better because of quite unequal group sizes -
 
 hist(data_cog_long$time_diff)
 
