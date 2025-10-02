@@ -68,6 +68,7 @@ library(gtsummary)
 library(broom.mixed)
 library(purrr)
 library(huxtable)
+library(pwrss)
 ```
 
 ```{r setup, include=FALSE}
@@ -244,7 +245,7 @@ The Preclinical Alzheimer Cognitive Composite (PACC) was developed to detect sub
 
 ## Statistical analyses
 
-study size? "Explain how the study size was arrived at"
+This analysis is opportunistic, in the sense that the ALFA+ cohort was designed to provide data for a wide range of questions. Consequently, this study sample size limits the kind of analysis we are able to perform. Because of this, we chose not to include results from stratified analysis in this paper because of a high chance of yielding type II errors.
 
 ### Linear regression models
 
@@ -397,7 +398,6 @@ data_ashs<-ashs1%>%
          #subject !=12489)
 ```
 
-
 ```{r, include = F}
 mod_ashs_simple<-lmer(vol_HIPP ~  kids_total*diff_mri+A +age_v1 +APOE_binary + scale(vol_tiv) + education  +(1|subject), data = data_ashs[data_ashs$sex==2,])
 summary(mod_ashs_simple)
@@ -406,12 +406,9 @@ mod_ashs<-lmer(vol_HIPP ~  kids_total*A*diff_mri +age_v1 +APOE_binary + scale(vo
 summary(mod_ashs)
 plot_model(mod_ashs, type="int")
 
-
 ```
 
-We found no significant independent effect of parity on whole hippocampal volume. However, a significant parity and Aβ positivity interaction was found (β = `r tidy(mod_ashs)$estimate[9]`, p = `r tidy(mod_ashs)$p.value[9]`), such that Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X). No significant interaction with time was found, indicating that this effect appears constant over visits. 
-
-
+We found no significant independent effect of parity on whole hippocampal volume. However, a significant parity and Aβ positivity interaction was found (β = `r tidy(mod_ashs)$estimate[9]`, p = `r tidy(mod_ashs)$p.value[9]`), such that Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X). No significant interaction with time was found, indicating that this effect appears constant over visits.
 
 ```{r, echo=F, warning=F}
 
@@ -465,6 +462,28 @@ data_ashs %>%
 ```
 
 ```{r, include=F}
+
+sd_kids_total <- sd(data_ashs$kids_total[data_ashs$sex==2], na.rm=TRUE)
+prop_A <- prop.table(table(data_ashs$A[data_ashs$sex==2]))
+p_A <- 0.336 
+sd_A <- sqrt(p_A * (1 - p_A))
+
+(134.143 * (sd_kids_total * sd_A) / sd(data_ashs$vol_HIPP[data_ashs$sex==2], na.rm=TRUE))^2
+
+power.t.regression(beta = -134.143,
+                   sd.predictor = sd_kids_total * sd_A,
+                   sd.outcome = sd(data_ashs$vol_HIPP[data_ashs$sex==2], na.rm=TRUE),
+                   r.squared = (134.143 * (sd_kids_total * sd_A) / sd(data_ashs$vol_HIPP[data_ashs$sex==2], na.rm=TRUE))^2,
+                   null.beta = 0, 
+                   k.total = 8, 
+                   n=196, 
+                   alpha=0.05)
+
+```
+
+Power analysis of our main linear regression yielded a value of 0.37. Therefore, we chose not to include stratified analysis by Aβ status, due to the high possibility of a type II error.
+
+```{r, include=F}
 mod_ashs_simple_men<-lmer(vol_HIPP ~  kids_total*diff_mri+A +age_v1 +APOE_binary + scale(vol_tiv) + education  +(1|subject), data = data_ashs[data_ashs$sex==1,])
 summary(mod_ashs_simple_men)
 
@@ -474,7 +493,7 @@ plot_model(mod_ashs_men, type="int")
 
 ```
 
-No main effect of parity was found in men but interestingly,the interaction of parity and Aβ significantly impacted whole hippocampal volume (β = `r tidy(mod_ashs_men)$estimate[10]`, p = `r tidy(mod_ashs_men)$p.value[10]`), but this time in an opposite pattern (Figure X). 
+No main effect of parity was found in men but interestingly,the interaction of parity and Aβ significantly impacted whole hippocampal volume (β = `r tidy(mod_ashs_men)$estimate[10]`, p = `r tidy(mod_ashs_men)$p.value[10]`), but this time in an opposite pattern (Figure X).
 
 ```{r, echo=F, warning=F}
 
@@ -629,15 +648,15 @@ data_cog_long %>%
                                   ymax = conf.high, 
                                   group=kids_total_factor), inherit.aes = F, alpha=.07)+
   facet_wrap(~A) +
-  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3" = "#0A5940", "4+" = "#0F3F2D")) +
+  scale_color_manual(values = c("0" = "#A8D8EA", "1" = "#79A3D1", "2" = "#4A6FA5", "3" = "#2E4057", "4+" = "#1B263B")) +
   th +
   labs(x = "Time difference (days)", 
        y = "PACC Z-score", 
        color = "Number of childbirths")
 ```
 
-
 ## Post-hoc analyses
+
 ### Hippocampal subfields
 
 ```{r, include = F}
@@ -713,6 +732,7 @@ pred_hippo_all %>%
   guides(colour = "none")
   
 ```
+
 ```{r, include=F}
 
 
@@ -745,7 +765,8 @@ summary(mod_ashs)
 
 
 ```
-In men, exploratory analyses of the subfields showed a significant effect of the interaction between Aβ and parity in the CA1 (β = `r tidy(mod_ashs_CA1_men)$estimate[10]`, p= `r tidy(mod_ashs_CA1_men)$p.value[10]`) and the parahippocampal cortex (β = `r tidy(mod_ashs_phc_men)$estimate[10]`, p= `r tidy(mod_ashs_phc_men)$p.value[10]`), and a trending effect in the dentate gyrus (β = `r tidy(mod_ashs_DG_men)$estimate[10]`, p= `r tidy(mod_ashs_DG_men)$p.value[10]`) and the subiculum (β = `r tidy(mod_ashs_sub_men)$estimate[10]`, p= `r tidy(mod_ashs_sub_men)$p.value[10]`). Similarly to the effects found in the whole hippocampus, the directioin of the interaction is reversed in men, such that Aβ+ men show a positive relationship between parity and subfield volume, and Aβ- men show the opposite. 
+
+In men, exploratory analyses of the subfields showed a significant effect of the interaction between Aβ and parity in the CA1 (β = `r tidy(mod_ashs_CA1_men)$estimate[10]`, p= `r tidy(mod_ashs_CA1_men)$p.value[10]`) and the parahippocampal cortex (β = `r tidy(mod_ashs_phc_men)$estimate[10]`, p= `r tidy(mod_ashs_phc_men)$p.value[10]`), and a trending effect in the dentate gyrus (β = `r tidy(mod_ashs_DG_men)$estimate[10]`, p= `r tidy(mod_ashs_DG_men)$p.value[10]`) and the subiculum (β = `r tidy(mod_ashs_sub_men)$estimate[10]`, p= `r tidy(mod_ashs_sub_men)$p.value[10]`). Similarly to the effects found in the whole hippocampus, the direction of the interaction is reversed in men, such that Aβ+ men show a positive relationship between parity and subfield volume, and Aβ- men show the opposite (Figure X).
 
 ```{r, echo=F, warning=F}
 data_forest_plot_men<-data_ashs%>%
@@ -808,7 +829,6 @@ pred_hippo_all_men %>%
   
 ```
 
-
 # Discussion
 
 We aimed to investigate the impact of parity on hippocampal subfield volumes and relation to AD pathology in post-menopausal women at risk of AD and men who share similar age and AD risk. Our results suggest that...
@@ -819,7 +839,6 @@ Interestingly, introducing variables that serve as proxy for hormonal exposure, 
 
 Similarly, parity does not impact PACC score independently but appears to moderate the impact of amyloid pathology on cognitive trajectory. In the context of low amyloid, female participants with higher parity showed lesser cognitive decline. However, this effect was very small, especially compared with the effect of other variables, like education. Whilst including covariates related to sex steroid exposure did not modify this relationship, including household income did.
 
-
 mention liisa galea's recent findings and how we don't find an interaction with APOE?
 
 The biggest limitation of this study is the lack of hormonal measurements. By only using proxy measurements, we are only able to estimate the role of sex steroid hormones in the results found, but cannot make any definitive conclusions. It is very possible the role of sex hormones in our observatioins was underestimated due to this missing variable. In addition to this, the ALFA+ cohort is very homogeneous: participants are majoritarily caucasian whites, from middle and upper-middle class background, who were selected due to their impeccable health records. Therefore, we must use cuation when generalising our results to a wider population. Additionally, our sample lacked highly multiparous individuals. Previous studies on the effect of parity on cognition and neurodegeneration have found an inverted u-shaped relation between parity and outcome measures, indicating that our lack of women having had more than 4 children might be leading to an incomplete picture of the phenomenon.
@@ -827,7 +846,3 @@ The biggest limitation of this study is the lack of hormonal measurements. By on
 # Appendix
 
 ## Analysis reproduction with ASHS
-
-
-
-
