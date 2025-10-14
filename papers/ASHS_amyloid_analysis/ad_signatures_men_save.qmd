@@ -1,0 +1,1340 @@
+---
+title: "Parity and AD specific neurodegeneration"
+author: "Clazz"
+toc: true
+number-sections: true
+format: 
+  html:
+    code-fold: true
+editor: visual
+bibliography: references.bib
+csl: elsevier-vancouver.csl
+---
+
+```{r, include = F}
+library(readxl)
+#install.packages("ggplot2")
+library(ggplot2)
+#install.packages("psych")
+library(psych)
+#install.packages("tidyverse")
+library(tidyverse)
+#install.packages("ggpubr")
+library(ggpubr)
+#install.packages("broom")
+library(broom)
+#install.packages("ggeffects")
+library(ggeffects)
+#install.packages("MASS")
+library(MASS)
+#install.packages("mice")
+library(mice)
+#install.packages("VIM")
+library(VIM)
+#install.packages("car")
+library(car)
+#install.packages("sjPlot")
+library(sjPlot)
+#install.packages("caret")
+library(caret)
+#install.packages("bestNormalize")
+library(bestNormalize)
+#install.packages("ggrain")
+library(ggrain)
+#install.packages("emmeans")
+library(emmeans)
+#install.packages("skimr")
+library(skimr)
+library(glmnet)
+#install.packages("bullseye")
+library(bullseye)
+#install.packages("lavaan")
+library(lavaan)
+#install.packages("brms")
+library(brms)
+#install.packages("mgcv")
+library(mgcv)
+library(splines)
+#install.packages("fitdistrplus")
+library(fitdistrplus)
+#install.packages("patchwork")
+library(patchwork)
+#install.packages("lme4")
+library(lme4)
+#install.packages("lmerTest")
+library(lmerTest)
+library(gtsummary)
+library(broom.mixed)
+library(purrr)
+library(huxtable)
+```
+
+```{r setup, include=FALSE}
+# Register an inline hook:
+options(scipen = 1, digits = 3)
+
+knitr::opts_chunk$set(
+  fig.width = 8,
+  fig.height = 4,
+  out.width = "100%"
+)
+```
+
+```{r, include=FALSE}
+## Plot aesthetics
+
+
+call_aesthethics <- function(text_size){
+  th <- theme(   panel.grid.major = element_blank(),
+                 panel.grid.minor = element_blank(),
+                 panel.border = element_blank(),
+                 panel.background = element_blank(),
+                 axis.line = element_line(linewidth = 0.5),
+                 legend.position = 'right',
+                 legend.text = element_text(size= text_size, family="Helvetica"),
+                 text = element_text(size= text_size, family="Helvetica"),
+                 strip.text.x = element_text(size = rel(0.90)),
+                 strip.text.y = element_text(size = rel(0.90)),
+                 axis.title.x = element_text(vjust=-0.3),
+                 plot.title = element_text(hjust = 0.5, vjust = 0),
+                 axis.ticks = element_line(linewidth = 0.4),
+                 axis.text.x.bottom  = element_text(size = rel(0.90), margin = unit(c(t = 2.5, r = 0, b = 0, l = 0), "mm")),
+                 axis.title.y = element_text(vjust = 1),
+                 axis.text.y = element_text(size = rel(0.90), margin = unit(c(t = 0, r = 2.5, b = 0, l = 0), "mm")),
+                 axis.ticks.length = unit(-1.2, "mm"),
+                 axis.text.x.top = element_text(size = rel(0.90), margin = unit(c(t = 0, r = 0, b = 2.5, l = 0), "mm")))
+  return(th)
+}
+
+
+th <- call_aesthethics(15)
+
+```
+
+# Abstract
+
+300 words
+
+# Introduction
+
+# Methods
+
+## Study design
+
+This study was realised within the context of the The ALFA+ project, a longitudinal observational cohort of healthly middle aged adults. This project currently takes place in the city of Barcelona, Spain, at the BarcelonaBeta Brain Research Center. Visit 1 was collected between 2013 and 2015, and Visit 2 between 2016 and 2019 Visit 3 is still undergoing. The ALFA study protocol was approved by the Independent Ethics Committee Parc de Salut Mar Barcelona (and registered at Clinicaltrials.gov, NCT01835717). For a more detailed description of the cohort see Molinuevo et al.[@molinuevo2016].
+
+## Participants
+
+```{r, include=FALSE}
+# creating basic dataset
+
+data<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(sex=factor(sex),
+         APOE_binary = factor(APOE_binary))
+
+
+#adding scan dates for descriptives, horizontal 
+date_mri_v1<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_scandates_ALFA_PLUS_V1_20231120_20250210_135308.xlsx")%>%
+  dplyr::select(subject_label, scandate)%>%
+  mutate(subject_label = as.numeric(subject_label))%>%
+  rename(subject = subject_label,
+         scandate_v1 = scandate)
+
+date_mri_v2<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_scandates_ALFA_PLUS_V2_20230518_20250210_135351.xlsx")%>%
+  dplyr::select(subject_label, scandate)%>%
+  mutate(subject_label = as.numeric(subject_label))%>%
+  rename(subject = subject_label,
+         scandate_v2 = scandate)
+
+date_mri_long<-full_join(date_mri_v1, date_mri_v2)%>%
+  mutate(scandate_v1 = as.Date(scandate_v1, format = "%Y-%m-%d"),
+         scandate_v2 = as.Date(scandate_v2, format = "%Y-%m-%d"),
+         diff_mri = as.numeric(difftime(scandate_v2, scandate_v1, units = c("days")))/365.25)
+
+#adding MRI sessions dates to the dataset
+data<-left_join(data, date_mri_long)%>%
+  mutate(DOB = as.Date (DOB, format = "%Y-%m-%d"),
+         age_v1_mri = as.numeric(difftime(scandate_v1, DOB, units= c("days")))/365.25,
+         age_v2_mri = as.numeric(difftime(scandate_v2, DOB, units= c("days")))/365.25)
+
+data_biomarkers<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  filter(Visit == "V1")%>%
+  dplyr::select(-Visit)
+
+data<-left_join(data, data_biomarkers)%>%
+  mutate(A = factor(A))
+
+participants_v1_cog<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+  dplyr::select(IdParticipante, Visit, Z_PACC)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = as.numeric(subject))%>%
+  filter(Visit == 1)%>%
+  dplyr::select(subject)%>%
+  nrow()
+
+
+participants_v2_cog<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+  dplyr::select(IdParticipante, Visit, Z_PACC)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = as.numeric(subject))%>%
+  filter(Visit == 2)%>%
+  dplyr::select(subject)%>%
+  nrow()
+  
+
+participants_v1_mri<-data%>%
+  drop_na(scandate_v1)%>%
+  nrow
+
+participants_v2_mri<-data%>%
+  drop_na(scandate_v2)%>%
+  nrow
+
+participants_v1_bio<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  filter(Visit == "V1")%>%
+  nrow()
+
+participants_v2_bio<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  filter(Visit == "V2")%>%
+  nrow()
+```
+
+In brief, inclusion criteria were being cognitively normal, Spanish and/or Catalan-speaking, being aged between 45 and 74 years and agreing with the study procedures and tests. A close relative was involved in the volunteer’s functional evaluation and both of them had to grant their written informed consent. Exclusion criterias Exclusion criteria were (1) Cognitive performance falling outside the established cutoffs, (2) a Clinical Dementia Rating above 0, (3) major psychiatric disorders (according to DSM-IV-TR), (4) Severe auditory and/or visual disorder, neurodevelopmental and/or psychomotor disorder, (5) Signiﬁcant diseases that could currently interfere with cognition, (6) neurological disorders, (7) Brain injuries and (8) a suspected pattern of family autosomal dominant AD.
+
+In addition to the above exclusion criteria, women with history of cardiovascular related gestational disease, such as preeclampsia, were excluded from our sample for analysis.
+
+Participants were recruited via advertisement campaigns in newspapers and followed-up via email/phonecalls.
+
+## Procedures
+
+### Demographics
+
+Demographic data was collected via oral questions administered by a clinician. Sex was self reported, as well as gender and participants could choose from three options: male, female, or ... Race and ethnicity were also self-reported.
+
+Reproductive variables, such as number of biological kids, age at menopause, age at menarche and number of abortions, were self-reported at the baseline visit. In the subsequent visits, participants were also asked about hormonal replacement therapy.
+
+Social variables such as years of education, household income, occupational attainment and civil status were also self-reported at baseline visit.
+
+### Imaging data preprocessing
+
+GMV changes were computed voxel-wise using the pairwise longitudinal registration implemented in the statistical parametric mapping software (SPM, version 12) ([**https://www.fil.ion.ucl.ac.uk/spm/software/spm12/**](https://www.fil.ion.ucl.ac.uk/spm/software/spm12/)). The procedure involves a high-dimensional warping between consecutive T1-weighted scans, combining diffeomorphic and rigid-body registrations and incorporating a correction for field inhomogeneities. This procedure yields for each subject a parametric whole brain map encoding at each voxel the local tissue deformations that have occurred over time @Ashburner2007 . Individual deformation maps were inspected for sample homogeneity using the computational anatomy toolbox (CAT12) ([**http://dbm.neuro.unijena.de/cat/**](http://dbm.neuro.unijena.de/cat/)) and normalized to the Montreal Neurological Institute (MNI) space using diffeomorphic image registration with DARTEL30 and spatially smoothed with an 8-mm full width at half maximum (FWHM) Gaussian kernel before being submitted to group statistical analyses.
+
+### Automatic Segmentation of Hippocampal Subfields
+
+Automatic Segmentation of Hippocampal Subfields (ASHS) software @Yushkevich2015 was used on the T1 and inversion recovery (IR) images to segment the hippocampal formation in the following sub-regions: Brodmann areas 35 and 36, cornu Ammonis (CA) 1, 2 and 3, dentate gyrus (DG), entorhinal cortex (ERC), parahippocampus (PHC), subiculum (SUB), and sulcus (SUL). All segmentations were visually inspected before proceeding with the statistical analyses.
+
+### Lumbar puncture
+
+CSF was collected by lumbar puncture between 9 and 12 a.m. in polypropylene tubes. Samples were processed within 1 hour and centrifuged at 4°C for 10 minutes at 2000 g, stored in polypropylene tubes and frozen at -80°C. Core AD biomarkers (namely Ab42, Ab40, total Tau, and p tau) and other molecules of interest (such as YKL-40, neurogranin and Ab oligomers) were analyzed and determined in Prof. Kaj Blennow’s laboratory (Institute ofNeuroscience and Physiology, Department of Psychiatry and Neurochemistry, The Sahlgrenska Academy at the University of Gothenburg, Sweden).
+
+### Cognitive measures
+
+The Preclinical Alzheimer Cognitive Composite (PACC) was developed to detect subtle cognitive changes in individuals who may be in the pre-clinical stages of AD [@Donohue2014], and includes elements of the Memory Binding Test, the Coding subtest of WAIS-IV, and semantic fluency. Z-scores were computed for Visit 1 and 2.
+
+## Statistical analyses
+
+### Linear regression models
+
+Statistical analyses were carried using R v4.5.1. Our exposure variables included parity, time and Aβ positivity. Parity was defined as number of biological children and used as a continuous variable (1, 2, 3, 4+). In order to explore the potential non-linear effects, we grouped subjects by nulliparous, primiparous and multiparous. Time was assessed as number of days between either MRI scans or cognitive testing sessions at visit 1 and 2. Aβ pathology was defined as a binary variable, obtained by computing the ratio of CSF Aß42 over CSF Aß40 and using the value of 0.071 pg/mL cutoff @Milà-Alomà2020 . ALFA+ individuals were considered Aß positive if they fell under this value. All analyses were stratified by sex?
+
+To identify other potential confounders in our primary analyses, we used directed acyclic graph (DAG) methodology to aid with covariate selection. Using Pearl's backdoor criteria, we decided to covary for education in all our analyses given that the effet of this variable on both the exposure and outcome variable, therefore making it a cofounding variable in our analyses along with age at baseline. All linear regressions were also adjusted for age at baseline, time and CSF Aß42/40 ratio. Linear regressions with hippocampal subfield volumes as outcomes were adjusted for Total Intracranial Volume (TIV).
+
+```{r, include=F}
+library(dagitty)
+library(ggdag)
+
+set.seed(123)
+
+g <- dagitty("dag{  
+  APOE_binary -> {A vol_Whole_hippocampus}
+  age_v1 -> {kids_total CAIDE_scr_20M1 Hormones HRT_pmm vol_Whole_hippocampus A}
+  kids_total -> {CAIDE_scr_20M1 Hormones}
+  Hormones -> {repro_span CAIDE_scr_20M1 vol_Whole_hippocampus};
+  education -> {kids_total CAIDE_scr_20M1 ingreso_hogar vol_Whole_hippocampus A};
+  repro_span -> {HRT_pmm CAIDE_scr_20M1 vol_Whole_hippocampus};
+  HRT_pmm -> CAIDE_scr_20M1 ;
+  ingreso_hogar -> {CAIDE_scr_20M1};
+  CAIDE_scr_20M1 -> {A vol_Whole_hippocampus};
+  A -> vol_Whole_hippocampus
+  kids_total [exposure]
+  vol_Whole_hippocampus [outcome]
+  Hormones [unobserved]
+ }")
+
+coords<-list(
+  x=c(age_v1 = 1, APOE_binary = 1, kids_total = 3, education = 2, HRT_pmm = 3, repro_span = 3, ingreso_hogar = 3, CAIDE_scr_20M1 = 4, A= 5, vol_Whole_hippocampus = 6),
+  y=c(age_v1 = 0, APOE_binary = 2, education = 1, HRT_pmm= 0, kids_total = -1, repro_span = 1, ingreso_hogar= 2, CAIDE_scr_20M1= 1, A = 1, vol_Whole_hippocampus = 1))
+
+dag_r<-dagify(vol_Whole_hippocampus ~ kids_total + education + age_v1 + CAIDE_scr_20M1+ A + HRT_pmm + age_v1,
+              CAIDE_scr_20M1 ~ repro_span + HRT_pmm + kids_total + age_v1 + education + ingreso_hogar,
+              ingreso_hogar ~ education,
+              A ~ age_v1 + APOE_binary + CAIDE_scr_20M1,
+              kids_total ~ education + age_v1,
+              labels = c(kids_total = "Parity",
+                         APOE_binary = "APOE-E4 Carriership",
+                         education = "Education",
+                         repro_span = "Reproductive span",
+                         CAIDE_scr_20M1 = "CAIDE score",
+                         A = "Aβ status",
+                         HRT_pmm = "HRT",
+                         vol_Whole_hippocampus = "Whole hippocampal volume",
+                         age_v1 = "Age at baseline",
+                         ingreso_hogar = "Household income"),
+              exposure = "kids_total",
+              outcome = "vol_Whole_hippocampus",
+              coords = coords)
+
+dag_r_tidy<-tidy_dagitty(dag_r, layout="nicely")%>%
+  node_dconnected(controlling_for = c("age_v1", "education"))
+```
+
+```{r, echo=F, warning=F}
+dag_r_tidy%>%
+  mutate(adjusted=str_to_title(adjusted),
+         arrow=ifelse(adjusted == "Adjusted", 0.15, 0.85))%>%
+  ggplot(aes(x=x, y=y, xend=xend, yend=yend, colour=adjusted, fill=adjusted, shape=adjusted))+
+  geom_dag_point()+
+  geom_dag_edges(aes(edge_alpha=arrow), edge_width=0.7)+
+  geom_dag_label_repel(aes(label = label), colour = "white", show.legend = FALSE)+
+  theme_dag() +
+  theme(legend.position= "none")+
+  scale_shape_manual(values = c(22, 21))
+```
+
+We first carried out linear mixed-effect models including parity and time as exposure and hippocampal volume as outcome. Aß positivity was then introduced as a moderator. Covariates were age at baseline, APOE4 carriership, education and total intracranial volume. These analyses were reproduced using PACC as outcome. For post-hoc analyses we tested the same interaction on hippocampal subfields. Due to the exploratory nature of these subsequent analyses, results are reported uncorrected.
+
+Data imputation methods were implemented using the mice package in R (v.3.18.0) on covariates, but not exposure or outcome variables. For continous variables, predictive mean matching with 5 donors was used. For categorical variables, logistic regression was used.
+
+This analysis is opportunistic, in the sense that the ALFA+ cohort was designed to provide data for a wide range of questions. Consequently, this study sample size limits the kind of analysis we are able to perform. Because of this, we chose not to include results from stratified analysis in this paper because of a high chance of yielding type II errors.
+
+# Results
+
+## Descriptive results
+
+```{r, include = F}
+data_table<-data%>%
+  mutate(TIV_cm=TIV/100)%>%
+  dplyr::select(age_v1, kids_total, A, APOE_binary, diff_mri, education)%>%
+  mutate(A=ifelse(A==1, "Aβ+", "Aβ-"),
+         APOE_binary=ifelse(APOE_binary==1, "Carrier", "Non-Carrier"))
+ 
+
+desc_table<-tbl_summary(data_table,
+            by = kids_total, 
+            missing = "no",
+            label= list(kids_total = "Number of childbirths",
+                     A= "Aβ status, Count (%)",
+                     APOE_binary = "APOE-E4 carrier, Count (%)",
+                     age_v1 = "Age at first visit, Mean (SD)",
+                     TIV_cm = "Total Intracranial Volume (cm3), Mean (SD)",
+                     diff_mri = "Time between visits (years), Mean (SD)",
+                     education = "Education (years), Mean (SD)"))%>%
+  add_n()%>%
+  add_p%>%
+  modify_header(label = "**Number of childbirths**") %>% # update the column header
+  bold_labels()
+
+
+```
+
+```{r, echo = F, warning=F}
+desc_table
+```
+
+`r nrow(data)` participants from the ALFA+ project were included in our analyses, of which `r nrow(data[data$sex==2,])` are women. Visit 1 included MRI data from `r participants_v1_mri` participants, cognitive testing from `r participants_v1_cog` participants and CSF biomarkers from `r participants_v1_bio` participants. Visit 2 included MRI data from `r participants_v2_mri` participants, cognitive testing from `r participants_v2_cog` participants and CSF biomarkers from `r participants_v2_bio` participants. Average time between visits was 3.32 years.
+
+(Flowchart?)
+
+Table 1 shows demographics and characteristics of the ALFA+ cohort for all aprticipants included in Visit 1, grouped by parity. Participants with higher parity were significantly more likely to be older. No difference was seen between groups regarding Aβ status and APOE-ε4 carriership.
+
+## Whole Hippocampal volume
+
+```{r, include = F}
+ashs1<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/ASHS/bx_ashs_volumes_ALFA_PLUS_V1_20231120_20250702_164509.xlsx")%>%
+  dplyr::select(subject, region, side, volume)%>%
+  group_by(subject, region) %>%
+  summarize(volume = sum(volume), .groups = "drop")%>%
+  pivot_wider(names_from = region, values_from = volume, names_prefix = "vol_")%>%
+  mutate(Visit = 1)
+
+ashs1b<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/ASHS/bx_ashs_volumes_ALFA_PLUS_EXP_20250918_161906.xlsx")%>%
+  dplyr::select(subject, region, side, volume)%>%
+  group_by(subject, region) %>%
+  summarize(volume = sum(volume), .groups = "drop")%>%
+  pivot_wider(names_from = region, values_from = volume, names_prefix = "vol_")%>%
+  mutate(Visit = 1)%>%
+  filter(subject != "11331",
+         subject != "10634",
+         subject!= "13368")
+  
+
+ashs2<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/ASHS/bx_ashs_volumes_ALFA_PLUS_V2_20230518_20250702_165801.xlsx")%>%
+  dplyr::select(subject, region, side, volume)%>%
+  group_by(subject, region) %>%
+  summarize(volume = sum(volume), .groups = "drop")%>%
+  pivot_wider(names_from = region, values_from = volume, names_prefix = "vol_")%>%
+  mutate(Visit = 2)
+
+data_ashs<-ashs1%>%
+  bind_rows(ashs1b)%>%
+  bind_rows(ashs2)%>%
+  mutate(subject = as.numeric(subject),
+         vol_HIPP = vol_CA1+vol_CA2+vol_CA3+vol_DG+vol_SUB)%>%
+  right_join(., data)%>%
+  mutate(diff_mri = ifelse(Visit==1, 0, diff_mri))
+  # filter(subject != 21136,
+  #        subject != 12560,
+  #        subject !=12489)
+```
+
+```{r, include = F}
+##whole hippocampus, simple
+
+mod_ashs<-lmer(vol_HIPP ~  kids_total*diff_mri*A +age_v1  + scale(vol_tiv) + education  +(1|subject), data = data_ashs[data_ashs$sex==2 ,])
+summary(mod_ashs)
+
+vif(mod_ashs)
+
+
+# men 
+
+mod_ashs_men<-lmer(vol_HIPP ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education  +(1|subject), data = data_ashs[data_ashs$sex==1,])
+summary(mod_ashs_men)
+
+plot_model(mod_ashs_men, type="int")
+
+
+```
+
+We found no significant independent effect of parity on whole hippocampal volume. However, a significant effect parity and Aβ interaction was found (β = `r tidy(mod_ashs)$estimate[10]`, SE = `r tidy(mod_ashs)$std.error[10]`, p = `r tidy(mod_ashs)$p.value[10]`), such that Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X).This association was independent from time.
+
+In men, number of biological kids did not have a main effect on hippocampal volume change. However, there was a significant effect of number of kids and Aβ interaction (β = `r tidy(mod_ashs_men)$estimate[10]`, `r tidy(mod_ashs_men)$std.error[10]`, p = `r tidy(mod_ashs_men)$p.value[10]`), such that in the context of high amyloid, men with a higher number of kids showed higher hippocampal volume. This association was also independent form time.
+
+```{r, include=F}
+preds_hip_int <- ggpredict(mod_ashs, terms = c("diff_mri", "kids_total", "A"))
+
+preds_hip_int_A0<-as.data.frame(preds_hip_int)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==0)%>%
+  mutate(A = ifelse(A==0, "Aβ-", "Aβ-"),
+         kids_total_factor = ifelse(kids_total_factor == 4, "4+", as.character(kids_total_factor)))
+
+
+preds_hip_int_A1<-as.data.frame(preds_hip_int)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==1)%>%
+  mutate(A = ifelse(A==1, "Aβ+", "Aβ+"),
+         kids_total_factor = ifelse(kids_total_factor == 4, "4+", as.character(kids_total_factor)))
+```
+
+```{r, echo=F, warning=F}
+data_ashs %>%
+  filter(sex == 2, !is.na(A)) %>%
+  mutate(kids_total_factor = ifelse(kids_total == 4, "4+", as.character(kids_total)),
+         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = diff_mri, y = vol_HIPP, color = kids_total_factor)) +
+  geom_point(alpha = 0.4, size=2) +
+  geom_line(data =preds_hip_int_A0, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_line(data =preds_hip_int_A1, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_ribbon(data =preds_hip_int_A0, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  geom_ribbon(data =preds_hip_int_A1, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  facet_wrap(~A) +
+  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3" = "#0A5940", "4+" = "#0F3F2D")) +
+  labs(title = "Association of parity*Aβ on hippocampal volume in women", 
+         x = "Time difference (years)", 
+       y = "Whole hippocampus", 
+       color = "Number of childbirths")
+
+
+```
+
+```{r, echo=F, warning=F}
+
+preds_hip_int_men <- ggpredict(mod_ashs_men, terms = c("diff_mri", "kids_total", "A"))
+
+preds_hip_int_A0_men<-as.data.frame(preds_hip_int_men)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==0)%>%
+  mutate(A = ifelse(A==0, "Aβ-", "Aβ-"),
+         kids_total_factor = as.numeric(as.character(kids_total_factor)))%>%
+  filter(kids_total_factor<5)%>%
+  mutate(kids_total_factor= ifelse(kids_total_factor==4, "4+", as.character(kids_total_factor)))
+
+
+preds_hip_int_A1_men<-as.data.frame(preds_hip_int_men)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==1)%>%
+  mutate(A = ifelse(A==1, "Aβ+", "Aβ+"),
+         kids_total_factor = as.numeric(as.character(kids_total_factor)))%>%
+  filter(kids_total_factor<5)%>%
+  mutate(kids_total_factor= ifelse(kids_total_factor==4, "4+", as.character(kids_total_factor)))
+
+
+data_ashs %>%
+  filter(sex == 1, !is.na(A), kids_total<5) %>%
+  mutate(kids_total_factor = ifelse(kids_total >= 4, "4+", as.character(kids_total)),
+         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = diff_mri, y = vol_HIPP, color = kids_total_factor)) +
+  geom_point(alpha = 0.4, size=2) +
+  geom_line(data =preds_hip_int_A0_men, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_line(data =preds_hip_int_A1_men, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_ribbon(data =preds_hip_int_A0_men, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  geom_ribbon(data =preds_hip_int_A1_men, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  facet_wrap(~A) +
+  scale_color_manual(values = c("0" = "#8AD9B5", "1" = "#50B88E", "2" = "#047A56", "3" = "#0A5940", "4+" = "#0F3F2D")) +
+  labs(x = "Time difference (years)", 
+       y = "Whole hippocampus", 
+       color = "Number of childbirths",
+       title = "Association of parity*Aβ on hippocampal volume in men")
+
+
+```
+
+```{r, include=F}
+mod_ashs_group<-lmer(vol_HIPP ~  parous_group*diff_mri*A +age_v1  + scale(vol_tiv) + education  +(1|subject), data = data_ashs[data_ashs$sex==2 ,])
+summary(mod_ashs_group)
+
+vif(mod_ashs)
+
+
+# men 
+
+mod_ashs_men_group<-lmer(vol_HIPP ~  parous_group*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education  +(1|subject), data = data_ashs[data_ashs$sex==1,])
+summary(mod_ashs_men_group)
+
+plot_model(mod_ashs_men, type="int")
+```
+
+Unfortunately, due to reduced power, reproducing the analysis using a group variable for parity instead of the linear variable, to compare nummiparous, primiparous and multiparous, does not show any effect in any group. This problem was also present in our sample of men.
+
+## Cognitive trajectory
+
+```{r, include=F}
+cognition<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+  dplyr::select(IdParticipante, Visit, Z_PACC, Z_FCSRTI_RT, Z_aWMS_DR_RS, Z_Wclave_totalscr, Z_FS_totalcnswr, FechaResultado)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = as.numeric(subject))
+
+time_diff<-read_excel("G:/My Drive/Data/ALFA+/Cognition/PACCv1_to_v3(incomplete).xlsx")%>%
+  dplyr::select(IdParticipante, Visit,FechaResultado)%>%
+  rename(subject = IdParticipante)%>%
+  mutate(subject = as.numeric(subject))%>%
+  filter(Visit != 3)%>%
+  pivot_wider(names_from = Visit, values_from = FechaResultado, names_prefix = c("Fecha_Resultado"))%>%
+  mutate(time_diff = as.numeric(difftime(Fecha_Resultado2, Fecha_Resultado1, units= c("days"))))%>%
+  dplyr::select(subject, time_diff)
+
+data_cog_long<- left_join(data, cognition)%>%
+  mutate(age_cog = as.numeric(difftime(FechaResultado, DOB, units= c("days")))/365.25)%>%
+  group_by(subject)%>%
+  filter(Visit != 3) %>%
+  filter(n()>=2)%>%
+  relocate(Visit, .after=sex)%>%
+  ungroup()%>%
+  left_join(., time_diff)%>%
+  mutate(time_diff = ifelse(Visit == 1, 0, time_diff))
+
+fit_cog_simple_PACC<-lmer(Z_PACC ~ kids_total*time_diff +age_v1 + APOE_binary + education + A +(1 | subject), data_cog_long[data_cog_long$sex==2,])
+summary(fit_cog_simple_PACC)
+
+fit_cog_PACC<-lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex==2,])
+summary(fit_cog_PACC)
+
+fit_cog_PACC_men<-lmer(Z_PACC ~ kids_total*A*time_diff +age_v1 + APOE_binary + education +(1 | subject), data_cog_long[data_cog_long$sex==1,])
+summary(fit_cog_PACC)
+
+plot_model(fit_cog_PACC_men, type= "int")
+
+```
+
+No significan main effect of parity on PACC score was found. However, after moderation by Aβ status, a modest yet significant effect of a 3-way interaction was found (β = `r tidy(fit_cog_PACC)$estimate[11]`, p=`r tidy(fit_cog_PACC)$p.value[11]`). Results suggest that whilst parity and Aβ status did not seem to affect PACC score at time = 0, Aβ- women appeared to show a positive relationship between parity and PACC score as time went on, and Aβ+ women the opposite.
+
+In men, no significant main effect of number of kids was found, but a significant 3-way interaction was also found between number of kids, Aβ status and time was found to affect PACC score (β = `r tidy(fit_cog_PACC_men)$estimate[11]`, p=`r tidy(fit_cog_PACC_men)$p.value[11]`). Unlike women, men seemed to always benefit from a higher number of kids no matter their amyloid load. Aβ- men seemed to particularly show lesser cognitive decline with a higher number of kids.
+
+```{r, echo=F, warning=F}
+
+preds_PACC <- ggpredict(fit_cog_PACC, terms = c("time_diff", "kids_total", "A"))
+
+preds_PACC_A0<-as.data.frame(preds_PACC)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==0)%>%
+  mutate(A = ifelse(A==0, "Aβ-", "Aβ-"))
+
+
+preds_PACC_A1<-as.data.frame(preds_PACC)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==1)%>%
+  mutate(A = ifelse(A==1, "Aβ+", "Aβ+"))
+
+#by time diff with predicted values - preferred?
+data_cog_long %>%
+  filter(sex == 2, !is.na(A)) %>%
+  mutate(kids_total_factor = factor(kids_total),
+         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = time_diff, y = Z_PACC, color = kids_total_factor)) +
+  geom_point(alpha = 0.3, size=2) +
+  geom_line(data =preds_PACC_A0, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_line(data =preds_PACC_A1, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_ribbon(data =preds_PACC_A0, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  geom_ribbon(data =preds_PACC_A1, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  facet_wrap(~A) +
+  scale_color_manual(values = c("0" = "#A7D4FF", "1" = "#5BAAF2", "2" = "#1E6FD9", "3" ="#124A99", "4" = "#0B2F66")) +
+  labs(x = "Time difference (days)", 
+       y = "PACC Z-score", 
+       color = "Number of childbirths",
+       title= "Prity*AB interaction on PACC score in women")
+```
+
+```{r, echo=F, warning=F}
+
+preds_PACC_men <- ggpredict(fit_cog_PACC_men, terms = c("time_diff", "kids_total", "A"))
+
+preds_PACC_A0_men<-as.data.frame(preds_PACC_men)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==0)%>%
+  mutate(A = ifelse(A==0, "Aβ-", "Aβ-"),
+         kids_total_factor = as.numeric(as.character(kids_total_factor)))%>%
+  filter(kids_total_factor<5)%>%
+  mutate(kids_total_factor= ifelse(kids_total_factor==4, "4+", as.character(kids_total_factor)))
+
+
+preds_PACC_A1_men<-as.data.frame(preds_PACC_men)%>%
+  rename(kids_total_factor = group,
+         A=facet)%>%
+  filter(A==1)%>%
+  mutate(A = ifelse(A==1, "Aβ+", "Aβ+"),
+         kids_total_factor = as.numeric(as.character(kids_total_factor)))%>%
+  filter(kids_total_factor<5)%>%
+  mutate(kids_total_factor= ifelse(kids_total_factor==4, "4+", as.character(kids_total_factor)))
+
+#by time diff with predicted values - preferred?
+data_cog_long %>%
+  filter(sex == 1, !is.na(A), kids_total<5) %>%
+  mutate(kids_total_factor = factor(kids_total),
+         A = factor(A, levels = c("0", "1"), labels = c("Aβ-", "Aβ+"))) %>%
+  ggplot(aes(x = time_diff, y = Z_PACC, color = kids_total_factor)) +
+  geom_point(alpha = 0.3, size=2) +
+  geom_line(data =preds_PACC_A0_men, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_line(data =preds_PACC_A1_men, aes(x=x, 
+                                y=predicted, 
+                                group=kids_total_factor), size=1.3) +
+  geom_ribbon(data =preds_PACC_A0_men, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  geom_ribbon(data =preds_PACC_A1_men, aes(x=x,  
+                                  ymin= conf.low, 
+                                  ymax = conf.high, 
+                                  group=kids_total_factor), inherit.aes = F, alpha=.07)+
+  facet_wrap(~A) +
+  scale_color_manual(values = c("0" = "#A7D4FF", "1" = "#5BAAF2", "2" = "#1E6FD9", "3" ="#124A99", "4+" = "#0B2F66")) +
+  labs(x = "Time difference (days)", 
+       y = "PACC Z-score", 
+       color = "Number of childbirths",
+       title= "Prity*AB interaction on PACC score in men")
+```
+
+## Post-Hoc
+
+## Hippocampal subfields
+
+```{r, include = F}
+mod_ashs_CA1<-lmer(vol_CA1 ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs_CA2<-lmer(vol_CA2 ~ kids_total*diff_mri*A + age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs_CA3<-lmer(vol_CA3 ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs_DG<-lmer(vol_DG ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs_SUB<-lmer(vol_SUB ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs_SUB)
+
+mod_ashs_ERC<-lmer(vol_ERC ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs_PHC<-lmer(vol_PHC ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs_BA35<-lmer(vol_BA35 ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+mod_ashs_BA36<-lmer(vol_BA36 ~  kids_total*diff_mri*A +age_v1 +APOE_binary + scale(vol_tiv) + education +(1|subject), data = data_ashs[data_ashs$sex==2,])
+summary(mod_ashs)
+
+```
+
+In hippocampal subfields, no significant main effect of parity was found in any of the subfields. However, there was a significant effect of the interaction between parity and Aβ on the dentate gyrus (β = `r tidy(mod_ashs_DG)$estimate[10]`, adj.SE = `r tidy(mod_ashs_DG)$std.error[10]`, adj.p = `r tidy(mod_ashs_DG)$p.value[10]`), and a trending effect of this same interaction in the subiculum (β = `r tidy(mod_ashs_SUB)$estimate[10]`, adj.SE = `r tidy(mod_ashs_SUB)$std.error[10]`, adj.p = `r tidy(mod_ashs_SUB)$p.value[10]`). The direction of the effect followed the same as for the whole hippocampus, where Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X)
+
+```{r, echo=F, warning=F}
+data_forest_plot<-data_ashs%>%
+  filter(sex == 2 )
+
+models<-list(
+  CA1 = lmer(vol_CA1 ~ kids_total*A + scale(vol_tiv) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  CA2 = lmer(vol_CA2 ~ kids_total*A + scale(vol_tiv) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  CA3 = lmer(vol_CA3 ~ kids_total*A + scale(vol_tiv) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  DG = lmer(vol_DG ~ kids_total*A + scale(vol_tiv) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  ERC = lmer(vol_ERC ~ kids_total*A + scale(vol_tiv) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  PHC = lmer(vol_PHC ~ kids_total*A + scale(vol_tiv) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  SUB = lmer(vol_SUB ~ kids_total*A + scale(vol_tiv) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  Sulcus = lmer(vol_sulcus ~ kids_total*A + scale(vol_tiv) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  BA35 = lmer(vol_BA35 ~ kids_total*A + scale(vol_tiv) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot),
+  BA36 = lmer(vol_BA36 ~ kids_total*A + scale(vol_tiv) + age_v1 + APOE_binary + (1 | subject),data = data_forest_plot)
+)
+
+# Extract coefficients and CIs
+#install.packages("broom.mixed")
+
+pred_hippo_all <- map_dfr(models, ~ {
+  broom.mixed::tidy(.x, terms = c("kids_total", "A1"))   # Add consistent term column
+}, .id = "region")%>%
+  filter(term %in% c("kids_total", "A1", "kids_total:A1"))%>%
+  dplyr::select(region, term, estimate, std.error)%>%
+  pivot_wider(names_from = term, values_from = c(estimate, std.error))%>%
+  mutate(plot_estimate_kids_A0 = estimate_kids_total,
+         plot_estimate_kids_A1 = estimate_kids_total + `estimate_kids_total:A1`,
+         plot_conf.low_kids_A0 = estimate_kids_total - 1.96 * std.error_kids_total,
+         plot_conf.high_kids_A0 = estimate_kids_total + 1.96 * std.error_kids_total,
+         plot_conf.low_kids_A1 = (estimate_kids_total + `estimate_kids_total:A1` - 1.96 * `std.error_kids_total:A1`),
+         plot_conf.high_kids_A1 = (estimate_kids_total + `estimate_kids_total:A1` + 1.96 * `std.error_kids_total:A1`))%>%
+  dplyr::select(-estimate_kids_total, -estimate_A1,-`estimate_kids_total:A1` ,-`std.error_kids_total`, -std.error_A1 ,         -`std.error_kids_total:A1`)%>%
+  pivot_longer(
+    cols = starts_with("plot_"),  # Keep 'term' as-is
+    names_to = c(".value", "A"),  # .value creates columns like estimate, conf.low, etc.
+    names_pattern = "plot_(.*)_kids_A(\\d+)"
+  )%>%
+  mutate(colour_group = case_when(
+                                  region == "SUB" ~ "trend",
+                                  region == "DG" ~ "significant",
+                                  .default = "normal"))
+
+pred_hippo_all %>%
+  mutate(A = factor(A, levels = c("1", "0"), labels = c("Positive", "Negative"))) %>%
+  ggplot(aes(x = estimate, y = region, group = A, shape = A, color = colour_group)) +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high), 
+                  position = position_dodge(width = 0.8),
+                  size = 0.6) +
+  labs(x = "Estimated effect of parity", 
+       y = "Hippocampal subfield", 
+       shape = "Aβ status",
+       color = "Significance level (FDR corrected)") +
+  th +
+  geom_vline(xintercept = 0, linetype = "dotted", colour = "grey3") +
+  scale_shape_manual(values = c("Negative" = 15, "Positive" = 16))+
+  scale_color_manual(values = c("trend" = "grey3", "significant" = "red", "normal" = "grey48"))+
+  guides(colour = "none")
+  
+```
+
+```{r, eval=F}
+
+diff_mri_df<-date_mri_long%>%
+  dplyr::select(subject, diff_mri)
+
+hippo_V1<-hippo%>%
+  rename_with(~ paste(., "V1", sep = "_"))%>%
+  rename(subject = subject_V1)
+
+hippo_sem<-hippo2%>%
+  rename_with(~ paste(., "V2", sep = "_"))%>%
+  rename(subject = subject_V2)%>%
+  right_join(., hippo_V1, join_by(subject))%>%
+  dplyr::select(-Visit_V1, -Visit_V2)%>%
+  left_join(., diff_mri_df)%>%
+  mutate(rate_CA1 = (vol_CA1_V2-vol_CA1_V1)/diff_mri,
+         rate_CA3 = (vol_CA3_V2-vol_CA3_V1)/diff_mri,
+         rate_CA4 = (vol_CA4_V2-vol_CA4_V1)/diff_mri,
+         rate_GC_ML_DG = (vol_GC_ML_DG_V2-vol_GC_ML_DG_V1)/diff_mri,
+         rate_HATA = (vol_HATA_V2-vol_HATA_V1)/diff_mri,
+         rate_Hippocampal_tail = (vol_Hippocampal_tail_V2-vol_Hippocampal_tail_V1)/diff_mri,
+         rate_fimbria = (vol_fimbria_V2-vol_fimbria_V1)/diff_mri,
+         rate_molecular_layer_HP = (vol_molecular_layer_HP_V2-vol_molecular_layer_HP_V1)/diff_mri,
+         rate_parasubiculum = (vol_parasubiculum_V2-vol_parasubiculum_V1)/diff_mri,
+         rate_presubiculum = (vol_presubiculum_V2-vol_presubiculum_V1)/diff_mri,
+         rate_subiculum = (vol_subiculum_V2-vol_subiculum_V1)/diff_mri)
+  
+
+# need to do SEM with GFAP, sTREM, neurogranin, IL6
+
+
+
+biomarkers_wide<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(subject=as.numeric(subject))%>%
+  rename(CSF_A = A,
+         CSF_AT = AT)%>%
+  drop_na(Visit)%>%
+  dplyr::select(-collection_dt)%>%
+  pivot_wider(names_from = Visit, values_from = c(starts_with("CSF_")))
+
+data_naked<-read_delim("G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(sex=factor(sex))
+
+data_sem<-full_join(biomarkers_wide, hippo_sem, join_by(subject))%>%
+  right_join(., data_naked)
+
+
+
+
+#this removes v2 of some people who have neuroimaging but not biomarkers. might have to revise it
+
+cog_sem<-data_cog_long%>%
+  dplyr::select(subject, Visit, c(starts_with("Z_")))%>%
+  mutate(Visit = ifelse(Visit == 1, "V1", "V2"))%>%
+  pivot_wider(names_from = Visit, values_from = c(starts_with("Z_")))
+  
+data_sem<-left_join(data_sem, cog_sem)
+
+library(lavaan)
+library(semPlot)
+library(corrplot)
+
+```
+
+### Mediation
+
+```{r, eval=FALSE}
+
+library(mediation)
+
+biomarkers_long<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(subject=as.numeric(subject),
+         Visit = ifelse(Visit == "V1", "1", "2"))
+
+data_med<-hippo%>%
+  bind_rows(hippo2)%>%
+  left_join(., data_naked, join_by(subject))%>%
+  mutate(Visit= ifelse(Visit=="V1","1", "2"))%>%
+  left_join(., cognition, join_by(subject, Visit))%>%
+  left_join(., biomarkers_long, join_by(subject, Visit))%>%
+  left_join(., diff_mri_df, join_by(subject))%>%
+  drop_na(CSF_sTREM2, vol_CA4, Z_PACC)
+
+data_med_A0<-data_med%>%
+  filter(Visit=="1")%>%
+  filter(A==0)%>%
+  dplyr::select(subject)%>%
+  left_join(., data_med, join_by(subject))
+
+data_med_A1<-data_med%>%
+  filter(Visit=="1")%>%
+  filter(A==1)%>%
+  dplyr::select(subject)%>%
+  left_join(., data_med, join_by(subject))
+
+data_med_A0_v1 <- data_med_A0%>%
+  filter(Visit == "1")
+
+#mediation of PACC by hippo volume
+
+med.fit_A0<-lme4::lmer(vol_parasubiculum ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A1[data_med_A1$sex==2 ,])
+
+out.fit_A0<-lme4::lmer(Z_PACC ~ vol_parasubiculum + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A1[data_med_A1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "vol_parasubiculum", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lme4::lmer(vol_presubiculum ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
+
+out.fit_A0<-lme4::lmer(Z_PACC ~ vol_presubiculum + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "vol_presubiculum", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lme4::lmer(vol_subiculum ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
+
+out.fit_A0<-lme4::lmer(Z_PACC ~ vol_subiculum + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "vol_subiculum", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lme4::lmer(vol_CA4 ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
+
+out.fit_A0<-lme4::lmer(Z_PACC ~ vol_CA4 + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "vol_CA4", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lme4::lmer(vol_GC_ML_DG ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
+
+out.fit_A0<-lme4::lmer(Z_PACC ~ vol_GC_ML_DG + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "vol_GC_ML_DG", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lme4::lmer(vol_Whole_hippocampus ~ kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med_A0[data_med_A0$sex==2 ,])
+
+out.fit_A0<-lme4::lmer(Z_PACC ~ vol_Whole_hippocampus + kids_total*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject) , data = data_med_A0[data_med_A0$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "vol_Whole_hippocampus", sims = 5000)
+summary(med.out_A0)
+
+
+#mediation of hippo volume by biomarkers
+
+med.fit_A0<-lm(CSF_Neurogranin ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CSF_Neurogranin + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_Neurogranin", sims = 5000)
+summary(med.out_A0)
+
+
+med.fit_A0<-lm(`CSF_a-Synuclein` ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ `CSF_a-Synuclein` + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_a-Synuclein", sims = 5000)
+summary(med.out_A0)
+
+
+med.fit_A0<-lm(CSF_NFL ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CSF_NFL + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_NFL", sims = 5000)
+summary(med.out_A0)
+
+
+med.fit_A0<-lm(CSF_sTREM2 ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CSF_sTREM2 + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_sTREM2", sims = 5000)
+summary(med.out_A0)
+
+
+
+med.fit_A0<-lm(CSF_sVCAM1 ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CSF_sVCAM1 + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_sVCAM1", sims = 5000)
+summary(med.out_A0)
+
+
+
+med.fit_A0<-lm(CSF_Synaptotagmin ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CSF_Synaptotagmin + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_Synaptotagmin", sims = 5000)
+summary(med.out_A0)
+
+
+med.fit_A0<-lm(`CSF_IL-6` ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ `CSF_IL-6` + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_IL-6", sims = 5000)
+summary(med.out_A0)
+
+
+med.fit_A0<-lm(CSF_YKL40 ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CSF_YKL40 + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CSF_YKL40", sims = 5000)
+summary(med.out_A0)
+
+#mediation of hippo volume by social factors
+
+med.fit_A0<-lm(ingreso_hogar ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ ingreso_hogar + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "ingreso_hogar", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lm(education ~ kids_total + scale(age_v1)  + scale(TIV) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ education + kids_total + scale(age_v1)  + scale(TIV) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "education", sims = 5000)
+summary(med.out_A0)
+
+#mediation of hippo volume by CVR
+
+med.fit_A0<-lm(CAIDE_scr_20M1 ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ CAIDE_scr_20M1 + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "CAIDE_scr_20M1", sims = 5000)
+summary(med.out_A0)
+
+# mediation effect by repro factors
+
+med.fit_A0<-lm(repro_span ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ repro_span + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "repro_span", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-glm(HRT_pmm ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,], family = binomial)
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ HRT_pmm + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "HRT_pmm", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-lm(age_menopause ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ age_menopause + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "age_menopause", sims = 5000)
+summary(med.out_A0)
+
+med.fit_A0<-glm(APOE_binary ~ kids_total + scale(age_v1)  + scale(TIV) + scale(education), data = data_med_A0_v1[data_med_A0_v1$sex==2 ,], family = binomial)
+
+out.fit_A0<-lm(vol_Whole_hippocampus ~ APOE_binary + kids_total + scale(age_v1)  + scale(TIV) + scale(education) , data = data_med_A0_v1[data_med_A0_v1$sex==2 ,])
+
+med.out_A0 <- mediate(med.fit_A0, out.fit_A0, treat = "kids_total", mediator = "APOE_binary", sims = 5000)
+summary(med.out_A0)
+
+
+med_model <- lme4::lmer(CSF_sTREM2 ~ kids_total*diff_mri*A + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med[data_med$sex==2 ,])
+
+# Test if A moderates the C→X pathway  
+out_model <- lme4::lmer(vol_CA4 ~ kids_total*A*diff_mri + CSF_sTREM2*A*diff_mri + scale(age_v1)  + scale(TIV) + scale(education) + (1|subject), data = data_med[data_med$sex==2 ,])
+
+# Conditional mediation effects
+med_A0 <- mediate(med_model, out_model, treat = "kids_total", mediator = "CSF_sTREM2", 
+                  covariates = list(A = 0), sims = 5000)
+med_A1 <- mediate(med_model, out_model, treat = "kids_total", mediator = "CSF_sTREM2", 
+                  covariates = list(A = 1), sims = 5000)
+
+# Test difference between conditional effects
+test.modmed(med_A0, med_A1)
+
+```
+
+Mediation analyses were done post-hoc using the mediation R package \[v.4.5.1\] to (1) investigate potential mechanisms of the ways through which parity could interact with amyloid load to affect hippocampal volume and (2) see if the effect of the parity and amyloid interaction on PACC score decline was mediated by the hippocampal volume loss.
+
+Given the association between parity and amyloid status was only significant in AB- women, we stratified our sample by amyloid positivity to reduce the complexity of our mediation model. We tested potential mediation roles of CSF biomarkers associated with inflammation \[SNAP-25, GAP-43, Neurogranin\] and cardiovascular health \[VCAM1\], proxy measures of sex hormones \[HRT use, reproductive span\] and social variables \[household income, occupation type\], on hippocampal volume then subfield volume. Our analyses did not reveal any significant mediation effect.
+
+Similarly, we verified if whole hippocampal volume or its subfields mediated the effect we observed of the 3-way interaction between parity, time and amyloid load on PACC decline. Our analysis did not yield any significant mediation effect either.
+
+### bayesian model
+
+```{r, eval=F, include=F}
+#this could be an interesting approach but I need to fine tune my NA imputation and to figure out the kind of algorithm to use with my factor variables
+
+
+library(bnlearn)
+
+data_bn_v1<-data_sem%>%
+  filter(sex==2)%>%
+  dplyr::select(kids_total, HRT_pmm, age_v1, repro_span, CSF_Neurogranin_V1, CSF_GFAP_V1, CAIDE_scr_20M1, `CSF_IL-6_V1`, vol_Whole_hippocampus_V1 , CSF_A_V1, CSF_sTREM2_V1, ingreso_hogar, education, APOE_binary)%>%
+  rename(CSF_IL_6_V1= `CSF_IL-6_V1`)%>%
+  na.omit()%>%
+  mutate(HRT_pmm = as.factor(HRT_pmm),
+         CSF_A_V1 = as.factor(CSF_A_V1),
+         ingreso_hogar = as.factor(ingreso_hogar),
+         APOE_binary = as.factor(APOE_binary))
+
+
+
+data_bn_all<-data_sem%>%
+  filter(sex==2)%>%
+  dplyr::select(kids_total, HRT_pmm, age_v1, repro_span, CSF_Neurogranin_V1, CSF_Neurogranin_V2, CSF_GFAP_V1, CSF_GFAP_V2, CAIDE_scr_20M1, `CSF_IL-6_V1`, `CSF_IL-6_V2`, vol_Whole_hippocampus_V1 , vol_Whole_hippocampus_V2, CSF_A_V1, CSF_A_V2, CSF_sTREM2_V1, CSF_sTREM2_V2, ingreso_hogar, education, APOE_binary)%>%
+  rename(CSF_IL_6_V1= `CSF_IL-6_V1`,
+         CSF_IL_6_V2= `CSF_IL-6_V2`)%>%
+  na.omit()%>%
+  mutate(HRT_pmm = as.factor(HRT_pmm),
+         CSF_A_V1 = as.factor(CSF_A_V1),
+         CSF_A_V2 = as.factor(CSF_A_V2),
+         ingreso_hogar = as.factor(ingreso_hogar),
+         APOE_binary = as.factor(APOE_binary))
+
+#code is from https://www.bnlearn.com/examples/useR19-tutorial/
+
+
+#blacklist
+
+bl = tiers2blacklist(list("HRT_pmm", "age_v1", "repro_span", "education", "APOE_binary",
+       c("CSF_Neurogranin_V1", "CSF_GFAP_V1", "CAIDE_scr_20M1", "CSF_IL_6_V1", "CSF_A_V1",  "CSF_sTREM2_V1", "ingreso_hogar", "vol_Whole_hippocampus_V1")))
+bl = rbind(bl, c("kids_total", "repro_span"), c("repro_span", "kids_total"))
+bl = rbind(bl, c("kids_total", "age_v1"), c("age_v1", "kids_total"))
+
+
+#whitelist
+wl = matrix(c("APOE_binary", "CSF_A_V1",
+              "education", "vol_Whole_hippocampus_V1",
+             "education", "kids_total"),
+        ncol = 2, byrow = TRUE, dimnames = list(NULL, c("from", "to")))
+
+dag = hc(data_bn_v1, blacklist = bl, whitelist = wl)
+dag
+
+graphviz.plot(dag, shape = "ellipse")
+
+
+str.diff = boot.strength(data_bn_v1, R = 200, algorithm = "hc", algorithm.args = list(whitelist = wl, blacklist = bl))
+
+attr(str.diff, "threshold")
+avg.diff = averaged.network(str.diff)
+strength.plot(avg.diff, str.diff, shape = "ellipse", highlight = list(arcs = wl))
+
+par(mfrow = c(1, 2))
+graphviz.compare(avg.diff, dag, shape = "ellipse", main = c("averaged DAG", "single DAG"))
+
+plot(str.diff)
+abline(v = 0.75, col = "tomato", lty = 2, lwd = 2)
+abline(v = 0.85, col = "steelblue", lty = 2, lwd = 2)
+
+nrow(str.diff[str.diff$strength > 0.85 & str.diff$direction > 0.5, ])
+
+avg.simpler = averaged.network(str.diff, threshold = 0.85)
+strength.plot(avg.simpler, str.diff, shape = "ellipse", highlight = list(arcs = wl))
+
+fitted.simpler = bn.fit(avg.simpler, clgaussian.test)
+fitted.simpler
+
+##other method
+
+
+```
+
+```{r, eval=F, include=F}
+#longitudinal attempt
+
+const = "kids_total"
+t1.variables = grep("V1$", names(data_bn_all), value = TRUE)
+t1.variables
+t2.variables = grep("V2$", names(data_bn_all), value = TRUE)
+t2.variables
+
+#creating blacklist to stop V2 from influencing V1 and V1 from influencing V1
+#We blacklist all the arcs going into all the variables at time t1, because we assume that the arcs between the variables at time t1 are the same as the corresponding variables in time t2 and it's pointless to learn them twice.
+
+roots = expand.grid(from = setdiff(names(data_bn_all), c("HRT_pmm", "age_v1", "repro_span", "education")), to = c("HRT_pmm", "age_v1", "repro_span", "education"), stringsAsFactors = FALSE)
+
+empty.t1 = expand.grid(from = c(t1.variables), to = c(t1.variables),
+              stringsAsFactors = FALSE)
+bl = rbind(tiers2blacklist(list(t1.variables, t2.variables)), roots, empty.t1)
+
+bl= rbind(bl, c("APOE_binary", "CSF_A_V1"))
+
+wl = matrix(c("APOE_binary", "CSF_A_V2",
+             "education", "kids_total"),
+        ncol = 2, byrow = TRUE, dimnames = list(NULL, c("from", "to")))
+
+dyn.dag = tabu(data_bn_all, blacklist = bl, whitelist = wl)
+dyn.dag
+
+
+gR = graphviz.plot(dyn.dag, shape = "rectangle", render = FALSE)
+sg0 = list(graph = subGraph(const, gR), cluster = TRUE)
+sg1 = list(graph = subGraph(t1.variables, gR), cluster = TRUE)
+sg2 = list(graph = subGraph(t2.variables, gR), cluster = TRUE)
+gR = layoutGraph(gR, subGList = list(sg0, sg1, sg2),
+        attrs = list(graph = list(rankdir = "LR")))
+nodeRenderInfo(gR)$fill[t1.variables] = "tomato"
+nodeRenderInfo(gR)$fill[t2.variables] = "gold"
+nodeRenderInfo(gR)$fontsize = 35
+renderGraph(gR)
+
+dyn.str = boot.strength(data_bn_all, R = 1000, algorithm = "tabu",
+            algorithm.args = list(blacklist = bl, whitelist = wl))
+plot(dyn.str)
+dyn.avg = averaged.network(dyn.str)
+par(mfrow = c(1, 2))
+graphviz.compare(dyn.dag, dyn.avg, shape = "rectangle")
+
+
+```
+
+# Discussion
+
+We aimed to investigate the impact of parity on hippocampal subfield volumes and relation to AD pathology in post-menopausal women at risk of AD and men who share similar age and AD risk. Our results suggest that...
+
+Parity interacts with amyloid pathology to influence neurodegeneration and cognition. In our sample, parity was not associated with hippocampal volume size directly but appeared to moderate the effet of amyloid accumulation on hippocampal volume. In the context of low amyloid, female participants appeared to exhibit greater volumes especially in the subiculum and dentate gyrus area.
+
+Interestingly, introducing variables that serve as proxy for hormonal exposure, such as HRT use and reproductive span, seemed to explain some of this effet in the dentate gyrus area but not in the subiculum.
+
+Similarly, parity does not impact PACC score independently but appears to moderate the impact of amyloid pathology on cognitive trajectory. In the context of low amyloid, female participants with higher parity showed lesser cognitive decline. However, this effect was very small, especially compared with the effect of other variables, like education. Whilst including covariates related to sex steroid exposure did not modify this relationship, including household income did.
+
+Mediation analyses trying to identify a possible mechanism behind the parity and amyloid accumulation did not yield any suitable candidates.
+
+mention liisa galea's recent findings and how we don't find an interaction with APOE?
+
+The biggest limitation of this study is the lack of hormonal measurements. By only using proxy measurements, we are only able to estimate the role of sex steroid hormones in the results found, but cannot make any definitive conclusions. It is very possible the role of sex hormones in our observatioins was underestimated due to this missing variable. In addition to this, the ALFA+ cohort is very homogeneous: participants are majoritarily caucasian whites, from middle and upper-middle class background, who were selected due to their impeccable health records. Therefore, we must use cuation when generalising our results to a wider population. Additionally, our sample lacked highly multiparous individuals. Previous studies on the effect of parity on cognition and neurodegeneration have found an inverted u-shaped relation between parity and outcome measures, indicating that our lack of women having had more than 4 children might be leading to an incomplete picture of the phenomenon.
+
+# Appendix
+
+## Analysis reproduction with ASHS
+
+```{r, eval=F}
+
+
+
+
+
+
+
+test<-data_ashs%>%
+  dplyr::select(subject, vol_HIPP, Visit)
+
+test1<-hippo_data_long%>%
+  dplyr::select(subject, vol_Whole_hippocampus, Visit)%>%
+  mutate(Visit= ifelse(Visit=="V1", 1, 2))
+
+test2<-left_join(test, test1)%>%
+  group_by(subject)%>%
+  filter(n()==2)
+
+plot(test2$vol_HIPP[test2$Visit==1], test2$vol_HIPP[test2$Visit==2])
+text(test2$vol_HIPP[test2$Visit==1], test2$vol_HIPP[test2$Visit==2], 
+     labels = test2$subject[test2$Visit==1])
+
+plot(test2$vol_Whole_hippocampus[test2$Visit==1], test2$vol_HIPP[test2$Visit==1])
+
+data_ashs%>%
+  filter(sex==2)%>%
+  drop_na(A)%>%
+  ggplot(aes(x= diff_mri, y= vol_DG, group= kids_total, colour=kids_total))+
+  geom_point()+
+  facet_wrap(~ A)+
+  geom_smooth(method="lm")
+
+
+```
+
+# Miscellaneous
+
+```{r, eval=F}
+
+cent<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_ftm_centiloids_ALFA_PET_FTM_20210421_20250703_170207.xlsx")%>%
+  dplyr::select(-ID)%>%
+  mutate(Visit = 1)
+cent2<-read_excel("G:/My Drive/Data/ALFA+/neuroimaging/bx_ftm_centiloids_ALFA_PLUS_V2_PET_20250703_170258.xlsx")%>%
+  dplyr::select(-ID)%>%
+  mutate(Visit = 2)
+
+data_cent<-cent%>%
+  bind_rows(cent2)%>%
+  mutate(subject=as.numeric(subject))%>%
+  right_join(., data)
+
+test<-lmer(centiloids ~ kids_total*diff_mri + age_v1  + APOE_binary +(1|subject), data = data_cent[data_cent$sex== 2, ])
+summary(test)
+
+```
+
+### PCA
+
+```{r, eval=F}
+library( lavaan )
+
+data_dag_v1<-hippo_data_long%>%
+  filter(Visit == "V1")%>%
+  filter(sex==2)%>%
+  mutate(APOE_binary= as.integer(APOE_binary),
+         A=as.integer(A))%>%
+  dplyr::select(subject, kids_total, repro_span, education, HRT_pmm, hypertension, high_chol, diabetes, vol_Whole_hippocampus, ingreso_hogar, A, CAIDE_scr_20M1)
+
+adjustmentSets(
+  g,
+  type="minimal",
+  effect="total",
+  max.results = Inf
+)
+
+corr <- lavCor( data_dag_v1 )
+localTests( g, sample.cov=corr, sample.nobs=nrow( data_dag_v1 ) )
+plotLocalTestResults( localTests( g, sample.cov=corr, sample.nobs=nrow( data_dag_v1 ) ) )
+
+
+```
+
+```{r, include=F, eval=F}
+data_reproductive<-data%>%
+  filter(sex==2)%>%
+  dplyr::select(kids_total, HRT, age_menopause_pmm, age_menarche, abortions, repro_span)%>%
+  na.omit()
+pca_result <- prcomp(data_reproductive, scale = TRUE)
+summary(pca_result)
+plot(pca_result, type = "l", main = "Scree Plot")
+
+# Extract loadings
+loadings <- data.frame(pca_result$rotation)
+loadings$Variable <- rownames(loadings)
+
+# Plot loadings for PC1 and PC2
+ggplot(loadings, aes(x = PC1, y = PC2)) +
+  geom_point() +
+  geom_text(aes(label = Variable), hjust = 0, vjust = 0) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  labs(title = "PCA Loadings Plot")
+
+library(factoextra)
+
+# Scree plot
+fviz_eig(pca_result, addlabels = TRUE)
+
+# Biplot
+fviz_pca_biplot(pca_result, repel = TRUE)
+
+# Variables plot
+fviz_pca_var(pca_result, col.var = "contrib", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+# Individuals plot
+fviz_pca_ind(pca_result, col.ind = "cos2", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+#PCA for latent avariable does not seem to be a good choice, not enough varaince explained with one of two dimensions
+
+```
