@@ -738,46 +738,33 @@ summary(mod_ashs_sulc)
 No significant main effect of parity was found in any of the hippocampal subfields. However, there was a significant effect of the interaction between parity and Aβ on the dentate gyrus (β = `r tidy(mod_ashs_DG)$estimate[8]`, SE = `r tidy(mod_ashs_DG)$std.error[8]`, p = `r tidy(mod_ashs_DG)$p.value[8]`), and a trending effect of this same interaction in the subiculum (β = `r tidy(mod_ashs_SUB)$estimate[8]`, SE = `r tidy(mod_ashs_SUB)$std.error[8]`, p = `r tidy(mod_ashs_SUB)$p.value[8]`). The direction of the effect followed the same as for the whole hippocampus, where Aβ- women showed a positive relationship between parity and hippocampal volume, whilst Aβ- women showed the opposite (Figure X)
 
 ```{r, echo=F, warning=F}
-preds_DG <- ggpredict(mod_ashs_DG, terms = c("kids_total", "A"))
-preds_SUB <- ggpredict(mod_ashs_SUB, terms = c("kids_total", "A"))
+preds_DG <- ggpredict(mod_ashs_DG, terms = c("kids_total", "A"))%>%
+  as.data.frame()%>%
+  mutate(group = ifelse(group==0, "Aβ-", "Aβ+"))
 
-
-preds_DG<-as.data.frame(preds_DG)%>%
-  rename(kids_total_factor = x,
-         A=group)%>%
-  mutate(A = ifelse(A==0, "Aβ-", "Aβ+"),
-         kids_total_factor = ifelse(kids_total_factor == 4, "4+", as.character(kids_total_factor)))
-
-preds_SUB<-as.data.frame(preds_SUB)%>%
-  rename(kids_total_factor = x,
-         A=group)%>%
-  mutate(A = ifelse(A==0, "Aβ-", "Aβ+"),
-         kids_total_factor = ifelse(kids_total_factor == 4, "4+", as.character(kids_total_factor)))
+preds_SUB <- ggpredict(mod_ashs_SUB, terms = c("kids_total", "A"))%>%
+  as.data.frame()%>%
+  mutate(A = ifelse(group==0, "Aβ-", "Aβ+"))
 
 DG<-preds_DG %>%
-  mutate(group_color = paste0(A, ".", kids_total_factor)) %>%
-  ggplot(aes(x = A, y = predicted, color = group_color, group = kids_total_factor)) +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), 
-                position = position_dodge(width = 0.8), size = 1.5, width = 0.5) +
+  ggplot(aes(x = x, y = predicted, color = group, group = group)) +
+  geom_line(size=2)+
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), colour=NA, alpha=0.2) +
   th +
-  labs(x = "Aβ load", 
+  labs(x = "Number of childbirths", 
        y = "DG", 
-       color = "Number of childbirths") +
-  scale_color_manual(values = color_mapping,
-                     labels = c("0", "1", "2", "3", "4+", "0", "1", "2", "3", "4+"))+
+       color = "Aβ load") +
   theme(legend.position= "none")
 
 SUB<-preds_SUB %>%
-  mutate(group_color = paste0(A, ".", kids_total_factor)) %>%
-  ggplot(aes(x = A, y = predicted, color = group_color, group = kids_total_factor)) +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), 
-                position = position_dodge(width = 0.8), size = 1.5, width = 0.5) +
+   ggplot(aes(x = x, y = predicted, color = group, group = group)) +
+  geom_line(size=2)+
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), colour=NA, alpha=0.2) +
   th +
-  labs(x = "Aβ load", 
+  labs(x = "Number of childbirths", 
        y = "SUB", 
-       color = "Number of childbirths") +
-  scale_color_manual(values = color_mapping,
-                     labels = c("0", "1", "2", "3", "4+", "0", "1", "2", "3", "4+"))
+       color = "Aβ load") +
+  theme(legend.position= "none")
 
 
 DG+SUB
