@@ -4,7 +4,7 @@ author: "Clazz"
 toc: true
 number-sections: true
 format: 
-  docx:
+  html:
     code-fold: true
 editor: visual
 bibliography: references.bib
@@ -118,15 +118,15 @@ th <- call_aesthethics(13)
 
 # Introduction
 
-Alzheimer's disease (AD) is a neurodegenerative disorder clinically characterized by progressive memory loss. Being biologically female is one of the main non-modifiable risk factors for AD @riedel2016. Females who develop AD show a worse cognitive trajectory after mild cognitive impairment (MCI) diagnosis @holland2013, faster atrophy rate in the hippocampus @ardekani2016, and may benefit less from amyloid-antibody based therapies @andrews2025. These differences in pathology suggest that sex-dependent pathways or biological events may lead to distinct pathological trajectories.
+Alzheimer's disease (AD) is a neurodegenerative disorder clinically characterized by progressive memory loss. Amyloid protein accumulation, a hallmark clinical marker of AD, is thought to trigger an inflammatory cascade, leading to further accumulation of tau protein, neurodegeneration, and cognitive impairment. Being biologically female is one of the main non-modifiable risk factors for AD @riedel2016. Females who develop AD show a worse cognitive trajectory after mild cognitive impairment (MCI) diagnosis @holland2013, faster atrophy rate in the hippocampus @ardekani2016, and may benefit less from amyloid-antibody based therapies @andrews2025. These differences in pathology suggest that sex-dependent pathways or biological processes may drive distinct pathological trajectories. In particular, pregnancy is a female specific event that remains poorly understood, and its consequences on ageing even more so.
 
-Pregnancy is a female-specific event that provokes significant changes to brain structure through major hormonal fluctuations, with lasting impacts on the hippocampus @puri2023. Animal models show decreased neurogenesis in the hippocampus during gestation and the postpartum period [@pawluski2007; @eid2019]. In humans, pregnancy is associated with total hippocampal volume loss that is traceable for at least up to 6 years post-partum @martínez-garcía2021. Crucially, the hippocampus is one of the first regions affected by AD, and hippocampal volume is a hallmark predictor of conversion from MCI to AD @apostolova2006. Altered neurogenesis is linked to AD-related neuropathology and cognitive impairments @hollands2017. Therefore, parity-induced alterations to hippocampal structure may create a distinct neurobiological landscape that either increases vulnerability to, or modifies the progression of, AD-related degeneration.
+The effect of parity on brain ageing and cognitive trajectory remains relatively unknown, and available evidence paints a complex picture. Epidemiological studies exploring a potential association between parity and AD show a potential link between grand multiparity and dementia @Colucci2006; @bae2020. Recent evidence indicates that parity modulates women’s cognitive performance differently depending on their disease status. Specifically, a recent study using cross-sectional data from 456 female participants with dementia showed that higher parity was associated with enhanced executive function but reduced episodic memory @lee2025. Notably, this pattern was not observed in cognitively normal women.
 
-The effect of previous parity on brain ageing and cognitive trajectory is still relatively unknown and available evidence paints a complex landscape. Previous parity has been linked with less apparent brain aging, an effect most evident in the striatal and limbic regions @de2020.; @delange2024. However, epidemiological studies exploring a potential association between parity and AD show a potential link between grand multiparity and dementia @colucci2006; @bae2020. But without biomarker data, specificity of disease trajectory is lost. To our knowledge, only two studies have included AD biomarkers as dependent variables. A post-mortem histopathological study found that multiparity was associated with a higher number of neuritic plaques @Beeri2009a. However, analysis using PET amyloid data from an observational cohort found no association between amyloid burden and parity or multiparity @jung2020. The lack of consensus on the topic indicates another factor might be driving the interaction.
+However, these studies did not include AD-specific biomarkers, meaning they were limited to studying advanced dementia cases and lacked specificity of disease trajectory. To our knowledge, only two studies with mixed results have included AD biomarkers as dependent variables. A post-mortem histopathological study found that multiparity was associated with more neuritic plaques @Beeri2009a. However, analysis using PET amyloid data from an observational cohort found no association between amyloid burden and parity or multiparity @jung2020. These results highlight the need for further examination of the link between parity and AD biomarker levels in women in the AD preclinical stage to disentangle mechanisms that might take place in early stages of neuropathological progression. This will enable us to identify women at risk and move towards more personalized preventive interventions.
 
-Amyloid protein accumulation is a hallmark clinical marker of AD that triggers an inflammatory cascade, leading to further accumulation of tau protein, neurodegeneration, and cognitive impairment. This process is thought to occur 10 to 15 years before the appearance of cognitive symptoms. CSF amyloid measurements are a clinically used method that allows tracking of early pathology before cognitive symptoms appear. It is possible that previous parity could act as a disease modifier via its alteration to hippocampal volume and molecular makeup, or via its impact on vascular health. Importantly, recent evidence shows that parity modulates female participants' cognitive capacity differently depending on their disease status: in participants with dementia, higher parity was associated with enhance executive functions but decreased episodic memory @lee2025. Importantly, this effect was no present in cognitively normal women. Therefore, parity could have a different effect on individuals depending on wetehr they are already accumulating amyloid pathology.
+The hippocampus is one of the first regions affected by AD, and whole hippocampal volume is a hallmark predictor of conversion from MCI to AD @apostolova2006. Importantly, pregnancy provokes significant changes to hippocampal structure and volume @puri2023. Animal models show decreased neurogenesis in the hippocampus during gestation and the postpartum period [@pawluski2007; @eid2019]. In humans, pregnancy is associated with hippocampal volume (HV) loss that persists for at least 6 years post-partum @martínez-garcía2021. Importantly, the hippocampus is one of the first regions affected by AD, and HV is a hallmark predictor of conversion from MCI to AD @apostolova2006. Altered neurogenesis is linked to AD-related neuropathology and cognitive impairments @hollands2017. Aß pathology can affect hippocampal neurodegeneration in the early stages of the AD continuum @cacciaglia2025. Therefore, parity-induced alterations to hippocampal structure may create a distinct neurobiological landscape that either increases vulnerability to, or modifies the progression of, AD-related degeneration.
 
-We investigated the link between previous parity, hippocampal volume, and amyloid load in postmenopausal cognitively unimpaired women genetically enriched for AD phenotype. Our aim was to determine whether parity's effect on hippocampal volume persists in postmenopausal women and whether this interacts with AD-related neuropathology.
+We investigated the association between previous parity and amyloid load, and their combined effect on cognition and HV in postmenopausal CU women genetically enriched for the AD phenotype. We aimed to determine whether parity's effect on HV persists in postmenopausal women and whether this interacts with AD-related neuropathology. We hypothesized that parity would interact with amyloid load such that women with low amyloid burden would exhibit higher HV and better cognitive performance with increasing parity. In contrast, the opposite pattern would be observed in amyloid-positive women.
 
 # Methods
 
@@ -164,7 +164,7 @@ Analyses were conducted using R version 4.5.1. 
 
 Normality of residuals was checked in all linear models using the base R plot() function on model output. Collinearity was also checked for all models using the vif() function of the car package (v.3.1.3).
 
-We conducted simple linear regressions to examine cross-sectional associations between parity and Aβ positivity (exposures) on hippocampal volume and PACC score (outcomes) using baseline visit data. Following this, mixed-effects linear models were used to assess longitudinal effects of parity and Aβ positivity (exposures) on hippocampal volume and cognitive change (outcomes) using baseline and follow-up visit data. These models included a three-way interaction term between parity, Aβ positivity, and time (interval between Visit 1 and Visit 2).
+We first conducted simple linear regressions to examine the cross sectional effect of previous parity (exposure) on Aß load (outcome). We then conducted simple linear regressions to examine cross-sectional associations between parity and Aβ positivity (exposures) on hippocampal volume and PACC score (outcomes) using baseline visit data. Following this, mixed-effects linear models were used to assess longitudinal effects of parity and Aβ positivity (exposures) on hippocampal volume and cognitive change (outcomes) using baseline and follow-up visit data. These models included a three-way interaction term between parity, Aβ positivity, and time (interval between Visit 1 and Visit 2).
 
 All models used a p-value threshold of p \< 0.05. 
 
@@ -417,6 +417,18 @@ desc_table
 
 15.35% of our participants have no previous childbirths, 21.25% have 1, 49.6 have 2, 10.6 have 3 and 3.14 have 4 or more. Participants with higher parity were significantly older. No difference was observed between groups regarding Aβ status and APOE-ε4 carrier status (Table 1).
 
+## Effect of previous parity on amyloid status
+
+```{r, include=F}
+
+fit_amyloid<-glm(A ~ kids_total +age_v1 + APOE_binary + education ,data_cog_long[data_cog_long$sex==2 & data_cog_long$Visit==1,], family=binomial(link = "logit"))
+summary(fit_amyloid)
+
+
+```
+
+No main effect of parity was found on amyloid load when looking at baseline data (β = `r tidy(fit_amyloid)$estimate[2]`, SE = `r tidy(fit_amyloid)$std.error[2]`, p=`r tidy(fit_amyloid)$p.value[2]`).
+
 ## Association between parity and amyloid status on cognition
 
 ```{r, include=F}
@@ -499,7 +511,14 @@ cog_p1<-ggplot(data_plot, aes(x = time_diff, y = Z_PACC, color = color_group)) +
        y = "PACC Z-score", 
        color = "Number of childbirths",
        fill = "Number of childbirths")+
-  th
+  th+
+  geom_text(data = data.frame(A = factor("Aβ+", 
+                                                     levels = c("Aβ-", "Aβ+")), 
+                              time_diff = Inf, 
+                              Z_PACC = Inf, 
+                              label = "p= 0.033"),
+            aes(x = time_diff, y = Z_PACC, label = label),
+            size = 4, vjust = 1.5, hjust = 1.2, inherit.aes = FALSE)
 ```
 
 ```{r cog_plot_emmeans, echo=F, warning=F}
@@ -569,11 +588,6 @@ Reproducing the analysis using our 3 parity groups showed that the direction of 
 
 ```{r, include = F}
 
-
-
-mod_ashs_lm_simple<-lm(vol_HIPP ~  kids_total + A +age_v1  + scale(vol_tiv) + education+ APOE_binary, data = data_ashs[data_ashs$sex==2 & data_ashs$Visit==1,])
-summary(mod_ashs_lm_simple)
-
 mod_ashs_lm<-lm(vol_HIPP ~  kids_total*A +age_v1  + scale(vol_tiv) + education+ APOE_binary, data = data_ashs[data_ashs$sex==2 & data_ashs$Visit==1,])
 summary(mod_ashs_lm)
 
@@ -587,7 +601,7 @@ emm_parous_A <- emmeans(mod_ashs_lm_group,
 pairs(emm_parous_A, by= "parous_group")
 ```
 
-No significant main effect of parity on HV was found cross-sectionally (β = `r tidy(mod_ashs_lm_simple)$estimate[2]`, SE = `r tidy(mod_ashs_lm_simple)$std.error[2]`, p = `r tidy(mod_ashs_lm_simple)$p.value[2]`). However there was an interaction between parity and Aβ status (β = `r tidy(mod_ashs_lm)$estimate[7]`, SE = `r tidy(mod_ashs_lm)$std.error[7]`, p = `r tidy(mod_ashs_lm)$p.value[7]`), showing that Aβ- women exhibited a positive relationship between parity and hippocampal volume, whilst Aβ+ women showed the opposite (Figure X).
+No significant main effect of parity on HV was found cross-sectionally (β = `r tidy(mod_ashs_lm)$estimate[2]`, SE = `r tidy(mod_ashs_lm)$std.error[2]`, p = `r tidy(mod_ashs_lm)$p.value[2]`). However there was an interaction between parity and Aβ status (β = `r tidy(mod_ashs_lm)$estimate[8]`, SE = `r tidy(mod_ashs_lm)$std.error[8]`, p = `r tidy(mod_ashs_lm)$p.value[8]`), showing that Aβ- women exhibited a positive relationship between parity and hippocampal volume, whilst Aβ+ women showed the opposite (Figure X).
 
 ```{r hippo_plot, echo=F, warning=F}
 cyan_gradient <- c("#4DD0E1", "#1CA8B7", "#1E8895", "#0D707B", "#0F565E")
@@ -621,7 +635,14 @@ hippo_p1<-data_ashs %>%
   scale_fill_manual(values = color_mapping,
                     labels = c("0", "1", "2", "3", "4+", "0", "1", "2", "3", "4+")) +
   scale_color_manual(values = color_mapping,
-                     labels = c("0", "1", "2", "3", "4+", "0", "1", "2", "3", "4+"))
+                     labels = c("0", "1", "2", "3", "4+", "0", "1", "2", "3", "4+"))+
+  geom_text(data = data.frame(A = factor("Aβ+", 
+                                                     levels = c("Aβ-", "Aβ+")), 
+                              time_diff = Inf, 
+                              Z_PACC = Inf, 
+                              label = "p= 0.036"),
+            aes(x = time_diff, y = Z_PACC, label = label),
+            size = 4, vjust = 1.5, hjust = 1.2, inherit.aes = FALSE)
 ```
 
 ```{r hippo_plot_emmeans, echo=F, warning=F}
@@ -660,6 +681,8 @@ hippo_p1/hippo_p2+
 
 When splitting women between nulliparous, primiparous and multiparous, the direction of the group interaction estimates indicated this interaction only took place in multiparous women, but no estimate showed significance (Figure x). Using estimated marginal effects for direct group comparison revealed that only multiparous women showed a difference in predicted HV depending on Aβ load (β= 242.9, SE=84.9, p=0.005).
 
+## Longitudinal association between parity and hipoccampal volume change
+
 ```{r, include = F}
 ##whole hippocampus, simple
 
@@ -672,31 +695,167 @@ plot_model(mod_ashs, type="int")
 
 Time did not moderate the previously found parity and Aβ status interaction (β = `r tidy(mod_ashs)$estimate[11]`, SE = `r tidy(mod_ashs)$std.error[11]`, p = `r tidy(mod_ashs)$p.value[11]`) . The effect previously seen was maintained over both visits (β = `r tidy(mod_ashs)$estimate[9]`, SE = `r tidy(mod_ashs)$std.error[9]`, p = `r tidy(mod_ashs)$p.value[9]`), suggesting that the observed relationship is does not show differences in the rate of hippocampal atrophy over time
 
+## Post Hoc analysis
+
+```{r}
+PACC_wide<-cognition%>%
+  dplyr::select(subject, Visit, Z_PACC, FechaResultado)%>%
+  pivot_wider(values_from = c(Z_PACC, FechaResultado), names_from = Visit, names_prefix = "V")%>%
+  mutate(Z_PACC_diff = Z_PACC_V2-Z_PACC_V1,
+         FechaResultado_V1= as.Date(FechaResultado_V1, format = "%Y-%m-%d"),
+         FechaResultado_V2= as.Date(FechaResultado_V2, format = "%Y-%m-%d"),
+         cog_diff= as.numeric(FechaResultado_V2-FechaResultado_V1)/365.25)%>%
+  dplyr::select(subject, Z_PACC_diff, cog_diff, Z_PACC_V2, Z_PACC_V1)
+
+
+
+data_all<-data%>%
+  filter(sex==2)%>%
+  left_join(.,PACC_wide)%>%
+  left_join(., ashs1)%>%
+  mutate(vol_HIPP = vol_CA1+vol_CA2+vol_CA3+vol_DG+vol_SUB)%>%
+  mutate(kids_total_factor = ifelse(kids_total==4, "4+", as.character(kids_total)),
+         kids_total_factor = factor(kids_total_factor, levels = c("0", "1", "2", "3", "4+")))%>%
+  mutate(scale_vol_HIPP= as.numeric(scale(vol_HIPP)),
+         scale_vol_tiv = as.numeric(scale(vol_tiv)),
+         tier_vol_HIPP = cut(vol_HIPP, 
+                 breaks = 3,
+                 labels = c("Low", "Medium", "High")))%>%
+  drop_na(Z_PACC_V2)%>%
+  drop_na(scale_vol_HIPP)%>%
+  drop_na(cog_diff)
+  
+
+
+fit_post_hoc<-lm(Z_PACC_diff ~ scale_vol_HIPP*kids_total*A + APOE_binary + education + age_v1+ cog_diff, data = data_all)
+summary(fit_post_hoc)
+plot(fit_post_hoc)
+plot_model(fit_post_hoc, type="int")
+
+fit_post_hoc2<-lm(Z_PACC_diff ~ scale_vol_HIPP*A*parous_group + APOE_binary + education + age_v1+ cog_diff, data = data_all)
+summary(fit_post_hoc2)
+plot(fit_post_hoc2)
+plot_model(fit_post_hoc2, type="int")
+
+test<-lm(vol_HIPP ~ Z_PACC_diff*A*kids_total + APOE_binary + education + scale_vol_tiv+ age_v1, data = data_all)
+summary(test)
+plot(test)
+plot_model(test, type="int")
+```
+
+```{r}
+library(mediation)
+
+model_mediator <- lm(scale_vol_HIPP ~ kids_total + age_v1 + APOE_binary + education, 
+                     data = data_all[data_all$A==0,])
+
+# Model 2: Effect of parity and HV on cognition
+model_outcome <- lm(Z_PACC_V2 ~ kids_total + scale_vol_HIPP + Z_PACC_V1 + cog_diff + age_v1 + APOE_binary + education, 
+                    data = data_all[data_all$A==0,])
+
+# Check your models
+summary(model_mediator)
+summary(model_outcome)
+set.seed(123)
+
+mediation_results <- mediate(model_mediator,    # Mediator model
+                              model_outcome,     # Outcome model
+                              treat = "kids_total",  # Independent variable
+                              mediator = "scale_vol_HIPP",   # Mediator
+                              boot = TRUE,       # Use bootstrapping
+                              sims = 5000) 
+
+summary(mediation_results)
+
+model_mediator <- lm(scale_vol_HIPP ~ kids_total + age_v1 + APOE_binary + education, 
+                     data = data_all[data_all$A==1,])
+
+# Model 2: Effect of parity and HV on cognition
+model_outcome <- lm(Z_PACC_V2 ~ kids_total + scale_vol_HIPP + Z_PACC_V1 + cog_diff + age_v1 + APOE_binary + education, 
+                    data = data_all[data_all$A==1,])
+
+# Check your models
+summary(model_mediator)
+summary(model_outcome)
+
+mediation_results <- mediate(model_mediator,    # Mediator model
+                              model_outcome,     # Outcome model
+                              treat = "kids_total",  # Independent variable
+                              mediator = "scale_vol_HIPP",   # Mediator
+                              boot = TRUE,       # Use bootstrapping
+                              sims = 5000) 
+
+summary(mediation_results)
+```
+
+
+
+```{r}
+preds_post_hoc <- ggpredict(fit_post_hoc, terms = c("vol_HIPP", "kids_total", "A"))%>%
+  as.data.frame()
+
+preds_post_hoc_A0<-preds_post_hoc%>%
+  filter(facet==0)%>%
+  rename(A=facet,
+         kids_total_factor=group)%>%
+  mutate(kids_total_factor= ifelse(as.character(kids_total_factor)==4, "4+", as.character(kids_total_factor)),
+         kids_total_factor = factor(kids_total_factor, levels = c("0", "1", "2", "3", "4+")))
+
+preds_post_hoc_A1<-preds_post_hoc%>%
+  filter(facet==1)%>%
+  rename(A=facet,
+         kids_total_factor=group)%>%
+  mutate(kids_total_factor= ifelse(as.character(kids_total_factor)==4, "4+", as.character(kids_total_factor)),
+         kids_total_factor = factor(kids_total_factor, levels = c("0", "1", "2", "3", "4+")))
+
+
+data_all%>%
+  filter(sex==2)%>%
+  drop_na(A)%>%
+  ggplot(aes(x= vol_HIPP, y= Z_PACC, group = kids_total_factor, colour=kids_total_factor))+
+  geom_point()+
+  geom_line(data = preds_post_hoc_A0, aes(x=x, y=predicted, group=kids_total_factor, colour=kids_total_factor), inherit.aes = F, size=1.3)+
+  geom_ribbon(data = preds_post_hoc_A0, aes(x=x, ymin= conf.low, ymax = conf.high, group=kids_total_factor), colour=NA, alpha=0.2, inherit.aes = F)+
+  geom_line(data = preds_post_hoc_A1, aes(x=x, y=predicted, group=kids_total_factor, colour=kids_total_factor), inherit.aes = F, size=1.3)+
+  geom_ribbon(data = preds_post_hoc_A1, aes(x=x, ymin= conf.low, ymax = conf.high, group=kids_total_factor), colour=NA, alpha=0.2, inherit.aes = F)+
+  facet_wrap(~A)+
+  th
+
+preds_post_hoc2 <- ggpredict(fit_post_hoc2, terms = c("vol_HIPP", "parous_group", "A"))%>%
+  as.data.frame()
+
+preds_post_hoc2%>%
+  ggplot(aes(x= x, y=predicted, group=group, colour = group))+
+  geom_line(size=1.3)+
+  geom_ribbon(aes(x=x, ymin= conf.low, ymax = conf.high, group=group), colour=NA, alpha=0.2)+
+  facet_wrap(~ facet)+
+  th
+```
+
+
 # Discussion
 
-In this study, we present evidence of long-term effect of previous pregnancies interacting with AD-specific biomarkers in postmenopausal women with enriched AD genetic risk. This interaction affected hippocampal volume and cognitive trajectory in our participants. Compared to multiparous Aβ+ women, multiparous Aβ- women showed greater total hippocampal volume. This interaction seemed to be present in particular in the DG, but could also be present in the subiculum. Additionally, in the context of low Aβ, parous women showed lesser cognitive reduction compared with parous women with high Aβ load. The cognitive rsults observed are of small magnitude, but given the short time between both visits this is to be expected. These results offer a compelling explanation behind the mixed results that have come out of studies examining a link between parity and AD risk. Most of these studies do not have biomarker data, meaning this interaction goes unnoticed. As such, weak effects in one direction or another might emerge as a result of sample biases in amyloid load.
+In this study, we explored the potential interaction between parity and amyloid accumulation on cognition and HV, two markers of AD. In women with low Aβ load, higher parity was associated with lesser cognitive decline and higher HV. In contrast, in women with high Aβ load, higher parity was associated with greater cognitive decline and lower HV. The effect of this interaction on cognitive trajectory appears present in both primiparous and multiparous women, but stronger in the latter. However, the effect of this interaction on HV seems only present in multiparous women. Together, this evidence presents a compelling case for long-term effects of previous pregnancies interacting with AD pathways in postmenopausal women with enriched AD genetic risk, affecting cognitive trajectory and HV. These results offer an explanation for the mixed findings from studies examining a link between parity and AD risk by shedding light on an interaction that drives opposite effects depending on amyloid burden.
 
-Parity did not independently affect hippocampal volume. To our knowledge, literature on the effect of parity on the hippocampus in older age is scarce. Grand multiparity is associated with reduced hippocampal volume @jung2020. First time mothers show a dramatic decrease in hippocampal volume followed by partial recovery detectable up to at least 6 years post partum, but there is no data on how subsequent pregnancies affect this recovery, or what kind of late-life biological mechanisms does this translate to for hippocampus neurogenesis. Additionally, given the effect of parity on this area is hormone dependant, the menopausal transition is probably affecting it too. Each subfield of the hippocampus presents estrogen receptors @brinton2015. This warrants further research focusing on the menopausal window and hippocampus volume. So if amyloid and parity interact and we have a higher prevalence of amyloid positive than other big cohort, the effect might be overshadowed by the interaction?
+Parity did not independently affect cognitive trajectory but instead, its effect was moderated by amyloid load. These results are congruent with the mixed findings from previous studies examining the role of cognitive decline and parity that do not include biomarkers data. Here, our results indicate that being on a trajectory of amyloid accumulation, a known early marker of prodromal AD, changes the direction of effect of parity on cognition. Although we evaluated overall cognition which is closely linked with dementia-related markers, it is possible that this association might be domain-dependent, especially when looking at more advanced dementia cases @lee2025. The direction of this interaction was present in both primiparous and multiparous women, but only significant in the latter, suggesting the effect could be additive.
 
-Parity did not affect cognition independently either.
+Similarly, amyloid load moderated the effect of parity on HV, but did not predict it independently. Whilst evidence suggests the effect of gestation on HV is visible up to at least 6 years postpartum @martínez-garcía2021, whether this effect is still visible in older adults is unknown. Although grand multiparity appears to be associated with lower HV @jung2020, we do not know which late-life biological mechanisms drive this change. Here, our analyses suggest that parity influences HV volume differently based on pathological burden. However, a wide knowledge gap remains, since our current window of observation only covers postmenopause, therefore ignoring the effects of the menopausal transition. This factor should be crucial to our understanding of this phenomenon given the hippocampus' affinity for sex hormones @brinton2015. Interestingly, the effects observed in our analyses were independent of time, which could indicate that the trigger point for these differences could have occurred before menopause. This warrants further research focusing on the menopausal window and hippocampal volume.
 
-The interaction that affects hippocampal volume appears to only affect multiparous women. Current literature examining the effect of pregnancy on brain and hippocampal structure have only done so on first time mothers. As such, there is a knowledge gap that exists on whether the effect of pregnancies and childbirths are cumulative or if the changes observed only occur in the first pregnancy. Rodent studies indicate that spine density in the CA1 increases with number of pups, and that dendritic remodelling in the hippocampus is more obvious in primiparous rats @Pawluski2006. However, it is important to highlight the nulliparous and primiparous groups in our analysis contained less individuals, which could have led to an increased rate of type II error.
+Primiparous and multiparous women seemed to be affected differently by this interaction. Recent studies examining the effect of pregnancy on brain and hippocampal structure have only been conducted in first-time mothers. As such, there is a knowledge gap regarding whether the effects of pregnancies and childbirths are cumulative or if the changes observed occur only in the first pregnancy. Rodent studies indicate that spine density in the CA1 increases with number of pups, and that dendritic remodelling in the hippocampus is more obvious in primiparous rats @Pawluski2006. Therefore, our results could suggest that the impact of pregnancy, especially on HV, depends on previous parity. However, it is important to highlight that our sample had significantly more multiparous participants, meaning our sensitivity analyses using parity as a categorical variable were likely underpowered for the nulliparous and primiparous levels. Therefore, Type II errors were more likely for these groups.
 
-Post-hoc analyses found this interaction affets the DG. We know that during pregnancy, hippocampal volume reduces in humans, but the biological mechanisms behind this change are unclear. Rodent studies tell us that parity is linked with decreased neurogenesis in the DG during early post-partum for multiparous rats @pawluski2007. Additionally, parity alters the trajectory of changes linked to ageing processes in hippocampal neurogenesis. In rats, primiparous dams show an increased neurogenesis, especially in the DG, whilst nulliparous dams show a significant decrease @eid2019; @barha2015. These previous results align with our present analysis showing that the effect seen in hippocampal volume might be particularly present in the DG.
+There are no established theories that explain a mechanistic interaction between parity and amyloid accumulation, but several mechanisms are possible. First, parity could interact with amyloid through immune changes brought on by pregnancy. Parity affects the immune system beyond birth, as evidenced by the presence of fetal cells in the mother's tissue at least one year postpartum @Huang2021. The long-term consequences of these immune changes remain largely unknown, with current evidence limited to a few epidemiological studies examining the effect of parity on autoimmune disease @jørgensen2012; @scime2024. A key theory behind sex differences in AD trajectory relates to immune differences and their effect on the inflammatory cascade that characterizes amyloid accumulation @buckley2022. Evidence suggests the percentage of amyloid accumulation mediated by microglial activation is nearly 3 times as high in females compared to males @casaletto2022. In that sense, gestational-related immune changes could contribute to the observed sex-differences in immunological pathways in AD.
 
-Post-hoc analysis also finds this interaction near significance in the subiculum. Studies have shown the subiculum and presubiculum are the earliest hippocampal anatomical marker of AD and linked to progression from MCI to AD @zilioli2024. This could indicate this interaction influences AD-specific neurodegeneration. But due to the the effect not reaching singiifcance threshold, this effect is less clear, and warrant furtehr investiagtion with more timpoints or increased participants for better power to detect smaller effects sizes.
+Second, both could interact through modification of vascular risk. Cardiovascular risk is highly associated with all-cause dementia and AD risk @farnsworthvoncederwald2022, and pregnancy requires substantial vasculature changes for the well being of the new foetus, in turn leading to significant increases in plasma volume and cardiac output @iacobaeus2017. To accommodate these changes, vascular resistance decreases via an outward hypertrophy of vessels. Although these changes are mostly seen in the uterine vasculature, these changes are, to some extent, pervasive to the entire vascular system @boeldt2017. Importantly, Aβ peptides can deposite on brain blood vessel, interfering with its integrity and function. Therefore, previous parity could modify participants' vascular system, which in turn could modulate the impact of Aβ on vasculature, or resilience to Aβ accumulation, and modify AD risk and trajectory. Given that microglial activation is strongly related to cerebrovascular injury, but also Aβ accumulation, it is possible that vascular and immune pathways interact with each other as well. Unfortunately, the effect of previous normotensive pregnancy on the vasculature system in older females is largely unknown, meaning further work is needed to characterise their vascular impact on postmenopausal individuals.
 
-There are several theories that could explain the ways in which parity and amyloid load could interact. Firstly, both could interact through the modification of vascular risk. Pregnancy causes deep changes to the vasculatureas part of the need to accomodate for an additional X% of blood needed for the well being of the foetus @iacobaeus2017. Evidence shows that adverse cardiovascular events during pregnancy can lead to adverse outocomes in later l ife (source?). However, we excluded any participants with gestational health issues, and the effect of previous normotensive pregnancy on the vasculature system at older age is largely unknown. Cardiovascular risk is highly associated with all cause dementia and with AD risk (source). Therefore, pregnancy could interact with amyloid load becasue it modifies participants' cardiovascular risk profile which in turns modifies AD risk and trajectory.
+It is unclear whether our cognition and hippocampal results reflect a single mechanistic pathway or independent consequences of the parity-amyloid interaction. One possibility is a sequential cascade: HV changes may have occurred earlier and remained stable over our observation window, while their downstream effects on cognition are only now becoming detectable. This would be consistent with a model where structural hippocampal vulnerability precedes measurable cognitive decline. Alternatively, HV and cognition could be affected through distinct pathways—for example, immune-mediated amyloid accumulation directly impacting hippocampal structure, while vascular mechanisms preferentially affect cognitive reserve and decline trajectories. A third consideration is that cognitive changes may be inherently slower to manifest or harder to detect in this relatively healthy, cognitively intact cohort, potentially explaining the time-dependent pattern we observe. Additional timepoints in our cohort will, in the future, help us untangle these possibilities.
 
-Secondly, parity could interact with the effect of amyloid through immunty changes brought on by pregnancy. Pregnancy affects the immune system in a complex way, which can neither be simply characterized fully suppressing or activating inflammatory state. Parity possibly affects the immune system beyond birth buthard to tell in what direction? @teter2014; @cockrill2010
-
-The biggest limitation of this study is the lack of hormonal measurements. By only using proxy measurements, we are only able to estimate the role of sex steroid hormones in the results found, but cannot make any definitive conclusions. It is very possible the role of sex hormones in our observatioins was underestimated due to this missing variable. In addition to this, the ALFA+ cohort is very homogeneous: participants are majoritarily caucasian whites, from middle and upper-middle class background, who were selected due to their impeccable health records. Therefore, we must use cuation when generalising our results to a wider population. Additionally, our sample lacked highly multiparous individuals. Previous studies on the effect of parity on cognition and neurodegeneration have found an inverted u-shaped relation between parity and outcome measures, indicating that our lack of women having had more than 4 children might be leading to an incomplete picture of the phenomenon.
+A limitation of this study is the lack of hormonal measurements. By using only proxy measurements, we are able to estimate but not definitively conclude the role of sex steroid hormones in our results. It is quite possible the role of sex hormones in our observations was underestimated due to this missing variable. Additionally, the ALFA+ cohort is very homogeneous: participants are predominantly Caucasian whites from middle and upper-middle class backgrounds who were selected due to their excellent health records. Therefore, caution should be exercised when generalizing our results to a wider population. Furthermore, our sample lacked highly multiparous individuals. Previous studies on the effect of parity on cognition and neurodegeneration have found an inverted U-shaped relationship between parity and outcome measures, indicating that our lack of women having had more than 4 children might be providing an incomplete picture of the phenomenon.
 
 # Appendix
 
 ## MRI data acquisition
 
-MRI scans were acquired on a in-house 3.0 T scanner (GE Discovery MR750 W 3 T) using the same protocol for all participants, which included one T1- and three T2- weighted sequences. The 3D-T1w sequence was designed with an isotropic voxel size of1mm3 and a matrix size of256x256x160 (TR/TE/TI = 8.0/3.7/450 ms, NSA = 1, flip angle = 8°). Three 3D-T2w sequences, with a voxel size of1 mm× 1 mm× 3 mm, were also used: fluid attenuation inversion recovery (FLAIR: TR/TE/ TI = 11,000/90/2600 ms, flip angle = 160°), fast spin echo (FSE: TR/TE = 5000/85 ms, flip angle = 110°) and, gradient echo (GRE: TR/TE = 1300/23 ms, flip angle = 15°). All scans were visually assessed to verify their quality and to detect incidental findings by a trained neuroradiologist and have been reported elsewhere (Brugulat-Serrat et al. 2017). At visit 1, ten participants were excluded due to the presence of a meningioma, as well as 37 participants due to susceptibility, motion artefacts or segmentation problems, resulting in a total of 561 images available for subsequent analysis. At Visit 2, ... The medial temporal lobe atrophy was assessed by Medial Temporal Atrophy scale [@scheltens1992a].
+MRI scans were acquired on a 3.0 T scanner (GE Discovery MR750 W 3 T) using the same protocol for all participants, which included one T1- and three T2- weighted sequences. The 3D-T1w sequence was designed with an isotropic voxel size of1mm3 and a matrix size of256x256x160 (TR/TE/TI = 8.0/3.7/450 ms, NSA = 1, flip angle = 8°). Three 3D-T2w sequences, with a voxel size of1 mm× 1 mm× 3 mm, were also used: fluid attenuation inversion recovery (FLAIR: TR/TE/ TI = 11,000/90/2600 ms, flip angle = 160°), fast spin echo (FSE: TR/TE = 5000/85 ms, flip angle = 110°) and, gradient echo (GRE: TR/TE = 1300/23 ms, flip angle = 15°). All scans were visually assessed to verify their quality and to detect incidental findings by a trained neuroradiologist and have been reported elsewhere @brugulat-serrat2017.
 
 ## Hippocampal subfields
 
@@ -763,14 +922,13 @@ SUB<-preds_SUB %>%
   th +
   labs(x = "Number of childbirths", 
        y = "SUB", 
-       color = "Aβ load") +
-  theme(legend.position= "none")
+       color = "Aβ load") 
 
 
-DG+SUB
+DG/SUB
 ```
 
-# Miscellaneous
+# References
 
 ```{r, eval=F, include=F}
 tbl_regression(mod_ashs_DG, show_single_row = c(A, APOE_binary, `kids_total:A`), 
@@ -864,4 +1022,20 @@ dag_r_tidy%>%
   theme_dag() +
   theme(legend.position= "none")+
   scale_shape_manual(values = c(22, 21))
+```
+
+```{r, include=F, eval=F}
+data_juando<-data_ashs%>%
+  filter(sex==2, Visit==1)
+
+followup<-data_ashs%>%
+  filter(Visit==2, sex==2)%>%
+  rename(followup = vol_HIPP)%>%
+  dplyr::select(subject, followup)
+
+data_juando<-left_join(data_juando, followup)
+
+test<-lm(followup~  kids_total*A  +APOE_binary + education + scale(vol_tiv) , data = data_juando)
+
+summary(test)
 ```
