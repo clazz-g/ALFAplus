@@ -62,7 +62,7 @@ This code processes ALFA+ cohort data into a main dataset. variable specs can be
 
 #WMH files by region for v1 and v2
 ```{r}
-wmh_V1<- read_excel("G:/My Drive/Data/ALFA+/WMH/bx_bamos_stats_ALFA_PLUS_V1_20231120_20231223_015120.xlsx")%>%
+wmh_V1<- read_excel("G:/My Drive/Data/ALFA+/data_raw/WMH/bx_bamos_stats_ALFA_PLUS_V1_20231120_20231223_015120.xlsx")%>%
   dplyr::select(subject, volume, region, depth)%>%
   filter(region!= "background", 
          region!= "infratentorial")%>%
@@ -71,7 +71,7 @@ wmh_V1<- read_excel("G:/My Drive/Data/ALFA+/WMH/bx_bamos_stats_ALFA_PLUS_V1_2023
   mutate(Visit ="V1")
 
 
-wmh_V2<- read_excel("G:/My Drive/Data/ALFA+/WMH/bx_bamos_stats_ALFA_PLUS_V2_20230518_20231025_084845.xlsx")%>%
+wmh_V2<- read_excel("G:/My Drive/Data/ALFA+/data_raw/WMH/bx_bamos_stats_ALFA_PLUS_V2_20230518_20231025_084845.xlsx")%>%
   dplyr::select(subject, volume, region, depth)%>%
   filter(region!= "background", 
          region!= "infratentorial")%>%
@@ -91,7 +91,7 @@ wmh_data<-bind_rows(wmh_V1, wmh_V2)%>%
   summarise(volume_wmh = sum(volume_wmh), .groups = "drop")
 
 
-write.csv(wmh_data, file = "G:/My Drive/Data/ALFA+/WMH/wmh_processed_regional_lobes.csv", row.names = F)
+write.csv(wmh_data, file = "G:/My Drive/Data/ALFA+/data_cleaned/wmh_processed_regional_lobes.csv", row.names = F)
   
 ```
 

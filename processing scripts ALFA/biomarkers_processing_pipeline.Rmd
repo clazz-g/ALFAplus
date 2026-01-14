@@ -5,58 +5,12 @@ date: "2025-06-26"
 output: html_document
 ---
 
-```{r}
-library(readxl)
-#install.packages("ggplot2")
-library(ggplot2)
-#install.packages("psych")
-library(psych)
-#install.packages("tidyverse")
-library(tidyverse)
-#install.packages("ggpubr")
-library(ggpubr)
-#install.packages("broom")
-library(broom)
-#install.packages("ggeffects")
-library(ggeffects)
-#install.packages("MASS")
-library(MASS)
-#install.packages("PResiduals")
-library(PResiduals)
-#install.packages("mice")
-library(mice)
-#install.packages("VIM")
-library(VIM)
-#install.packages("car")
-library(car)
-#install.packages("sjPlot")
-library(sjPlot)
-#install.packages("caret")
-library(caret)
-#install.packages("bestNormalize")
-library(bestNormalize)
-#install.packages("ggrain")
-library(ggrain)
-#install.packages("emmeans")
-library(emmeans)
-#install.packages("skimr")
-library(skimr)
-library(glmnet)
-#install.packages("bullseye")
-library(bullseye)
-#install.packages("lavaan")
-library(lavaan)
-#install.packages("brms")
-library(brms)
-#install.packages("mgcv")
-library(mgcv)
-library(splines)
-#install.packages("fitdistrplus")
-library(fitdistrplus)
-#install.packages("patchwork")
-library(patchwork)
-library(ellmer)
-library(gander)
+```{r, include = F}
+
+if (!require("pacman")) install.packages("pacman")
+
+pacman::p_load(tidyverse, VIM, ggpubr, ggeffects, car, sjPlot,caret, ggrain, emmeans, skimr, lavaan, patchwork, lme4, lmerTest, gtsummary, huxtable, readxl, broom.mixed, pwrss, mediation)
+
 ```
 
 
@@ -70,7 +24,7 @@ library(gander)
 #sICAM1, VCAM1: Vascular Injury Panel 2 (human) kits #K15198D
 #SNAP25: In-house (Brinkmalm et al. 2014. PMID 25418885)
 
-biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Alfa_Cohort__Biomarkers_alfa_cohort_20241220142704(in).csv", 
+biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/data_raw/fluid_biomarkers/Biomarkers_Alfa_Cohort__Biomarkers_alfa_cohort_20241220142704(in).csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE)%>%
   dplyr::select(Visit, idparticipante, collection_dt, Assay, SampleType, Result, Kit, ResultRecalc)%>%
   mutate(Kit = factor(Kit),
@@ -106,7 +60,7 @@ biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Al
 
 
 
-write.csv(biomarcadores_CSF, file = "G:/My Drive/Data/ALFA+/biomarkers/biomarkers_CSF_processed.csv", row.names = F)
+write.csv(biomarcadores_CSF, file = "G:/My Drive/Data/ALFA+/data_cleaned/biomarkers_CSF_processed.csv", row.names = F)
 
 
 #using NTK for amyloid means some NA with abeta42. Is this the best course of action still?
@@ -116,35 +70,40 @@ write.csv(biomarcadores_CSF, file = "G:/My Drive/Data/ALFA+/biomarkers/biomarker
 plasma values are a mess - come back to later
 
 ```{r}
-biomarcadores_PLASMA <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Biomarkers_Alfa_Cohort__Biomarkers_alfa_cohort_20241220142704(in).csv", 
+biomarcadores_PLASMA <- read_delim("G:/My Drive/Data/ALFA+/data_raw/fluid_biomarkers/Biomarkers_Alfa_Cohort__Biomarkers_alfa_cohort_20241220142704(in).csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE)%>%
-  dplyr::select(Visit, idparticipante, collection_dt, Assay, SampleType, Result, Kit, ResultRecalc)%>%
+  dplyr::select(Visit, Session, idparticipante, collection_dt, Assay, SampleType, Result, Kit, ResultRecalc, LbNam)%>%
   mutate(Kit = factor(Kit),
          SampleType = factor(SampleType),
          Assay = factor(Assay),
          Result= as.numeric(gsub("\\.", "", Result)) / 1000)%>%
   filter(SampleType == "PLASMA")%>%
-  mutate(Result = ifelse(is.na(Result)&!is.na(ResultRecalc), as.numeric(gsub("\\.", "", ResultRecalc)) / 1000, Result))%>%
+  mutate(Result = ifelse(!is.na(ResultRecalc), as.numeric(gsub("\\.", "", ResultRecalc)) / 1000, Result))%>%
   dplyr::select(-ResultRecalc) %>%
-  filter(Assay %in% c("a-Synuclein", "Abeta1-40", "Abeta1-42", "GAP43", "GFAP", "IL-6", "Neurogranin", "NFL", "pTau181", "pTau217", "sICAM1", "SNAP25", "sTREM2", "sVCAM1", "Synaptotagmin", "tTau", "YKL40"),
-         Visit %in% c("V1", "V2"))
+  filter(Assay %in% c("Abeta1-40", "Abeta1-42", "GFAP", "NFL", "pTau181", "pTau217", "sICAM1", "sVCAM1", "tTau", "ApoE4"),
+         Visit %in% c("V1", "V2"))%>%
+  filter((Kit == "N4PE (NEUROLOGY 4-PLEX E) #103670" & Assay %in% c("Abeta1-40", "Abeta1-42", "GFAP", "NFL")) |
+       (Kit == "Advantage 2.1" & Assay == "pTau181") |
+       (Kit == "NTK" & Assay == "pTau217")|
+         Kit== "NTK" & Assay == "ApoE4")%>%
+  filter(LbNam == "UGOT")
+  
+#need to finish pipeline once I know more from ferran
   pivot_wider(names_from = Assay, values_from = Result, names_prefix = "PLASMA_")
 
+apoe<-biomarcadores_PLASMA%>%
+  filter(Assay=="ApoE4")%>%
+  dplyr::select(idparticipante, Visit, Result, collection_dt)%>%
+  rename(subject = idparticipante)
 
+
+write.csv(apoe, file = "G:/My Drive/Data/ALFA+/data_cleaned/biomarkers_plasma_apoe.csv", row.names = F)
+
+#abeta1-40 = N4PE (NEUROLOGY 4-PLEX E) #103670
+#abeta1-42 = N4PE (NEUROLOGY 4-PLEX E) #103670
+#gfap = N4PE (NEUROLOGY 4-PLEX E) #103670
+#nfl = N4PE (NEUROLOGY 4-PLEX E) #103670
+# pTau181 Advantage 2.1
+# ptau217 = NTK
 ```
 
-
-
-
-```{r}
-### add PET amyloid 
-
-biomarkers_PET<- read_excel("G:/My Drive/Data/ALFA+/biomarkers/bx_ftm_centiloids_ALFA_PET_FTM_20210421_20250319_141859.xlsx")
-
-biomarkers_PET_A<-biomarkers_PET%>%
-  dplyr::select(centiloids, subject)%>%
-  mutate(subject = factor(subject))
-
-master_nd<-left_join(master_nd, biomarkers_PET_A)
-
-```

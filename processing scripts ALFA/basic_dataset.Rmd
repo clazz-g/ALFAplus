@@ -65,13 +65,13 @@ This code processes ALFA+ cohort data into a main dataset. variable specs can be
 
 ```{r}
 
-master_nd<- read_excel("G:/My Drive/Data/ALFA+/new participants_V1_03042025.xlsx")%>%
+master_nd<- read_excel("G:/My Drive/Data/ALFA+/data_raw/list_alfa_subjects_v1.xlsx")%>%
   dplyr::select(ID, sex, age_v1,education)%>%
   rename(subject = ID)%>%
   mutate(subject = factor(subject),
          sex= factor(sex),
          age_v1 = as.numeric(age_v1))
-bd<-read_excel("G:/My Drive/Data/ALFA+/20210517_APlus_General_Clinical.xlsx")%>%
+bd<-read_excel("G:/My Drive/Data/ALFA+/data_raw/20210517_APlus_General_Clinical.xlsx")%>%
   rename(subject = IdParticipante)%>%
    mutate(subject = factor(subject))%>%
   dplyr::select(subject, DOB)%>%
@@ -85,7 +85,7 @@ master_nd<-left_join(master_nd, bd)
 
 ##TIV
 ```{r}
-TIV<- read_excel("G:/My Drive/Data/ALFA+/TIV_ALFA+_V1.xlsx")
+TIV<- read_excel("G:/My Drive/Data/ALFA+/data_raw/neuroimaging/TIV_ALFA+_V1.xlsx")
 
 TIV<-TIV%>%
   dplyr::select(subject, value)%>%
@@ -105,7 +105,7 @@ I want to find out which of the women had more than 4 kids that they changed...
 
 #removing women who reported pregnancy related diseases 
 
-women_preg<-read_delim("G:/My Drive/Data/ALFA+/reproductive_var/Alfa Plus Long 2025_1054_AF_CRF_AF_embarazos_20250304095809(in).csv", 
+women_preg<-read_delim("G:/My Drive/Data/ALFA+/data_raw/reproductive_var/Alfa Plus Long 2025_1054_AF_CRF_AF_embarazos_20250304095809(in).csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE, skip = 1)%>%
   filter(Visita == "V2")%>%
   dplyr::select(IdParticipante, AF_deliverypat, AF_deliveryage)%>%
@@ -132,7 +132,7 @@ master_nd<-master_nd%>%
 
 #age menopause + abortions + menarche 
 
-menopause<-read_delim("G:/My Drive/Data/ALFA+/reproductive_var/Alfa Plus Long 2025_1054_AF_20250304095809(in).csv", 
+menopause<-read_delim("G:/My Drive/Data/ALFA+/data_raw/reproductive_var/Alfa Plus Long 2025_1054_AF_20250304095809(in).csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE, skip = 1)%>%
   dplyr::select(IdParticipante, F06_2_017, F06_2_019, F06_2_018, F06_2_015)%>%
   rename(subject = IdParticipante,
@@ -152,7 +152,7 @@ menopause<-read_delim("G:/My Drive/Data/ALFA+/reproductive_var/Alfa Plus Long 20
 
 master_nd<-left_join(master_nd, menopause)
 
-cause_menopause<-read_delim("G:/My Drive/Data/ALFA+/reproductive_var/Alfa Plus Long 2025_1054_AF_20250304095809(in).csv", 
+cause_menopause<-read_delim("G:/My Drive/Data/ALFA+/data_raw/reproductive_var/Alfa Plus Long 2025_1054_AF_20250304095809(in).csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE, skip = 1)%>%
   dplyr::select(IdParticipante, AF_menopcs)%>%
   rename(cause_menopause = AF_menopcs)%>%
@@ -164,7 +164,7 @@ cause_menopause<-read_delim("G:/My Drive/Data/ALFA+/reproductive_var/Alfa Plus L
   filter(!(IdParticipante == "55036" & cause_menopause == "natural"))%>%
   filter(!(IdParticipante == "11882" & cause_menopause == "natural"))#found duplicate entries becuse participants answers change
 
-cause_early_menopause<-read_delim("G:/My Drive/Data/ALFA+/reproductive_var/Alfa Plus Long 2025_1054_AF_20250304095809(in).csv", 
+cause_early_menopause<-read_delim("G:/My Drive/Data/ALFA+/data_raw/reproductive_var/Alfa Plus Long 2025_1054_AF_20250304095809(in).csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE, skip = 1)%>%
   dplyr::select(IdParticipante, AF_earlymenopcs, AF_horm_sust)%>%
   mutate(AF_earlymenopcs = factor(AF_earlymenopcs))
@@ -195,7 +195,7 @@ menopause%>%
 master_nd<-left_join(master_nd, cause_menopause)
 
 # HRT
-hrt<-read_delim("G:/My Drive/Data/ALFA+/reproductive_var/Alfa Plus Long 2025_1054_AF_20250304095809(in).csv", 
+hrt<-read_delim("G:/My Drive/Data/ALFA+/data_raw/reproductive_var/Alfa Plus Long 2025_1054_AF_20250304095809(in).csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE, skip = 1)%>%
   dplyr::select(IdParticipante, AF_horm_sust, Visita)%>%
   mutate(AF_horm_sust = factor(AF_horm_sust),
@@ -223,7 +223,7 @@ master_nd<-master_nd%>%
 ###CAIDE
 
 ```{r}
-caide<-read_excel("G:/My Drive/Data/ALFA+/CVR/20220325_APlus_CAIDE.xlsx")
+caide<-read_excel("G:/My Drive/Data/ALFA+/data_raw/CVR/20220325_APlus_CAIDE.xlsx")
 
 caide<-caide%>%
   filter(Visit == 1)%>%
@@ -237,7 +237,7 @@ master_nd<-left_join(master_nd, caide)
 ### men's reproductive history
 ```{r}
 
-men_repro<-read_excel("G:/My Drive/Data/ALFA+/BBDD_chldren_prealfa_clara.xlsx")%>%
+men_repro<-read_excel("G:/My Drive/Data/ALFA+/data_raw/reproductive_var/BBDD_chldren_prealfa_clara.xlsx")%>%
   dplyr::select(ID, total)%>%
   rename(subject = ID, 
          kids_total = total)%>%
@@ -263,7 +263,7 @@ BP_DIAST_2	TA diastólica (mmHg) - TOMA-2
 AL_09_038C	Minnesota Resultado Actividad Física según tipo de ejercico. 0 is inactive, 1 is active
 
 ```{r}
-risks<-read_excel("G:/My Drive/Data/ALFA+/20210517_APlus_General_Clinical.xlsx")%>%
+risks<-read_excel("G:/My Drive/Data/ALFA+/data_raw/20210517_APlus_General_Clinical.xlsx")%>%
   dplyr::select(IdParticipante, BP_SIST_2, BP_DIAST_2, AL_09_038C, F13_011C)%>%
   mutate(F13_011C = as.numeric(F13_011C),
          BP_SIST_2 = as.numeric(BP_SIST_2),
@@ -282,22 +282,10 @@ master_nd$BP_SIST_2[master_nd$subject ==10601] <-133
 master_nd$BP_DIAST_2[master_nd$subject ==10601] <-68
 ```
 
-###cholesterol
-```{r}
-cholesterol <- read_delim("G:/My Drive/Data/ALFA+/biomarkers/Laboratorio_v1.csv", 
-    delim = ";", escape_double = FALSE, trim_ws = TRUE)
-
-cholesterol<-cholesterol%>%
-  dplyr::select(IdParticipante, cholesterol)%>%
-  mutate(IdParticipante=factor(IdParticipante))%>%
-  rename(subject = IdParticipante)
-
-master_nd<-left_join(master_nd, cholesterol)
-```
 
 ###smoking status
 ```{r}
-smoke <- read_delim("G:/My Drive/Data/ALFA+/CVR/smoking status alfa+ v1.csv", 
+smoke <- read_delim("G:/My Drive/Data/ALFA+/data_raw/CVR/smoking status alfa+ v1.csv", 
     delim = ";", escape_double = FALSE, col_types = cols(Fuma2 = col_factor(levels = c("0", 
         "1", "2")), ...3 = col_skip(), ...4 = col_skip(), 
         ...5 = col_skip()), trim_ws = TRUE)
@@ -315,45 +303,9 @@ master_nd<-left_join(master_nd, smoke)
 master_nd$Fuma2[master_nd$subject == "11849"]<-0
 ```
 
-###medical antecedents
-```{r}
-#antecedentes patogenicos
-AP<-read_excel("G:/My Drive/Data/ALFA+/CVR/20210517_APlus-AP_copy.xlsx")
-
-AP<-AP%>%
-  filter(!is.na(IdParticipante))%>%
-  dplyr::select(IdParticipante, AP_CVhbp, AP_METDM, AP_METdislip)%>%
-  rename(subject = IdParticipante)%>%
-  mutate(subject=factor(subject),
-         AP_CVhbp = replace_na(AP_CVhbp, 0),
-         AP_METDM = replace_na(AP_METDM, 0),
-         AP_METdislip = replace_na(AP_METdislip, 0))
-
-master_nd<-left_join(master_nd, AP)
-```
-
-###Medication
-```{r}
-#medications
-meds<-read_excel("G:/My Drive/Data/ALFA+/CVR/ALFA+_v1_meds.xls")
-meds<-meds%>%
-  dplyr::select(idparticipante, anti_hta, `anti_dyslip (cholesterol)`, anti_diab)%>%
-  rename(subject = idparticipante,
-         anti_dyslip = `anti_dyslip (cholesterol)`)%>%
-  mutate(subject = factor(subject),
-         anti_hta = replace_na(anti_hta, 0),
-         anti_dyslip = replace_na(anti_dyslip, 0),
-         anti_diab = replace_na(anti_diab, 0),)
 
 
-master_nd<-left_join(master_nd, meds)
 
-master_nd<-master_nd%>%
-  mutate(anti_hta = replace_na(anti_hta, 0),
-         anti_dyslip = replace_na(anti_dyslip, 0),
-         anti_diab = replace_na(anti_diab, 0))
-
-```
 
 
 ## social factors
@@ -393,7 +345,7 @@ master_nd<-master_nd%>%
                                         DEMOG_famincomecat == -88 ~ NA,
                                         T ~ DEMOG_famincomecat)
 ```{r}
-socio<-read_delim("G:/My Drive/Data/ALFA+/socio_var/Alfa Plus Long 2024_1020_DEMOG_20241219102604(in).csv", delim = ";", escape_double = FALSE, trim_ws = TRUE, skip=1)%>%
+socio<-read_delim("G:/My Drive/Data/ALFA+/data_raw/socio_var/Alfa Plus Long 2024_1020_DEMOG_20241219102604(in).csv", delim = ";", escape_double = FALSE, trim_ws = TRUE, skip=1)%>%
   filter(Visita == "V2"| Visita == "V3")%>%
   dplyr::select(IdParticipante, Visita, DEMOG_famincomecat, F01_015B)%>%
   rename(estado_civil = F01_015B)%>%
@@ -431,7 +383,7 @@ master_nd<-left_join(master_nd, socio)
 group 0 and 1 together; rationale is that both have no 
 
 ```{r}
-occupation<- read_excel("G:/My Drive/Data/ALFA+/socio_var/occupational attainment.xlsx", skip = 1)%>%
+occupation<- read_excel("G:/My Drive/Data/ALFA+/data_raw/socio_var/occupational attainment.xlsx", skip = 1)%>%
   filter(Visita == "V1")%>%
   dplyr::select(IdParticipante, F02_4_012B)%>%
   rename(subject = IdParticipante, 
@@ -447,20 +399,20 @@ master_nd<-left_join(master_nd, occupation)
 ## SNAC
 value reflects the total amount of adverse/stressful events in one's life
 ```{r}
-snac<-read_excel("G:/My Drive/Data/ALFA+/20210517_APlus_General_Clinical.xlsx")%>%
-  dplyr::select(IdParticipante, AO_03_044C)%>%
-  rename(subject = IdParticipante,
-         SNAC = AO_03_044C)%>%
-  mutate(subject = factor(subject),
-         SNAC = factor(SNAC))
-
-master_nd<-left_join(master_nd, snac)
+# snac<-read_excel("G:/My Drive/Data/ALFA+/data_raw/20210517_APlus_General_Clinical.xlsx")%>%
+#   dplyr::select(IdParticipante, AO_03_044C)%>%
+#   rename(subject = IdParticipante,
+#          SNAC = AO_03_044C)%>%
+#   mutate(subject = factor(subject),
+#          SNAC = factor(SNAC))
+# 
+# master_nd<-left_join(master_nd, snac)
 ```
 
 ##APOE status
 
 ```{r}
-apoe<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/20201007_APlus_Biomarcadores - corregido.csv", 
+apoe<-read_delim("G:/My Drive/Data/ALFA+/data_raw/fluid_biomarkers/20201007_APlus_Biomarcadores - corregido.csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE)%>%
   dplyr::select(IdParticipante, APOE_binary)%>%
   rename(subject = IdParticipante)%>%
@@ -471,192 +423,25 @@ apoe<-read_delim("G:/My Drive/Data/ALFA+/biomarkers/20201007_APlus_Biomarcadores
 master_nd<-left_join(master_nd, apoe)
 ```
 
-## cognitive scores - not included atm
-
-This dataset only contains V1 and V2 scores for now.
-
-1.	FCSRT Total Immediate recall (0-48), Z_FCSRTI_RT -> word recall based on semantic cues
-2.	WMS logical memory Total Delayed recall (0-50) Z_aWMS_DR_RS -> narrative memory
-3.	WAIS- Coding (0-135) Z_Wclave_total -> attention/processing
-4.	Semantic Fluency (animals in 1 minute), Z_FS_totalcnswr -> semantic memory
-
-
-```{r}
-# cog_v1<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 1 - Cognition Z Scores.xlsx")%>%
-#   dplyr::select(-Gender, -Years_Edu, -Age_V1S1)%>%
-#   rename(subject = IdParticipante,
-#          Z_PACC_v1 = Z_PACC_Composite_1.2._v1)
-# 
-# 
-# cog_v2<-read_excel("G:/My Drive/Data/ALFA+/Cognition/Visit 2 - Cognition Z Scores.xlsx")%>%
-#   dplyr::select(-Gender, -Years_Edu, -Age_V1S1, -V1S1_dt)%>%
-#   rename(subject = IdParticipante,
-#          Z_PACC_v2 = Z_PACC_Composite_1.2._V2)
-# 
-# cog_all<-full_join(cog_v1, cog_v2)
-# 
-# #create time difference variable for adjusting in models, and create the score difference between V1 and V2
-# 
-# cog_all<-cog_all%>%
-#   mutate(V1S1_dt = as.Date(V1S1_dt, format = "%d/%m/%Y"),
-#          V2S1_dt = as.Date(V2S1_dt, format = "%d/%m/%Y"),
-#          diff_time = difftime(V2S1_dt, V1S1_dt, units = c("days")),
-#          diff_PACC = Z_PACC_v2 - Z_PACC_v1,
-#          diff_Attention = Z_Attention_Composite_V2 - Z_Attention_Composite_v1,
-#          diff_Executive = Z_Executive_Composite_V2 - Z_Executive_Composite_v1,
-#          diff_Language = Z_Language_Composite_V2 - Z_Language_Composite_v1,
-#          diff_Visual = Z_Visual_Composite_V2 - Z_Visual_Composite_v1,
-#          diff_Memory = Z_Memory_Composite_V2 - Z_Memory_Composite_v1)
-# 
-# 
-# 
-# 
-# master_nd<-left_join(master_nd, cog_all)
-# master_nd$diff_time<-as.numeric(master_nd$diff_time)
-
-```
-
-
-
-
 #handling missing data
-##check
-```{r}
-master_nd%>%
-  md.pattern(., rotate.names = T)
 
-aggr_plot <- VIM::aggr(master_nd[master_nd$sex== 2,], numbers = T, sortVars= T)
-#this tells us that all AP variables, plus age at first birth have missing rates that are too high. Discuss this tomorrow
+Replacing NAs: Not doing this method anymore, apparently flawed. data needs to be imputed at least 10 times, for the specific regression used. 
+Example:
 
+-> Get all imputed datasets in long format
+data_imp_long <- complete(imp_multi, "long", include = TRUE)
 
-```
-
-##fix 
-
-Replacing NAs: predicitve means matching is used with 5 imputations for each value. I deem this necessary and useful to keep the little power we have in the linear regression since losing data because of covariates suck. NAs are missing at random
-
-a new dataset is created with the new variables that have been imputed. New variables wear the suffix "_pmm" and old ones were delected from the new dataset
-
-threshold for imputing is 10% missing data, fairly conservative
-
-outcome variables aren't being computed, only covariates
-
-
-
-```{r}
-
-
-#cholesterol
-
-mice_dat<-master_nd%>%
-  dplyr::select(cholesterol, subject, age_v1, sex, BP_SIST_2, bmi, education , APOE_binary)%>%
-  distinct()
-
-ini <- mice(mice_dat,maxit=0)
-pred1 <- ini$predictorMatrix
-pred1[,'subject'] <- 0
-imp_multi <- mice(mice_dat, pred = pred1, m = 5, method = "pmm")  # Impute missing values multiple times
-data_imp_multi_all <- complete(imp_multi,       # Store multiply imputed data
-                           "repeated",
-                           include = TRUE)
-
-cholesterol_pmm<-data_imp_multi_all%>%
-  dplyr::select(2:7)%>%
-  mutate(cholesterol_pmm = rowMeans(across(starts_with("cholesterol."))))%>%
-  rename(subject=subject.0)%>%
-  mutate(subject = factor(subject))
-
-master_nd_pmm<-master_nd
-master_nd_pmm<-left_join(master_nd_pmm, cholesterol_pmm[,c(6, 7)])
-
-## age_menopause
-
-mice_dat<-master_nd%>%
-  filter(sex == 2)%>%
-  dplyr::select(age_menopause, subject, age_v1, sex, BP_SIST_2, bmi, education , APOE_binary)%>%
-  distinct()
-
-ini <- mice(mice_dat,maxit=0)
-pred1 <- ini$predictorMatrix
-pred1[,'subject'] <- 0
-imp_multi <- mice(mice_dat, pred = pred1, m = 5, method = "pmm")  # Impute missing values multiple times
-data_imp_multi_all <- complete(imp_multi,       # Store multiply imputed data
-                           "repeated",
-                           include = TRUE)
-
-age_menopause_pmm<-data_imp_multi_all%>%
-  dplyr::select(2:7)%>%
-  mutate(age_menopause_pmm = rowMeans(across(starts_with("age_menopause."))))%>%
-  rename(subject=subject.0)%>%
-  mutate(subject = factor(subject))
-
-
-master_nd_pmm<-left_join(master_nd_pmm, age_menopause_pmm[,c(6, 7)])
-
-#age_menarche
-
-mice_dat<-master_nd%>%
-  filter(sex == 2)%>%
-  dplyr::select(age_menarche, subject, age_v1, sex, BP_SIST_2, bmi, education , APOE_binary)%>%
-  distinct()
-
-ini <- mice(mice_dat,maxit=0)
-pred1 <- ini$predictorMatrix
-pred1[,'subject'] <- 0
-imp_multi <- mice(mice_dat, pred = pred1, m = 5, method = "pmm")  # Impute missing values multiple times
-data_imp_multi_all <- complete(imp_multi,       # Store multiply imputed data
-                           "repeated",
-                           include = TRUE)
-
-age_menarche_pmm<-data_imp_multi_all%>%
-  dplyr::select(2:7)%>%
-  mutate(age_menarche_pmm = rowMeans(across(starts_with("age_menarche."))))%>%
-  rename(subject=subject.0)%>%
-  mutate(subject = factor(subject))
-
-
-master_nd_pmm<-left_join(master_nd_pmm, age_menarche_pmm[,c(6, 7)])
-
-#hrt
-
-mice_dat<-master_nd%>%
-  filter(sex == 2)%>%
-  dplyr::select(HRT, subject, age_v1, sex, BP_SIST_2, bmi, education , APOE_binary)%>%
-  distinct()
-
-ini <- mice(mice_dat,maxit=0)
-pred1 <- ini$predictorMatrix
-pred1[,'subject'] <- 0
-imp_multi <- mice(mice_dat, pred = pred1, m = 5, method = "logreg")  # Impute missing values multiple times
-data_imp_multi_all <- complete(imp_multi,       # Store multiply imputed data
-                           "repeated",
-                           include = TRUE)
-
-HRT_pmm<-data_imp_multi_all%>%
-  dplyr::select(2:7)%>%
-  rowwise() %>%
-  mutate(HRT_pmm = {
-    values <- c_across(starts_with("HRT."))
-    as.numeric(names(sort(table(values), decreasing = TRUE))[1])
-  }) %>%
-  ungroup() %>%
-  # Add subject back
-  mutate(subject = data_imp_multi_all$subject.0) %>%
-  mutate(subject = factor(subject)) %>%
-  dplyr::select(subject, HRT_pmm)
-
-
-
-master_nd_pmm<-left_join(master_nd_pmm, HRT_pmm)
-
-
-master_nd_pmm%>%
-  md.pattern(., rotate.names = T)
-
-aggr_plot <- VIM::aggr(master_nd_pmm, numbers = T, sortVars= T)
-
-```
-
+-> Run analysis within each imputation
+library(broom)
+results <- data_imp_long %>%
+  filter(.imp > 0) %>%  # Exclude original data
+  group_by(.imp) %>%
+  do(tidy(lm(outcome ~ cholesterol + age_v1, data = .))) %>%
+  ungroup()
+  
+fit <- with(imp_multi, lm(outcome ~ covariate1 + covariate2 + covariate3 + covariate4 + covariate5))
+pooled <- pool(fit)
+summary(pooled)
 
 
 #create vars for analysis
@@ -664,8 +449,8 @@ aggr_plot <- VIM::aggr(master_nd_pmm, numbers = T, sortVars= T)
 ## reproductive var
 ```{r}
 #recompute reproductive_span variable
-master_nd_pmm<-master_nd_pmm%>%
-  mutate(repro_span = age_menopause_pmm - age_menarche_pmm,
+master_nd<-master_nd%>%
+  mutate(repro_span = age_menopause - age_menarche,
          kids_dicho = factor(ifelse(kids_total == 0, 0, 1)),
          parous_group = case_when(
   kids_total >= 2 ~ "2+",
@@ -675,38 +460,68 @@ master_nd_pmm<-master_nd_pmm%>%
 ```
 
 
-##CVR variables
+#Other (not processed currently)
+cholesterol procssing is missing too
 ```{r}
-master_nd_pmm<-master_nd_pmm%>%
-  mutate(hypertension = ifelse(BP_SIST_2>=140|BP_DIAST_2>=90| AP_CVhbp == 1 |anti_hta==1, 1, 0),
-         high_chol = ifelse(cholesterol_pmm>=200 |AP_METdislip == 1 | anti_dyslip ==1, 1, 0),
-         diabetes = ifelse(AP_METDM == 1 |anti_diab ==1, 1, 0))
-
-master_nd_pmm<-master_nd_pmm%>%
-  mutate(hypertension = factor(hypertension),
-         high_chol = factor(high_chol),
-         diabetes = factor(diabetes))%>%
-  dplyr::select(-AP_METDM, -AP_METdislip, -AP_CVhbp, -anti_dyslip, -anti_hta, -anti_diab)
+# master_nd<-master_nd%>%
+#   mutate(hypertension = ifelse(BP_SIST_2>=140|BP_DIAST_2>=90| AP_CVhbp == 1 |anti_hta==1, 1, 0),
+#          high_chol = ifelse(cholesterol_pmm>=200 |AP_METdislip == 1 | anti_dyslip ==1, 1, 0),
+#          diabetes = ifelse(AP_METDM == 1 |anti_diab ==1, 1, 0))
+# 
+# master_nd<-master_nd%>%
+#   mutate(hypertension = factor(hypertension),
+#          high_chol = factor(high_chol),
+#          diabetes = factor(diabetes))%>%
+#   dplyr::select(-AP_METDM, -AP_METdislip, -AP_CVhbp, -anti_dyslip, -anti_hta, -anti_diab)
 ```
 
-
-#Social variables
-to adjust for the very unequal amount of observation per bin
+###medical antecedents
 ```{r}
-master_nd_pmm<-master_nd_pmm%>%
-  mutate(new_ingreso = case_when(ingreso_hogar <=5 ~ "low",
-                                 ingreso_hogar == 6 ~ "medium",
-                                 ingreso_hogar>6 ~ "high"))
+#antecedentes patogenicos
+# AP<-read_excel("G:/My Drive/Data/ALFA+/data_raw/CVR/20210517_APlus-AP_copy.xlsx")
+# 
+# AP<-AP%>%
+#   filter(!is.na(IdParticipante))%>%
+#   dplyr::select(IdParticipante, AP_CVhbp, AP_METDM, AP_METdislip)%>%
+#   rename(subject = IdParticipante)%>%
+#   mutate(subject=factor(subject),
+#          AP_CVhbp = replace_na(AP_CVhbp, 0),
+#          AP_METDM = replace_na(AP_METDM, 0),
+#          AP_METdislip = replace_na(AP_METdislip, 0))
+# 
+# master_nd<-left_join(master_nd, AP)
+```
 
+###Medication
+```{r}
+#medications
+# meds<-read_excel("G:/My Drive/Data/ALFA+/data_raw/CVR/ALFA+_v1_meds.xls")
+# meds<-meds%>%
+#   dplyr::select(idparticipante, anti_hta, `anti_dyslip (cholesterol)`, anti_diab)%>%
+#   rename(subject = idparticipante,
+#          anti_dyslip = `anti_dyslip (cholesterol)`)%>%
+#   mutate(subject = factor(subject),
+#          anti_hta = replace_na(anti_hta, 0),
+#          anti_dyslip = replace_na(anti_dyslip, 0),
+#          anti_diab = replace_na(anti_diab, 0),)
+# 
+# 
+# master_nd<-left_join(master_nd, meds)
+# 
+# master_nd<-master_nd%>%
+#   mutate(anti_hta = replace_na(anti_hta, 0),
+#          anti_dyslip = replace_na(anti_dyslip, 0),
+#          anti_diab = replace_na(anti_diab, 0))
 
 ```
+
 # Save output
 ```{r}
   
 
-aggr_plot <- VIM::aggr(master_nd_pmm, numbers = T, sortVars= T)
+aggr_plot <- VIM::aggr(master_nd, numbers = T, sortVars= T)
 
-write.csv(master_nd_pmm, file = "G:/My Drive/Data/ALFA+/ALFA_dataset_basic.csv", row.names = F)
+write.csv(master_nd, file = "G:/My Drive/Data/ALFA+/data_cleaned/ALFA_dataset_basic.csv", row.names = F)
 ```
 
 
