@@ -32,7 +32,7 @@ biomarcadores_CSF <- read_delim("G:/My Drive/Data/ALFA+/data_raw/fluid_biomarker
          Assay = factor(Assay),
          Result= as.numeric(gsub("\\.", "", Result)) / 1000)%>%
   filter(SampleType == "CSF")%>%
-  filter(Assay %in% c("a-Synuclein", "Abeta1-40", "Abeta1-42", "GAP43","GFAP", "IL-6", "Neurogranin", "NFL", "pTau181", "pTau217", "sICAM1", "SNAP25", "sTREM2", "sVCAM1","Synaptotagmin", "tTau", "YKL40"))%>%
+  filter(Assay %in% c("a-Synuclein", "Abeta1-40", "Abeta1-42", "GAP43","GFAP", "IL-6", "Neurogranin", "NFL", "pTau181", "pTau217", "sICAM1", "SNAP25", "sTREM2", "sVCAM1","Synaptotagmin", "tTau", "YKL40", "S100"))%>%
   unique()%>%
   filter(!(Kit == "Elecsys" & Assay == "Abeta1-42"),
          !(Kit == "In-house (Karikari et al. Lancet Neurol 2020. Suarez-Calvet et al. 2020)" & Assay == "pTau181"),
