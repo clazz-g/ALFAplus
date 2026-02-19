@@ -32,8 +32,6 @@ library(car)
 library(sjPlot)
 #install.packages("caret")
 library(caret)
-#install.packages("bestNormalize")
-library(bestNormalize)
 #install.packages("ggrain")
 library(ggrain)
 #install.packages("emmeans")
@@ -41,19 +39,17 @@ library(emmeans)
 #install.packages("skimr")
 library(skimr)
 library(glmnet)
-#install.packages("bullseye")
-library(bullseye)
+
 #install.packages("lavaan")
 library(lavaan)
 #install.packages("brms")
 library(brms)
 #install.packages("mgcv")
 library(mgcv)
-library(splines)
+
 #install.packages("fitdistrplus")
 library(fitdistrplus)
-#install.packages("patchwork")
-library(patchwork)
+
 ```
 
 This code processes ALFA+ cohort data into a main dataset. variable specs can be found in the READ_ME file
@@ -106,7 +102,7 @@ I want to find out which of the women had more than 4 kids that they changed...
 #removing women who reported pregnancy related diseases 
 
 women_preg<-read_delim("G:/My Drive/Data/ALFA+/data_raw/reproductive_var/Alfa Plus Long 2025_1054_AF_CRF_AF_embarazos_20250304095809(in).csv", 
-    delim = ";", escape_double = FALSE, trim_ws = TRUE, skip = 1)%>%
+    delim = ";", escape_double = FALSE, trim_ws = TRUE, skip = 1)
   filter(Visita == "V2")%>%
   dplyr::select(IdParticipante, AF_deliverypat, AF_deliveryage)%>%
   rename(subject = IdParticipante)%>%
@@ -122,6 +118,10 @@ women_preg%>%
   filter(AF_deliverypat !=0)
 
 master_nd<-left_join(master_nd, women_preg)
+
+women_delivery_pat<-master_nd%>%
+  mutate(AF_deliverypat = replace_na(AF_deliverypat, 0))%>%
+  filter(AF_deliverypat != 0)
 
 master_nd<-master_nd%>%
   mutate(AF_deliverypat = replace_na(AF_deliverypat, 0))%>%
@@ -151,6 +151,8 @@ menopause<-read_delim("G:/My Drive/Data/ALFA+/data_raw/reproductive_var/Alfa Plu
          age_menopause = ifelse(age_menopause == 0, NA, age_menopause))
 
 master_nd<-left_join(master_nd, menopause)
+
+women_delivery_pat<-left_join(women_delivery_pat, menopause)
 
 cause_menopause<-read_delim("G:/My Drive/Data/ALFA+/data_raw/reproductive_var/Alfa Plus Long 2025_1054_AF_20250304095809(in).csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE, skip = 1)%>%
@@ -421,6 +423,7 @@ apoe<-read_delim("G:/My Drive/Data/ALFA+/data_raw/fluid_biomarkers/20201007_APlu
   unique()
 
 master_nd<-left_join(master_nd, apoe)
+women_delivery_pat<-left_join(women_delivery_pat, apoe)
 ```
 
 #handling missing data
@@ -522,6 +525,7 @@ cholesterol procssing is missing too
 aggr_plot <- VIM::aggr(master_nd, numbers = T, sortVars= T)
 
 write.csv(master_nd, file = "G:/My Drive/Data/ALFA+/data_cleaned/ALFA_dataset_basic.csv", row.names = F)
+write.csv(women_delivery_pat, file = "G:/My Drive/Data/ALFA+/data_cleaned/excluded_repro_var.csv")
 ```
 
 

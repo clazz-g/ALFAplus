@@ -57,7 +57,7 @@ library(fitdistrplus)
 library(patchwork)
 ```
 
-This code processes ALFA+ cohort data into a main dataset. variable specs can be found in the READ_ME file
+
 
 
 #WMH files by region for v1 and v2
