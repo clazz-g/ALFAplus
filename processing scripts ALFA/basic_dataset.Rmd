@@ -223,21 +223,43 @@ master_nd<-master_nd%>%
 
 ```
 
-
-
-###CAIDE
-
+# New repro var
 ```{r}
-caide<-read_excel("G:/My Drive/Data/ALFA+/data_raw/CVR/20220325_APlus_CAIDE.xlsx")
+# repro_var<-read_delim("G:/My Drive/Data/ALFA+/data_raw/reproductive_var/27_4_2026/A+ Long 2025 4Q_1054_AF_20251204105351.csv", skip=1)%>%
+#   dplyr::select(IdParticipante, F06_2_017, F06_2_019, F06_2_018, F06_2_015, Visita)%>%
+#   rename(subject = IdParticipante,
+#          age_menopause = F06_2_017, 
+#          abortions = F06_2_019,
+#          preg_termino = F06_2_018,
+#          age_menarche = F06_2_015,
+#          Visit = Visita)%>%
+#   mutate(age_menopause = ifelse(age_menopause == -77, NA, age_menopause))%>%
+#   filter(!if_all(c(age_menopause, abortions, preg_termino, age_menarche), is.na))%>%
+#   group_by(subject)%>%
+#   mutate(age_menopause = if (all(is.na(age_menopause))) NA else max(age_menopause, na.rm = TRUE),
+#          abortions = if (all(is.na(abortions))) NA else max(abortions, na.rm = TRUE),
+#          age_menarche = if (all(is.na(age_menarche))) NA else max(age_menarche, na.rm = TRUE))%>%
+#   ungroup()%>%
+#   mutate(subject = factor(subject))%>%
+#   dplyr::select(-Visit)%>%
+#   unique()
+# 
+# 
+# menopause<-repro_var%>%
+#   dplyr::select(subject, age_menopause)%>%
+#   mutate(subject = as.numeric(as.character(subject)))
+# 
+# symptoms<-read_delim("G:/My Drive/Data/ALFA+/data_raw/reproductive_var/27_4_2026/A+ Long 2025 4Q_1054_AF_CRF_AF_SymptomsMenopause_20251204105351.csv", skip=1)%>%
+#   dplyr::select(IdParticipante, Visita, AF_SympMnps_id, AF_SympMnps, AF_OnsetAgeSympMnps, AF_EndAgeSympMnps, AF_CmmSympMnps)%>%
+#   rename(subject = IdParticipante, 
+#          Visit = Visita)%>%
+#   left_join(.,menopause)
+#   
 
-caide<-caide%>%
-  filter(Visit == 1)%>%
-  dplyr::select(IdParticipante, CAIDE_scr_20M1)%>%
-  rename(subject = IdParticipante)%>%
-  mutate(subject = factor(subject))
 
-master_nd<-left_join(master_nd, caide)
 ```
+
+
 
 ### men's reproductive history
 ```{r}
