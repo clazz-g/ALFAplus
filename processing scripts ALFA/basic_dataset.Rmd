@@ -76,9 +76,6 @@ bd<-read_excel("G:/My Drive/Data/ALFA+/data_raw/20210517_APlus_General_Clinical.
 master_nd<-left_join(master_nd, bd)
 
 ```
-
-
-
 ##TIV
 ```{r}
 TIV<- read_excel("G:/My Drive/Data/ALFA+/data_raw/neuroimaging/TIV_ALFA+_V1.xlsx")
@@ -118,6 +115,13 @@ women_preg%>%
   filter(AF_deliverypat !=0)
 
 master_nd<-left_join(master_nd, women_preg)
+
+#1 = Preeclampsia/eclampsia
+#2 = Gestational diabetes
+#4 = Postpartum depression
+#3 = Other (specify in comments)
+#0 = None
+#-77 = Does not know  
 
 women_delivery_pat<-master_nd%>%
   mutate(AF_deliverypat = replace_na(AF_deliverypat, 0))%>%
@@ -219,7 +223,8 @@ master_nd<-left_join(master_nd, hrt)
 #replacing the no answers values with NA
 master_nd<-master_nd%>%
   mutate(age_menopause = ifelse(age_menopause == -77, NA, age_menopause),
-         age_menarche = ifelse(age_menarche == -77, NA, age_menarche))
+         age_menarche = ifelse(age_menarche == -77, NA, age_menarche),
+         is_meno_v1 = ifelse(age_menopause>age_v1+0.5, 0, 1))
 
 ```
 
@@ -550,7 +555,19 @@ cholesterol procssing is missing too
 aggr_plot <- VIM::aggr(master_nd, numbers = T, sortVars= T)
 
 write.csv(master_nd, file = "G:/My Drive/Data/ALFA+/data_cleaned/ALFA_dataset_basic.csv", row.names = F)
-write.csv(women_delivery_pat, file = "G:/My Drive/Data/ALFA+/data_cleaned/excluded_repro_var.csv")
+#write.csv(women_delivery_pat, file = "G:/My Drive/Data/ALFA+/data_cleaned/excluded_repro_var.csv")
+
+
+biomarkers<-read_delim(paste0("G:/My Drive/Data/ALFA+/data_cleaned/biomarkers_CSF_processed.csv"), 
+    delim = ",", escape_double = FALSE, trim_ws = TRUE)%>%
+  mutate(A=factor(A))%>%
+  filter(Visit == "V1")%>%
+  dplyr::select(subject, A)%>%
+  mutate(subject= as.factor(subject))
+
+master_bio<-left_join(master_nd, biomarkers)
+#write.csv(master_bio, file = "G:/My Drive/Data/ALFA+/data_cleaned/main_dataset_with_A.csv", row.names = F)
+
 ```
 
 
