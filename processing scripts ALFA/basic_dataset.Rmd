@@ -18,37 +18,12 @@ library(tidyverse)
 library(ggpubr)
 #install.packages("broom")
 library(broom)
-#install.packages("ggeffects")
-library(ggeffects)
-#install.packages("MASS")
-library(MASS)
-#install.packages("mice")
-library(mice)
-#install.packages("VIM")
-library(VIM)
-#install.packages("car")
-library(car)
-#install.packages("sjPlot")
-library(sjPlot)
 #install.packages("caret")
 library(caret)
 #install.packages("ggrain")
 library(ggrain)
-#install.packages("emmeans")
-library(emmeans)
-#install.packages("skimr")
-library(skimr)
-library(glmnet)
 
-#install.packages("lavaan")
-library(lavaan)
-#install.packages("brms")
-library(brms)
-#install.packages("mgcv")
-library(mgcv)
 
-#install.packages("fitdistrplus")
-library(fitdistrplus)
 
 ```
 
@@ -111,8 +86,6 @@ women_preg<-read_delim("G:/My Drive/Data/ALFA+/data_raw/reproductive_var/Alfa Pl
   unique()%>%
   rename(Age_at_first_birth = AF_deliveryage)
 
-women_preg%>%
-  filter(AF_deliverypat !=0)
 
 master_nd<-left_join(master_nd, women_preg)
 
@@ -157,7 +130,18 @@ menopause<-read_delim("G:/My Drive/Data/ALFA+/data_raw/reproductive_var/Alfa Plu
   dplyr::select(-Visita)%>%
   unique()
 
-master_nd<-left_join(master_nd, menopause)
+master_nd<-left_join(master_nd, menopause)%>%
+  mutate(is_meno = ifelse(age_v1>age_menopause, 0, 1))
+
+#hard coded values retrieved from pt info
+master_nd$is_meno[master_nd$subject == 10627]<-1
+master_nd$age_menopause[master_nd$subject == 10627]<-54
+master_nd$is_meno[master_nd$subject == 11099]<-1
+master_nd$is_meno[master_nd$subject == 12125]<-1
+master_nd$age_menopause[master_nd$subject == 12125]<-48
+master_nd$is_meno[master_nd$subject == 12774]<-0
+
+
 
 women_delivery_pat<-left_join(women_delivery_pat, menopause)
 
